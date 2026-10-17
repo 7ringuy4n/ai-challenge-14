@@ -298,9 +298,10 @@
     },
     {
       "action": "Synchronize local develop/main and verify GitHub refs under REQ-021",
-      "status": "IN_PROGRESS",
-      "remote_update": "NOT_RUN_PENDING_VERIFIABLE_REMOTE_REFS",
-      "evidence": "reports/verification/REQ-021/repository-check.md"
+      "status": "LOCAL_PASS_REMOTE_BLOCKED",
+      "remote_update": "NOT_RUN_AUTO_REVIEW_REJECTED_AND_REMOTE_UNVERIFIED",
+      "evidence": "reports/verification/REQ-021/repository-check.md",
+      "local_heads": "ea89eb3340b0b900f106934aee2a92203c9439e7"
     }
   ]
 }
