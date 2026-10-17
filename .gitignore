@@ -6,3 +6,5 @@ reports/verification/generated/
 reports/java-performance/results/
 __pycache__/
 *.py[cod]
+
+node_modules/

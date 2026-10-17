@@ -7,6 +7,7 @@ import base64
 import http.cookiejar
 import json
 import os
+from datetime import datetime, timezone
 import sys
 import time
 import urllib.error
@@ -27,18 +28,22 @@ def read_env(path: Path) -> dict[str, str]:
 
 
 class Api:
-    def __init__(self, base: str, passwords: dict[str, str]):
+    def __init__(self, base: str, passwords: dict[str, str], evidence_path: Path):
         self.base = base.rstrip("/")
         self.passwords = passwords
+        self.evidence_path = evidence_path
         self.cookies = http.cookiejar.CookieJar()
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookies))
 
-    def call(self, username: str | None, method: str, path: str, *, body=None, key=None, csrf=None):
-        headers = {"Accept": "application/json"}
+    def call(self, username: str | None, method: str, path: str, *, body=None, key=None, csrf=None, traceparent=None):
+        correlation_id = "accept-" + uuid.uuid4().hex[:24]
+        headers = {"Accept": "application/json", "X-Correlation-ID": correlation_id}
         if body is not None:
             headers["Content-Type"] = "application/json"
         if key:
             headers["Idempotency-Key"] = key
+        if traceparent:
+            headers["traceparent"] = traceparent
         if csrf:
             headers[csrf["csrfHeaderName"]] = csrf["csrfToken"]
         if username:
@@ -46,17 +51,33 @@ class Api:
             headers["Authorization"] = f"Basic {auth}"
         data = json.dumps(body, separators=(",", ":")).encode() if body is not None else None
         request = urllib.request.Request(self.base + path, data=data, headers=headers, method=method)
+        started = datetime.now(timezone.utc).isoformat()
         try:
             with self.opener.open(request, timeout=10) as response:
                 content = response.read()
-                return response.status, json.loads(content) if content else None, response.headers
+                result = (response.status, json.loads(content) if content else None, response.headers)
         except urllib.error.HTTPError as error:
             content = error.read()
             try:
                 parsed = json.loads(content) if content else None
             except json.JSONDecodeError:
                 parsed = None
-            return error.code, parsed, error.headers
+            result = (error.code, parsed, error.headers)
+        response_body = result[1]
+        redactions = []
+        if isinstance(response_body, dict) and "csrfToken" in response_body:
+            response_body = {**response_body, "csrfToken": "[REDACTED]"}
+            redactions.append({"field": "response.body.csrfToken", "reason": "anti-CSRF credential"})
+        record = {
+            "timestamp_utc": started, "request": {"method": method, "path": path,
+                "headers": {k: ("[REDACTED]" if k.lower() in {"authorization", "x-csrf-token"} or "csrf" in k.lower() else v)
+                            for k, v in headers.items()}, "body": body},
+            "response": {"status": result[0], "headers": {"X-Correlation-ID": result[2].get("X-Correlation-ID")},
+                         "body": response_body},
+            "redactions": redactions}
+        with self.evidence_path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(record, separators=(",", ":"), default=str) + "\n")
+        return result
 
 
 def main() -> int:
@@ -71,14 +92,28 @@ def main() -> int:
         return 2
 
     port = env.get("SERVER_PORT", "8080")
+    evidence_dir = Path(os.environ.get("CLAIMS_EVIDENCE_DIR", "reports/verification/acceptance-matrix"))
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    evidence_path = evidence_dir / "http-exchanges.jsonl"
+    evidence_path.unlink(missing_ok=True)
     api = Api(os.environ.get("CLAIMS_API_BASE", f"http://127.0.0.1:{port}"), {
         "clerk": env["CLAIMS_DEMO_PASSWORD"], "lead": env["CLAIMS_DEMO_PASSWORD"],
         "assessor": env["CLAIMS_DEMO_PASSWORD"], "finance": env["CLAIMS_DEMO_PASSWORD"],
         "member-demo": env["CLAIMS_DEMO_PASSWORD"], "system": env["CLAIMS_SYSTEM_PASSWORD"],
-    })
-    total = 20
+    }, evidence_path)
+    total = 29
     case = 0
     run_tag = uuid.uuid4().hex
+    session_trace_id = uuid.uuid4().hex
+    session_parent_span_id = uuid.uuid4().hex[:16]
+    approval_trace_id = uuid.uuid4().hex
+    approval_parent_span_id = uuid.uuid4().hex[:16]
+    trace_evidence = evidence_dir / "trace-context.json"
+    trace_evidence.write_text(json.dumps({
+        "session_traceparent": f"00-{session_trace_id}-{session_parent_span_id}-01",
+        "approval_traceparent": f"00-{approval_trace_id}-{approval_parent_span_id}-01",
+        "expected_outbox_trace_id": approval_trace_id,
+    }, indent=2) + "\n", encoding="utf-8")
 
     def check(name: str, actual: int, expected: int) -> None:
         nonlocal case
@@ -91,7 +126,8 @@ def main() -> int:
         status, _, _ = api.call(None, "GET", "/api/v1/claims?page=0&size=1")
         check("unauthenticated claims request is rejected", status, 401)
 
-        status, csrf, _ = api.call("clerk", "GET", "/api/v1/session")
+        status, csrf, _ = api.call("clerk", "GET", "/api/v1/session",
+            traceparent=f"00-{session_trace_id}-{session_parent_span_id}-01")
         check("authenticated session supplies CSRF token", status, 200)
         if not all(csrf.get(field) for field in ("csrfHeaderName", "csrfParameterName", "csrfToken")):
             raise RuntimeError("session did not return the expected CSRF contract")
@@ -152,7 +188,8 @@ def main() -> int:
 
         status, approved, _ = api.call("assessor", "POST", f"/api/v1/claims/{claim_id}/transitions",
             key=f"e2e-{run_tag}-approve", csrf=csrf,
-            body={"targetState": "APPROVED", "expectedVersion": 5, "reason": "Covered", "facts": {}})
+            body={"targetState": "APPROVED", "expectedVersion": 5, "reason": "Covered", "facts": {}},
+            traceparent=f"00-{approval_trace_id}-{approval_parent_span_id}-01")
         check("assessor approves and persists payment request", status, 200)
 
         status, _, _ = api.call("finance", "POST", f"/api/v1/claims/{claim_id}/transitions",
@@ -196,6 +233,47 @@ def main() -> int:
         check("complete lifecycle exposes claim transition audit", status, 200)
         if len(audit["items"]) < 5:
             raise RuntimeError("expected transition audit records were not persisted")
+
+        # Extra live boundaries make the acceptance inventory a single 29-case run.
+        status, _, _ = api.call("clerk", "POST", f"/api/v1/claims/{claim_id}/transitions",
+            key=f"e2e-{run_tag}-illegal", csrf=csrf,
+            body={"targetState": "APPROVED", "expectedVersion": 8, "reason": "illegal", "facts": {}})
+        check("closed claim rejects a transition", status, 409)
+
+        status, _, _ = api.call("clerk", "GET", "/api/v1/claims/not-a-uuid")
+        check("malformed claim UUID returns stable client error", status, 400)
+
+        status, _, _ = api.call("clerk", "GET", f"/api/v1/claims/{uuid.uuid4()}")
+        check("unknown claim is not found", status, 404)
+
+        # Replay key with a different payload must conflict and leave the original claim untouched.
+        status, _, _ = api.call("member-demo", "POST", "/api/v1/claims", key=f"e2e-{run_tag}-create",
+            csrf=csrf, body={"policyLimit": 501, "currency": "USD", "facts": {"requestedAmount": 125.50}})
+        check("idempotency key reuse with different payload conflicts", status, 409)
+
+        status, options, _ = api.call("clerk", "GET", f"/api/v1/claims/{claim_id}/transitions")
+        check("terminal state exposes no available transitions", status, 200)
+        if any(option.get("available") for option in options):
+            raise RuntimeError("terminal claim returned an available transition")
+
+        status, _, _ = api.call("member-demo", "POST", f"/api/v1/claims/{claim_id}/system-transitions",
+            key=f"e2e-{run_tag}-system-closed", csrf=csrf,
+            body={"targetState": "CLOSED", "expectedVersion": 8, "reason": "terminal", "facts": {}})
+        check("member cannot invoke protected system endpoint", status, 403)
+
+        status, _, _ = api.call("member-demo", "POST", f"/api/v1/claims/{claim_id}/transitions",
+            key=f"e2e-{run_tag}-oversized-state", csrf=csrf,
+            body={"targetState": "X" * 100, "expectedVersion": 8, "reason": "invalid", "facts": {}})
+        check("oversized state value returns validation error", status, 400)
+
+        status, _, _ = api.call("member-demo", "POST", "/api/v1/claims", key=f"e2e-{run_tag}-invalid-currency",
+            csrf=csrf, body={"policyLimit": 500, "currency": "US", "facts": {"requestedAmount": 10}})
+        check("invalid currency returns validation error", status, 400)
+
+        status, _, _ = api.call("member-demo", "PUT", f"/api/v1/claims/{claim_id}/facts",
+            key=f"e2e-{run_tag}-stale-version", csrf=csrf,
+            body={"expectedVersion": 0, "facts": {"requestedAmount": 125.50}})
+        check("stale version cannot mutate closed claim", status, 409)
     except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
         print(f"Scenario failure after {case}/{total} cases: {error}", file=sys.stderr)
         return 1

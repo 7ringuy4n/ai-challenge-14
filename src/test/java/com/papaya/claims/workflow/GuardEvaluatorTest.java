@@ -51,6 +51,7 @@ class GuardEvaluatorTest {
         assertGuard("new_information_received", Map.of(), "", new WorkflowEvidence(1, requested, requested.plusNanos(1_000), null, null, null, false, null, null), true);
         assertGuard("new_information_received", Map.of(), "", new WorkflowEvidence(1, requested, requested, null, null, null, false, null, null), false);
         assertGuard("new_information_received", Map.of(), "", new WorkflowEvidence(1, requested, requested.minusSeconds(1), null, null, null, false, null, null), false);
+        assertGuard("new_information_received", Map.of(), "", new WorkflowEvidence(1, null, requested, null, null, null, false, null, null), false);
     }
 
     @Test
@@ -100,6 +101,9 @@ class GuardEvaluatorTest {
         assertGuardAt("appeal_period_expired_or_member_acknowledged", Map.of(), "",
                 new WorkflowEvidence(0, null, null, null, rejected, rejected.minusNanos(1_000), false, null, null),
                 Instant.parse("2026-10-01T12:00:00Z"), false);
+        assertGuardAt("appeal_period_expired_or_member_acknowledged", Map.of(), "",
+                new WorkflowEvidence(0, null, null, null, rejected, null, false, null, null),
+                Instant.parse("2026-10-01T12:00:00Z"), false);
     }
 
     @Test
@@ -108,6 +112,10 @@ class GuardEvaluatorTest {
         assertGuard("all_required_documents_present", Map.of("documents", Map.of("invoice/1", doc(true, true, true))), "", WorkflowEvidence.empty(), false);
         assertGuard("all_required_documents_present", Map.of("documents", Map.of("invoice", doc(false, true, true))), "", WorkflowEvidence.empty(), false);
         assertGuard("all_required_documents_present", Map.of("documents", Map.of("invoice", doc(true, true, true), "receipt", doc(true, true, true))), "", WorkflowEvidence.empty(), true);
+        assertGuard("all_required_documents_present", Map.of("documents", Map.of("invoice", doc(false, true, true))), "", WorkflowEvidence.empty(), false);
+        assertGuard("all_required_documents_present", Map.of("documents", Map.of("invoice", doc(true, false, true))), "", WorkflowEvidence.empty(), false);
+        assertGuard("all_required_documents_present", Map.of("documents", Map.of("invoice", doc(true, true, false))), "", WorkflowEvidence.empty(), false);
+        assertGuard("all_required_documents_present", Map.of("documents", Map.of("invoice", Map.of("required", "yes", "present", true, "valid", true))), "", WorkflowEvidence.empty(), false);
     }
 
     @Test

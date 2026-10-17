@@ -1,0 +1,6 @@
+{
+  "profile": "baseline",
+  "status": "DIAGNOSTIC_RUN_METADATA_INVALID",
+  "reason": "Initial runner smoke produced malformed Java version JSON; the HTTP execution completed but is excluded from benchmark comparison.",
+  "source": "scripts/performance/run-profile.sh before version-quoting fix"
+}

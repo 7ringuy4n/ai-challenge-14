@@ -1,5 +1,9 @@
 # Project history
 
+## 2026-10-17 — Remaining acceptance verification
+
+REQ-015/016 advanced from implementation with missing integration/performance/observability evidence to actual current evidence. One combined live API run against the running PostgreSQL-backed service passed 29/29 checks; 31 request/response exchanges are retained with Authorization, Cookie, and CSRF values redacted. The final clean Maven -Pquality clean verify passed 123 unit tests and 9 PostgreSQL/Testcontainers cases, ran six Liquibase changesets, and measured 97.0464% line and 90.1116% branch coverage. The user approved P95≤500 ms, P99≤1 s, and HTTP errors≤1%; all seven JMeter profile runs met them. These runs predate a final request log context-field adjustment, so the performance record states that limitation; a post-adjustment five-second run only checked JMeter runner packaging. Newman passed 14 assertions, and actual Collector spans verify incoming HTTP parent propagation through the security and asynchronous outbox child spans with matching app logs. Mermaid and rendered PNG/SVG exist for all five requested diagram families. Independent review found no critical/high findings and the cited P2/P3 items were fixed. Browser UI, live cross-member ownership, requirement-level coverage beyond grouped cases, and host-managed raw LLM payload capture remain open. Status stays in progress and not accepted.
+
 ## 2026-10-17 — Fresh project setup and implementation continuation
 
 The workspace is a fresh, untracked project initialization on branch `develop`.

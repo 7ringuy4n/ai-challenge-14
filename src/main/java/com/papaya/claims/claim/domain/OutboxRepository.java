@@ -10,5 +10,9 @@ public interface OutboxRepository {
     List<Message> claimDue(Instant now, int limit);
     boolean markDelivered(UUID id, Instant deliveredAt);
     boolean markFailed(UUID id, String safeError, Instant retryAt);
-    record Message(UUID id, UUID claimId, String effect, String payload, int attempts, Instant availableAt) { }
+    record Message(UUID id, UUID claimId, String effect, String payload, int attempts, Instant availableAt, String traceparent) {
+        public Message(UUID id, UUID claimId, String effect, String payload, int attempts, Instant availableAt) {
+            this(id, claimId, effect, payload, attempts, availableAt, null);
+        }
+    }
 }

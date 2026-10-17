@@ -1,0 +1,14 @@
+{
+  "samples": 2005,
+  "errors": 1,
+  "error_rate": 0.0004987531172069825,
+  "duration_seconds": 4.943,
+  "rps": 405.62411490997374,
+  "throughput_samples_per_second": 405.62411490997374,
+  "latency_ms": {
+    "p50": 2,
+    "p95": 4,
+    "p99": 6
+  },
+  "concurrency_configured": "see profile properties"
+}

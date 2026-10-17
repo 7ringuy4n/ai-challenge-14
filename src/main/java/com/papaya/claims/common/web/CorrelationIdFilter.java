@@ -7,8 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import io.micrometer.observation.Observation;
-import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -24,9 +22,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
     public static final String ATTRIBUTE = CorrelationIdFilter.class.getName() + ".id";
     private static final Pattern SAFE = Pattern.compile("[A-Za-z0-9._:-]{1,128}");
     private static final Logger log = LoggerFactory.getLogger(CorrelationIdFilter.class);
-    private final ObservationRegistry observations;
-
-    public CorrelationIdFilter(ObservationRegistry observations) { this.observations = observations; }
+    public CorrelationIdFilter() { }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -37,23 +33,14 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         response.setHeader(HEADER, correlationId);
         MDC.put("correlationId", correlationId);
         long started = System.nanoTime();
-        Observation observation = Observation.createNotStarted("claims.http.filter", observations)
-                .lowCardinalityKeyValue("method", request.getMethod());
-        observation.start();
-        try (Observation.Scope ignored = observation.openScope()) {
-            try {
-                chain.doFilter(request, response);
-            } catch (ServletException | IOException | RuntimeException failure) {
-                observation.error(failure);
-                throw failure;
-            } finally {
-                long durationMs = (System.nanoTime() - started) / 1_000_000;
-                log.info("http_request method={} path={} status={} durationMs={} correlationId={} traceId={} spanId={}",
-                        request.getMethod(), request.getRequestURI(), response.getStatus(), durationMs, correlationId,
-                        MDC.get("traceId"), MDC.get("spanId"));
-            }
+        try {
+            chain.doFilter(request, response);
         } finally {
-            observation.stop();
+            long durationMs = (System.nanoTime() - started) / 1_000_000;
+            Traceparent.Ids trace = Traceparent.ids(request.getHeader("traceparent")).orElse(null);
+            log.info("http_request method={} path={} status={} durationMs={} correlationId={} traceId={} parentSpanId={}",
+                    request.getMethod(), request.getRequestURI(), response.getStatus(), durationMs, correlationId,
+                    trace == null ? null : trace.traceId(), trace == null ? null : trace.parentSpanId());
             MDC.remove("correlationId");
         }
     }

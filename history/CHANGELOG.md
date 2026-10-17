@@ -1,5 +1,9 @@
 # Technical changelog
 
+## 2026-10-17 — REQ-015/016 acceptance continuation
+
+A clean quality run passed 123 unit plus 9 PostgreSQL 16/Testcontainers tests, all six Liquibase changesets, and JaCoCo at 97.0464% lines (920/948) and 90.1116% branches (565/627). The combined live PostgreSQL-backed acceptance runner passed 29/29 and preserved 31 redacted exchanges. Newman passed 27 requests/14 assertions. Seven JMeter profiles passed the thresholds selected by the user (P95 ≤500 ms, P99 ≤1,000 ms, errors ≤1%); full runs predate a final log-only trace context change, and one 5-second post-change run checked the runner rather than load behavior. Exported Collector evidence verifies HTTP server, security child and asynchronous outbox child spans, correlated to application logs. All required diagram families have editable source and SVG/PNG outputs. Independent review found no critical/high issues; a P2 evidence token issue and a P3 stale test name were fixed. Remaining: browser UI and live two-member ownership checks, complete per-requirement HTTP coverage, byte-identical full JMeter after logging adjustment, host LLM raw payload capture. Project is NOT_ACCEPTED; see reports/verification/REQ-015-final.json.
+
 ## 2026-10-17
 
 - Initialized the fresh-project design, Maven/Spring/OpenAPI contracts and raw prompt/interaction evidence.

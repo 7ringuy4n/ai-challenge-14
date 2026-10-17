@@ -11,6 +11,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class OutboxDispatcherTest {
@@ -68,6 +69,19 @@ class OutboxDispatcherTest {
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("must be positive");
         assertThatThrownBy(() -> dispatcher(outbox, ignored -> {}, metrics, 1, 0))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("must be positive");
+    }
+
+    @Test
+    void deliversInsidePersistedParentTraceContextWhenTraceparentIsValid() {
+        String traceparent = "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01";
+        OutboxRepository.Message message = new OutboxRepository.Message(UUID.randomUUID(), UUID.randomUUID(),
+                "notify", "{}", 1, NOW, traceparent);
+        AtomicReference<Boolean> delivered = new AtomicReference<>(false);
+        EffectDelivery delivery = ignored -> delivered.set(true);
+        MemoryOutbox outbox = new MemoryOutbox(List.of(message));
+        dispatcher(outbox, delivery, new SimpleMeterRegistry(), 10, 2).dispatchDue();
+        assertThat(delivered.get()).isTrue();
+        assertThat(outbox.delivered).containsExactly(message.id());
     }
 
     private OutboxDispatcher dispatcher(OutboxRepository outbox, EffectDelivery delivery,

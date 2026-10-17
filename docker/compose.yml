@@ -1,4 +1,12 @@
 services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.153.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-collector.yml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "127.0.0.1:4318:4318"
+
   database:
     image: postgres:16
     restart: unless-stopped
@@ -28,6 +36,8 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     environment:
       CLAIMS_DATABASE_URL: ${CLAIMS_DATABASE_URL:?Set CLAIMS_DATABASE_URL in .env}
       CLAIMS_RUNTIME_DB_USER: claims_runtime
@@ -35,6 +45,10 @@ services:
       CLAIMS_MIGRATION_DB_USER: claims_migration
       CLAIMS_MIGRATION_DB_PASSWORD: ${CLAIMS_MIGRATION_DB_PASSWORD:?Set CLAIMS_MIGRATION_DB_PASSWORD in .env}
       SERVER_PORT: 8080
+      OTEL_SERVICE_NAME: claims-workflow
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+      CLAIMS_TRACING_SAMPLING: ${CLAIMS_TRACING_SAMPLING:-1.0}
       CLAIMS_DEMO_PASSWORD: ${CLAIMS_DEMO_PASSWORD:?Set CLAIMS_DEMO_PASSWORD in .env}
       CLAIMS_SYSTEM_PASSWORD: ${CLAIMS_SYSTEM_PASSWORD:?Set CLAIMS_SYSTEM_PASSWORD in .env}
     ports:

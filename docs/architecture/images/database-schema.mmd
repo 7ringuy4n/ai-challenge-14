@@ -1,0 +1,49 @@
+erDiagram
+  CLAIMS ||--o{ CLAIM_AUDIT : records
+  CLAIMS ||--o{ SYSTEM_OPERATION_AUDIT : correlates
+  CLAIMS ||--o{ COMMAND_RECEIPTS : mutates
+  CLAIMS ||--o| PAYMENT_REQUESTS : pays
+  CLAIMS ||--o{ LOCAL_OUTBOX : emits
+  CLAIMS {
+    uuid id PK
+    varchar state
+    bigint version
+    jsonb facts
+  }
+  CLAIM_AUDIT {
+    uuid id PK
+    uuid claim_id FK
+    bigint sequence
+    varchar from_state
+    varchar to_state
+  }
+  SYSTEM_OPERATION_AUDIT {
+    uuid id PK
+    varchar action
+    varchar resource
+    varchar outcome
+  }
+  COMMAND_RECEIPTS {
+    uuid id PK
+    varchar actor_id
+    varchar scope
+    varchar idempotency_key
+    char fingerprint
+    jsonb result_json
+  }
+  PAYMENT_REQUESTS {
+    uuid id PK
+    uuid claim_id FK
+    uuid request_id
+    varchar status
+    varchar reference
+  }
+  LOCAL_OUTBOX {
+    uuid id PK
+    uuid claim_id FK
+    varchar effect
+    jsonb payload
+    int attempts
+    timestamptz available_at
+    timestamptz delivered_at
+  }

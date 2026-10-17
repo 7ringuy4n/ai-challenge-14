@@ -2,6 +2,8 @@ package com.papaya.claims.claim.effects;
 
 import com.papaya.claims.claim.domain.OutboxRepository;
 import com.papaya.claims.claim.domain.PaymentRepository;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,8 @@ public class MockEffectDelivery implements EffectDelivery {
         if (message.effect().equals("trigger_payment_system")) {
             payments.confirm(message.claimId(), "MOCK-" + message.id());
         }
-        log.info("mock_effect_delivered eventId={} effect={}", message.id(), message.effect());
+        SpanContext context = Span.current().getSpanContext();
+        log.info("mock_effect_delivered eventId={} effect={} traceId={} spanId={}", message.id(), message.effect(),
+                context.isValid() ? context.getTraceId() : null, context.isValid() ? context.getSpanId() : null);
     }
 }

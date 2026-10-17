@@ -1,0 +1,11 @@
+flowchart TB
+  subgraph Host[Single Docker Compose host]
+    Browser[Browser or client] -->|127.0.0.1:8080| App[Claims service container<br/>Java 21 JRE<br/>non-root app user]
+    App -->|private Compose network<br/>runtime credentials| DB[(PostgreSQL 16 volume)]
+    Init[PostgreSQL init script<br/>bootstrap credentials] --> DB
+    App -->|Liquibase migration credentials| DB
+  end
+  Secrets[Ignored mode-0600 .env] -. injects credentials .-> App
+  Secrets -. bootstrap and migration secrets .-> DB
+  Setup[setup.sh / Docker Compose] --> App
+  Setup --> DB

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.papaya.claims.claim.domain.*;
 import com.papaya.claims.audit.Auditable;
+import com.papaya.claims.common.web.Traceparent;
 import com.papaya.claims.workflow.*;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -250,7 +251,7 @@ public class ClaimServiceImpl implements ClaimUseCases {
                 payments.create(claimId, UUID.randomUUID(), claim.currency(), amount);
             }
             outbox.enqueue(new OutboxRepository.Message(UUID.randomUUID(), claimId, intent.id(),
-                    writeJson(intent.payload()), 0, available));
+                    writeJson(intent.payload()), 0, available, Traceparent.current()));
         }
     }
 

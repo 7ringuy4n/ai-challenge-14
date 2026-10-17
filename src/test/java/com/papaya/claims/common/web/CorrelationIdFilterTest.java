@@ -3,7 +3,6 @@ package com.papaya.claims.common.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -12,7 +11,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 class CorrelationIdFilterTest {
     @Test
     void preservesOnlyBoundedSafeIdsAndReturnsTheEffectiveCorrelationId() throws Exception {
-        var filter = new CorrelationIdFilter(ObservationRegistry.create());
+        var filter = new CorrelationIdFilter();
         var request = new MockHttpServletRequest("GET", "/api/v1/claims");
         request.addHeader("X-Correlation-ID", "client:trace-17");
         var response = new MockHttpServletResponse();
@@ -23,7 +22,7 @@ class CorrelationIdFilterTest {
 
     @Test
     void replacesMalformedOrOversizedIdsWithGeneratedUuid() throws Exception {
-        var filter = new CorrelationIdFilter(ObservationRegistry.create());
+        var filter = new CorrelationIdFilter();
         var request = new MockHttpServletRequest("GET", "/api/v1/claims");
         request.addHeader("X-Correlation-ID", "bad value");
         var response = new MockHttpServletResponse();
@@ -33,8 +32,8 @@ class CorrelationIdFilterTest {
     }
 
     @Test
-    void removesMdcAndStopsObservationWhenDownstreamFails() throws Exception {
-        var filter = new CorrelationIdFilter(ObservationRegistry.create());
+    void removesMdcWhenDownstreamFails() throws Exception {
+        var filter = new CorrelationIdFilter();
         var request = new MockHttpServletRequest("POST", "/api/v1/claims");
         request.addHeader("X-Correlation-ID", "valid-17");
         var response = new MockHttpServletResponse();

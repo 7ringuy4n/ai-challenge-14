@@ -1,30 +1,19 @@
 # Operations
 
-## Local environment
+## Local runtime
 
-Java 21.0.12.1 and Maven 3.9.11 are installed under `/home/tringuyen/.local/java/jdk-21` and `/home/tringuyen/.local/maven`. The normal Maven cache is read-only; checks use `/tmp/claims-m2`. A Maven Wrapper is not present. Since a local Maven installation is available, wrapper bootstrap was not required for this run; a wrapper would still require Java and the Maven distribution/dependencies.
+Use Java 21, Maven 3.9.11, Docker Compose, and `bash scripts/setup.sh`. The setup creates an ignored mode-0600 `.env` when needed, applies database schema changes, and starts the app, PostgreSQL 16, and the OpenTelemetry Collector. Credentials are generated from `.env.example` inputs; do not commit `.env`. The app binds to loopback by default and fails closed on blank/placeholder credentials. Database bootstrap, migration owner, and restricted runtime roles remain separate.
 
-Create `.env` from `.env.example` and use `bash scripts/setup.sh` to generate bootstrap, migration and runtime database passwords before Compose starts. Set `CLAIMS_DEMO_PASSWORD` and a separate `CLAIMS_SYSTEM_PASSWORD`; the application fails closed when either is blank or left at a `CHANGE_ME_` placeholder. Do not commit `.env`. Compose binds the service to loopback by default, runs PostgreSQL 16, grants Liquibase a schema-owner login, and gives the application a restricted runtime login. The bootstrap credential is reserved for first-time database initialization.
-
-The intended sequence is:
-
-```bash
-bash scripts/setup.sh
-docker compose --env-file .env -f docker/compose.yml up --build -d
-bash scripts/smoke.sh
-```
-
-Docker daemon access is denied inside the default sandbox, so Docker commands were run only through approved escalated invocations; no socket permissions or daemon settings were changed. `bash scripts/setup.sh` succeeded three times, including the final image rebuild from normalized migration source against the existing volume. Both services reported healthy; existing claim rows were retained (four claims after the final unique scenario run). Liquibase ran five changesets on first startup and reported the database up to date on subsequent startup. The authenticated smoke check and 20-case API scenario run passed after final setup. Evidence is in `reports/verification/compose-repeat-setup.log`, `compose-final-setup.log`, `api-smoke-final.log`, and `e2e-scenarios-final.log`.
+The app exports OTLP traces to the Compose collector (`docker/otel-collector.yml`). The Collector currently uses the debug exporter for local verification; this is a development evidence setup, not a persistent production trace backend. The application defaults to 100% sampling locally (`management.tracing.sampling.probability=1.0`). Adjust sampling and exporter endpoints for deployment policy. The app/collector use the same Compose network; the app endpoint is configurable through `OTEL_EXPORTER_OTLP_ENDPOINT`.
 
 ## Runtime behavior
 
-Mutations write claim state, claim audit, system audit, idempotency receipt, and any payment/outbox evidence in a PostgreSQL transaction. The scheduled outbox dispatcher runs after commit, applies a configured lease and retry delay, and emits only mock Challenge 14 effects. Outbox delivered/failed counters and request observations are exposed through Micrometer; `/actuator/prometheus` remains authenticated. Public health output hides details.
+Mutations write claim state, claim audit, system audit, idempotency receipt, payment, and outbox evidence in a PostgreSQL transaction. The outbox dispatcher leases due work after commit, creates a child span using the persisted W3C traceparent, and records delivery/retry state. This challenge build uses only mock effect delivery. Correlation ID remains a separate bounded value; HTTP request logs include correlation ID plus validated inbound trace/parent IDs. Outbox logs include active trace/span IDs.
 
-Logs include method, path, status, duration, effective correlation ID, and trace/span IDs when provided by an observation tracing bridge. The application currently includes Micrometer observations and Prometheus metrics, but no tracing bridge dependency was resolved; observed `traceId` and `spanId` are null in unit output. Do not describe distributed tracing as verified.
+Public health output hides details. Other actuator routes, including Prometheus, require authentication. Do not expose debug collector output on an untrusted network.
 
-## Verification limits
+## Verification evidence and limits
 
-- The default sandbox blocks direct Docker socket and localhost access; approved escalated invocations work. No security controls were modified or bypassed.
-- JMeter 100/500-client profiles and distributed trace/span propagation remain unverified. Do not make capacity or tracing claims.
-- An earlier first-start DB log contains a `databasechangeloglock` lookup before the table existed; the subsequent successful Liquibase run created all five changesets, and repeat startup reports the database up to date. Current app/database services are healthy. See the preserved container log evidence for exact chronology.
-- The project remains in progress and is not marked accepted or production-ready.
+The current full clean quality command passed 123 unit plus 9 PostgreSQL/Testcontainers tests; six Liquibase changesets applied and JaCoCo passed at 97.0464% line / 90.1116% branch. The single combined 29-case live API matrix, smoke test, Postman run, seven JMeter profiles and an HTTP-to-outbox trace chain have actual saved evidence. See [`docs/testing/README.md`](../testing/README.md), [`reports/verification/REQ-015-final.json`](../../reports/verification/REQ-015-final.json), and [`reports/telemetry/trace-verification.json`](../../reports/telemetry/trace-verification.json).
+
+Docker socket and loopback access are restricted in the default sandbox. Approved escalated invocations were used; permissions and daemon settings were not changed. Performance results are local-run measurements, and the seven full runs predate a final logging-only source adjustment. A short post-adjustment JMeter run validates the runner only. Host-managed LLM payloads are `NOT_CAPTURED`; trace audit remains `PARTIAL`. The project remains in progress and not accepted.

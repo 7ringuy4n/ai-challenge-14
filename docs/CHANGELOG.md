@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-17 — Remaining acceptance evidence (REQ-015/016)
+
+- Completed one combined PostgreSQL-backed live run of 29/29 acceptance checks; saved 31 redacted request/response exchanges and W3C context carriers.
+- Added OTLP tracing and an outbox trace-context migration; verified collector-exported HTTP → security → asynchronous outbox parentage and matching application logs.
+- Executed seven JMeter profiles against user-approved P95≤500 ms, P99≤1,000 ms, and errors≤1% limits. All selected runs passed; full-run provenance predates a final log-context-only adjustment. Runner JSON metadata/compression was verified by a short post-adjustment run.
+- Newman executed 27 requests and 14 assertions with zero failures. Updated all five editable architecture/workflow/database/security/deployment diagram source/render sets.
+- Final clean Maven verification passed 123 unit and 9 PostgreSQL/Testcontainers tests, six Liquibase changesets, 97.0464% line and 90.1116% branch coverage. No acceptance status is granted; browser UI, live cross-member ownership, and full bullet-by-bullet live coverage remain open. Raw host-managed LLM payloads remain NOT_CAPTURED/PARTIAL.
+
 ## 2026-10-17
 
 - Initialized the approved architecture/implementation plan, Maven/Spring configuration scaffold, initial OpenAPI contract, and prompt/interaction evidence files.

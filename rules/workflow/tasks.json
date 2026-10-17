@@ -668,34 +668,74 @@
         "reports/"
       ],
       "verification": [
-        "env JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Pquality clean verify",
+        "env JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Pquality clean verify",
         "bash scripts/setup.sh",
         "bash scripts/smoke.sh",
-        "python3 scripts/run-scenarios.py",
+        "CLAIMS_API_BASE=http://127.0.0.1:8080 CLAIMS_EVIDENCE_DIR=reports/verification/acceptance-matrix python3 scripts/run-scenarios.py",
+        "bash scripts/run-postman.sh",
+        "JMETER_DURATION=5 scripts/performance/run-profile.sh baseline",
+        "python3 scripts/performance/compare-runs.py reports/performance",
         "python3 scripts/workflow/verify_workflow.py",
         "agent-memory rebuild"
       ],
-      "case_ids": [],
+      "case_ids": [
+        "C14-01",
+        "C14-02",
+        "C14-03",
+        "C14-04",
+        "C14-05",
+        "C14-06",
+        "C14-07",
+        "C14-08",
+        "C14-09",
+        "C14-10",
+        "C14-11",
+        "C14-12",
+        "C14-13",
+        "C14-14",
+        "C14-15",
+        "C14-16",
+        "C14-17",
+        "C14-18",
+        "C14-19",
+        "C14-20",
+        "C14-21",
+        "C14-22",
+        "C14-23",
+        "C14-24",
+        "C14-25",
+        "C14-26",
+        "C14-27",
+        "C14-28",
+        "C14-29"
+      ],
       "acceptance": [
         "Final reports tied to source hashes and actual command exit codes; no fabricated metrics",
         "README, dated technical history, changelog, config-only diff and raw AI conversation ready",
-        "User can review package locally; publish to GitHub only under explicit user authorization"
+        "User can review package locally; publish to GitHub only under explicit user authorization",
+        "Run a single all-29 acceptance suite against the running PostgreSQL-backed API and preserve redacted request/response evidence",
+        "Provide runnable JMeter baseline/normal/peak/stress/spike/soak/concurrent-claims profiles and measured resource/database/outbox metrics",
+        "Configure OpenTelemetry propagation through HTTP and asynchronous outbox; verify exported trace/span evidence and log correlation",
+        "Verify requirement-to-implementation/test/review traceability, Postman collection execution, and editable/rendered architecture/workflow/database/security/deployment diagrams"
       ],
       "evidence": [
         {
-          "artifact": "reports/verification/T08-final.json",
-          "result": "PASS_WITH_OPEN_NOT_RUN_ITEMS",
-          "source_hash": "354c3d032a26c9ab807e0742aea4063ad87594fc6b838e99535855bb2e5e671c",
-          "unit_tests": 120,
+          "artifact": "reports/verification/REQ-015-final.json",
+          "result": "PASS_WITH_OPEN_GATES_NOT_ACCEPTED",
+          "source_hash": "reported in artifact",
+          "unit_tests": 123,
           "integration_tests": 9,
-          "line_coverage_percent": 97.3799,
-          "branch_coverage_percent": 90.1478,
-          "scenario_cases": 20,
-          "review": "NO_CRITICAL_OR_HIGH; P2_TEST_RACE_FIXED_AND_REREVIEWED",
-          "commit": "207c70d7e559af9be86fb5cf9e9b538a42b8bf22"
+          "line_coverage_percent": 97.0464,
+          "branch_coverage_percent": 90.1116,
+          "scenario_cases": 29,
+          "performance_profiles": 7,
+          "postman_assertions": 14,
+          "trace": "HTTP-to-security-to-outbox parent chain verified",
+          "review": "NO_CRITICAL_OR_HIGH",
+          "commit": "PENDING_COORDINATOR_COMMIT"
         }
       ],
-      "notes": "Coordinator-owned verification and submission evidence is in reports/verification/T08-final.json. Final clean quality, Compose repeat startup, smoke, 20 API scenarios, validator and reviewer checks pass at scope hash 354c3d032a26c9ab807e0742aea4063ad87594fc6b838e99535855bb2e5e671c. JMeter runs and one combined 29-case live acceptance run are NOT_RUN. Status remains running and the project is not accepted. Implementation commit: 207c70d7e559af9be86fb5cf9e9b538a42b8bf22 (parent is planning baseline 521cb1427f910ebbd01129cc1a950c55b899ee87)."
+      "notes": "Current coordinator evidence is reports/verification/REQ-015-final.json. Combined PostgreSQL-backed matrix passed 29/29; clean quality passed 123 unit + 9 integration, six changesets and JaCoCo gates; seven JMeter profiles met user-approved limits; Newman passed; exported HTTP/security/outbox traces were correlated; diagrams and two independent rereviews are recorded. The full JMeter suite predates the final log-only adjustment; a short post-adjustment run validates runner metadata only. Browser UI, live two-member ownership and fully per-bullet live requirement execution remain open. Host-managed model payloads remain NOT_CAPTURED/PARTIAL. Keep status running; do not accept, merge, or push."
     },
     {
       "id": "T09",

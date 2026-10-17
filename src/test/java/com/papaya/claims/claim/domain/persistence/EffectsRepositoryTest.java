@@ -20,7 +20,7 @@ class EffectsRepositoryTest {
         Instant now = Instant.parse("2026-10-17T12:00:00Z");
         OutboxRow selected = new OutboxRow();
         selected.id = id; selected.claimId = claimId; selected.effect = "archive_claim";
-        selected.payloadJson = "{}"; selected.attempts = 2; selected.availableAt = now;
+        selected.payloadJson = "{}"; selected.attempts = 2; selected.availableAt = now; selected.traceparent = "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01";
         Object[] outcome = {1};
         Object[] captured = {null};
         EffectsMapper mapper = mapper((method, args) -> switch (method) {
@@ -30,9 +30,10 @@ class EffectsRepositoryTest {
             default -> null;
         });
         var repository = new MyBatisOutboxRepository(mapper, 250);
-        OutboxRepository.Message message = new OutboxRepository.Message(id, claimId, "archive_claim", "{}", 2, now);
+        OutboxRepository.Message message = new OutboxRepository.Message(id, claimId, "archive_claim", "{}", 2, now, selected.traceparent);
         repository.enqueue(message);
         assertThat(captured[0]).isInstanceOf(OutboxRow.class);
+        assertThat(((OutboxRow) captured[0]).traceparent).isEqualTo(message.traceparent());
         assertThat(repository.claimDue(now, 5)).containsExactly(message);
         assertThat(repository.markDelivered(id, now)).isTrue();
         assertThat(repository.markFailed(id, "safe", now.plusSeconds(1))).isTrue();

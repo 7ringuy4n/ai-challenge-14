@@ -1,0 +1,10 @@
+flowchart LR
+  Client[Browser or API client] -->|Basic authentication| Security[Spring Security]
+  Security -->|CSRF token required for unsafe methods| CSRF[CSRF filter]
+  CSRF --> Actor[ActorFactory: authenticated principal and roles]
+  Actor --> AuthZ[Ownership and role checks]
+  AuthZ --> API[Claim REST controller]
+  API --> Limit[JSON size and DTO validation]
+  Limit --> Service[Transactional use cases]
+  Service --> Runtime[Restricted PostgreSQL runtime role]
+  Audit[Append-only audit records] -.never stores secrets or claim document payloads.-> Runtime

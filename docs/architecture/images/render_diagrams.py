@@ -164,6 +164,87 @@ def workflow():
     im.save(ROOT / "claims-workflow.png")
 
 
+def render_simple_mermaid_sources():
+    """Render the additional simple Mermaid flow/entity diagrams without a browser runtime."""
+    import re
+    sources = [ROOT / "security-boundaries.mmd", ROOT / "deployment.mmd"]
+    fnt = font(16)
+    for source in sources:
+        text = source.read_text(encoding="utf-8")
+        labels = {}
+        for match in re.finditer(r"(\w+)\[(.*?)\]", text, re.S):
+            labels[match.group(1)] = re.sub(r"<br\s*/?>", " ", match.group(2)).replace("\\n", " ")
+        ids = list(labels)
+        width, height = 1500, max(700, ((len(ids) + 2) // 3) * 230 + 150)
+        im = Image.new("RGB", (width, height), "white")
+        d = ImageDraw.Draw(im)
+        svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}"><rect width="100%" height="100%" fill="white"/>']
+        pos = {}
+        for i, key in enumerate(ids):
+            col, row = i % 3, i // 3
+            col = col if row % 2 == 0 else 2 - col
+            x, y = 70 + col * 480, 80 + row * 230
+            w, h = 400, 145
+            pos[key] = (x, y, w, h)
+            d.rounded_rectangle((x, y, x+w, y+h), radius=16, fill=PALETTE['blue_fill'], outline=PALETTE['blue_stroke'], width=3)
+            lines = wrap(d, labels[key].replace('\\n',' '), fnt, w-36)
+            yy = y + max(20, (h-len(lines)*24)//2)
+            for line in lines[:5]:
+                d.text((x+18, yy), line, font=fnt, fill=PALETTE['body']); yy += 24
+            svg.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="16" fill="{PALETTE["blue_fill"]}" stroke="{PALETTE["blue_stroke"]}" stroke-width="3"/>')
+            for j,line in enumerate(lines[:5]):
+                safe=line.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
+                svg.append(f'<text x="{x+18}" y="{y+42+j*24}" font-family="DejaVu Sans" font-size="16" fill="{PALETTE["body"]}">{safe}</text>')
+        edges = re.findall(r"(\w+)\s*-->\s*(?:\|([^|]*)\|\s*)?(\w+)", text)
+        edges += [(a, "", b) for a,b in re.findall(r"(\w+)\[[^]]*\]\s*-\.[^-]*->\s*(\w+)", text)]
+        for a,label,b in edges:
+            if a not in pos or b not in pos: continue
+            ax,ay,aw,ah=pos[a]; bx,by,bw,bh=pos[b]
+            x1,y1=ax+aw/2,ay+ah/2; x2,y2=bx+bw/2,by+bh/2
+            if abs(x2-x1)>=abs(y2-y1):
+                x1=ax+aw if x2>x1 else ax; y1=ay+ah/2
+                x2=bx if x2>x1 else bx+bw; y2=by+bh/2
+            else:
+                x1=ax+aw/2; y1=ay+ah if y2>y1 else ay
+                x2=bx+bw/2; y2=by if y2>y1 else by+bh
+            d.line((x1,y1,x2,y2),fill=PALETTE['line'],width=3)
+            svg.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{PALETTE["line"]}" stroke-width="3" marker-end="url(#arrow)"/>')
+        svg.insert(1,'<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#1e3a5f"/></marker></defs>')
+        svg.append('</svg>')
+        im.save(source.with_suffix('.png'))
+        source.with_suffix('.svg').write_text(''.join(svg),encoding='utf-8')
+    source=ROOT/'database-schema.mmd'
+    text=source.read_text(encoding='utf-8')
+    tables=re.findall(r"^\s{2}(\w+) \{([^}]*)\}",text,re.M|re.S)
+    width=1600;height=max(800,((len(tables)+2)//3)*280+100)
+    im=Image.new('RGB',(width,height),'white');d=ImageDraw.Draw(im);svg=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}"><rect width="100%" height="100%" fill="white"/>']
+    table_pos=[]
+    for i,(name,fields) in enumerate(tables):
+        x=50+(i%3)*515;y=40+(i//3)*280;w=455;h=235
+        table_pos.append((x,y,w,h))
+    if table_pos:
+        sx,sy,sw,sh=table_pos[0]
+        # Claims owns the domain-audit, command-receipt, payment and local outbox rows.
+        for index in (1,3,4,5):
+            tx,ty,tw,th=table_pos[index]
+            x1,y1=(sx+sw/2,sy+sh) if ty>sy else (sx+sw,sy+sh/2)
+            x2,y2=(tx+tw/2,ty) if ty>sy else (tx,ty+th/2)
+            d.line((x1,y1,x2,y2),fill=PALETTE['line'],width=2)
+            svg.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{PALETTE["line"]}" stroke-width="2" marker-end="url(#arrow)"/>')
+    for i,(name,fields) in enumerate(tables):
+        x,y,w,h=table_pos[i]
+        d.rectangle((x,y,x+w,y+h),fill=PALETTE['green_fill'],outline=PALETTE['green_stroke'],width=3)
+        d.text((x+14,y+12),name,font=font(18,True),fill=PALETTE['body'])
+        lines=fields.strip().splitlines()
+        for j,line in enumerate(lines[:7]):d.text((x+14,y+45+j*25),line.strip(),font=font(14),fill=PALETTE['body'])
+        svg.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{PALETTE["green_fill"]}" stroke="{PALETTE["green_stroke"]}" stroke-width="3"/><text x="{x+14}" y="{y+28}" font-family="DejaVu Sans" font-size="18" font-weight="bold">{name}</text>')
+        for j,line in enumerate(lines[:7]):
+            safe_line=line.strip().replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
+            svg.append(f'<text x="{x+14}" y="{y+63+j*25}" font-family="DejaVu Sans" font-size="14">{safe_line}</text>')
+    svg.append('</svg>');im.save(source.with_suffix('.png'));source.with_suffix('.svg').write_text(''.join(svg),encoding='utf-8')
+
+
 if __name__ == "__main__":
     architecture()
     workflow()
+    render_simple_mermaid_sources()

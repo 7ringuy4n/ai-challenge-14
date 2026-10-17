@@ -19,11 +19,11 @@ public class MyBatisOutboxRepository implements OutboxRepository {
     }
     @Override public void enqueue(Message m) {
         OutboxRow r=new OutboxRow(); r.id=m.id(); r.claimId=m.claimId(); r.effect=m.effect(); r.payloadJson=m.payload();
-        r.attempts=m.attempts(); r.availableAt=m.availableAt(); mapper.enqueue(r);
+        r.attempts=m.attempts(); r.availableAt=m.availableAt(); r.traceparent=m.traceparent(); mapper.enqueue(r);
     }
     @Override public List<Message> claimDue(Instant now,int limit) {
         if(limit<1) throw new IllegalArgumentException("limit must be positive");
-        return mapper.claimDue(now,limit,leaseMillis).stream().map(r -> new Message(r.id,r.claimId,r.effect,r.payloadJson,r.attempts,r.availableAt)).toList();
+        return mapper.claimDue(now,limit,leaseMillis).stream().map(r -> new Message(r.id,r.claimId,r.effect,r.payloadJson,r.attempts,r.availableAt,r.traceparent)).toList();
     }
     @Override public boolean markDelivered(UUID id,Instant at) { return mapper.delivered(id,at)==1; }
     @Override public boolean markFailed(UUID id,String safeError,Instant retryAt) { return mapper.failed(id,safeError,retryAt)==1; }

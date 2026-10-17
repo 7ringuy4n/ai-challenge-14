@@ -380,3 +380,23 @@ A broader non-root search found Java 21.0.12.1 at `/home/tringuyen/.local/java/j
 - Status: in progress.
 - Supersedes: none.
 - Disposition: the empty remote was preserved as evidence; planning/contracts-only main baseline `521cb1427f910ebbd01129cc1a950c55b899ee87` was initialized and `develop` continues from it. Reviewed implementation commit `207c70d7e559af9be86fb5cf9e9b538a42b8bf22` is on `develop`. The final clean quality run passed 120 unit and 9 PostgreSQL/Testcontainers tests, applied all five Liquibase changesets, and measured 97.3799% line / 90.1478% branch coverage. Repeat Compose startup, authenticated smoke, and the 20-case live API workflow passed. Independent review found no remaining critical/high finding after the coordinator fixed and rereviewed a CAS test race. Preserve review raw payload limitations as `NOT_CAPTURED` / `PARTIAL`; JMeter 100/500-client runs and a single end-to-end run of the entire 29-case matrix are still `NOT_RUN`. Work remains in progress and is not accepted or complete.
+
+## REQ-20261017-015 — Remaining acceptance gates (2026-10-17)
+- Source: verbatim human prompt in `docs/submission/user-prompts.jsonl`.
+- Requirement: execute all 29 PostgreSQL-backed live scenarios in one combined run with request/response evidence; provide reproducible Apache JMeter profiles and actual performance metrics against approved targets; implement and evidence OpenTelemetry propagation across HTTP and asynchronous outbox with log correlation; update requirement traceability; reconcile actual and inaccessible LLM records; verify a no-manual-edit Postman workflow; verify editable/rendered architecture, workflow, database, security, and deployment diagrams; retain 129-test and JaCoCo gates; independently review changes; synchronize project history, reports and task evidence; commit verified changes to `develop` without merge or push.
+- Constraints: no fabricated evidence, actual commands/timestamps/environment; distinguish PASS, FAIL, BLOCKED and NOT_RUN. Ask for approval when mandatory performance thresholds are undefined. Do not accept until all gates pass.
+- Status: in progress; acceptance explicitly withheld pending evidence and thresholds.
+- Supersedes: none.
+
+## REQ-20261017-016 — Performance threshold clarification (2026-10-17)
+- Source: verbatim response in `docs/submission/user-prompts.jsonl`.
+- Requirement: compare measured load runs against P95 latency ≤ 500 ms, P99 latency ≤ 1,000 ms, and HTTP error rate ≤ 1%.
+- Status: approved by the user; resource saturation/database/outbox metrics must still be reported separately as observed measurements.
+- Supersedes: no prior numeric threshold; resolves REQ-20261017-015's missing latency/error targets.
+
+## REQ-20261017-015/016 — Verification outcome (2026-10-17)
+- Status: implementation and specified evidence substantially complete; overall acceptance remains NOT_ACCEPTED.
+- PASS evidence: combined live API 29/29 against PostgreSQL; clean Maven 123 unit + 9 PostgreSQL/Testcontainers tests, six migrations, 97.0464% line / 90.1116% branch; seven JMeter profiles within approved latency/error targets; Newman 27 requests/14 assertions; actual OTLP HTTP→security→outbox child-span/log correlation evidence; editable sources and SVG/PNG for five diagram families; independent review has no critical/high finding.
+- Provenance qualification: seven full JMeter runs were against the business/outbox/tracing implementation before a final HTTP trace-context log field adjustment. The post-adjustment five-second baseline verifies only runner metadata/compression, not full load performance. A malformed-metadata diagnostic run is retained and excluded from comparison.
+- Remaining: browser UI scenario, live cross-member scenario with two runtime principals, requirement-level HTTP execution of all individual criteria (the 29 cases are grouped), byte-identical full JMeter rerun, and full raw host-managed LLM payload capture. LLM audit remains PARTIAL with inaccessible records NOT_CAPTURED.
+- Authoritative current evidence: `reports/verification/REQ-015-final.json`; trace matrix: `docs/testing/traceability-matrix.md`; JMeter aggregation: `reports/performance/comparison.json`.

@@ -2,60 +2,57 @@
 
 ## Goal
 
-Implement `CHANGE_REQUEST.md` on the new planning/contracts `main` baseline's `develop` child, preserving honest verification and audit evidence.
+Complete the remaining REQ-015/016 evidence package on the existing `develop` branch while retaining honest limitations; do not mark acceptance.
 
 ## Current status
 
-in_progress — implementation, quality, PostgreSQL, startup, smoke, core API lifecycle, validator, and independent-review checks pass; the project is not accepted or complete.
+in_progress
 
 ## Current step
 
-Continue the unified live acceptance matrix and available load/tracing checks; retain open status until coordinator acceptance.
+Finalize independently reviewed JMeter evidence and verify remaining report, diff, and Git state
 
 ## Completed
 
-- [x] Inspected Git status, branch graph, remotes, history and remote refs; origin advertised no refs.
-- [x] Preserved pre-baseline worktree at `refs/codex/snapshots/pre-main-final-20261017`.
-- [x] Created planning/contracts-only `main` baseline `521cb1427f910ebbd01129cc1a950c55b899ee87`; `develop` descends directly from it. No app code on main and no force/reset/merge/push occurred.
-- [x] Resolved Maven plugin dependencies with the configured build environment; local Java 21/Maven 3.9.11 used. No Maven Wrapper is present.
-- [x] Restored workflow validator using `rules/workflow/START.md`; 12 validator tests pass and 13 manifest tasks structurally validate.
-- [x] Final clean quality build passed 120 unit + 9 PostgreSQL 16/Testcontainers tests, 0 failures/errors/skips; all five Liquibase changesets applied.
-- [x] JaCoCo gate passed without production exclusions: 892/916 lines (97.3799%) and 549/609 branches (90.1478%).
-- [x] Added PostgreSQL rollback coverage across claim, claim audit, system audit, idempotency receipt, payment and outbox; added same-key idempotency-lock concurrency and same-version CAS contention tests.
-- [x] Independent review found no critical/high findings. Fixed its P2 CAS test race and received focused rereview confirmation. Advisory-lock 250ms wait sensitivity remains documented.
-- [x] Repeated Compose setup three times against the existing volume; final app and DB healthy, prior rows persisted, and four claims remained after the final unique scenario run.
-- [x] Authenticated API smoke passed; live Python scenario runner passed 20/20 checks through payment confirmation and claim close.
-- [x] Updated requirements, task manifest, history/changelogs, verification evidence, raw prompts and LLM review audit. Host-managed model payloads remain `NOT_CAPTURED`, trace audit `PARTIAL`.
-- [x] Committed reviewed implementation on `develop`: `207c70d7e559af9be86fb5cf9e9b538a42b8bf22` (parent `521cb1427f910ebbd01129cc1a950c55b899ee87`); no push or merge.
-- [x] Committed final verification/Git documentation as `cd4032b2e25940df261b0dfca301429a54fe87ec`.
-- [x] Post-commit status clean; `main` remains at `521cb1427f910ebbd01129cc1a950c55b899ee87`, the direct `develop` parent.
+- [x] OpenTelemetry HTTP→security→asynchronous outbox spans exported with verified parent chain and matching application log IDs.
+- [x] All seven JMeter profiles ran and met user-approved P95/P99/error targets; full runs predate the final logging-only adjustment. A short post-adjustment baseline validated runner metadata/compression.
+- [x] Newman 6.2.1 completed 27 requests/14 assertions with zero failures. Five diagram families have editable sources and rendered PNG/SVG.
+- [x] Final clean Maven quality run: 123 unit + 9 PostgreSQL/Testcontainers tests, zero failures/errors/skips, six migrations; 97.0464% line / 90.1116% branch.
+- [x] Independent review found no critical/high issue; token redaction and stale test name findings fixed. Host-managed LLM payloads remain NOT_CAPTURED/PARTIAL.
+- [x] One live PostgreSQL-backed 29-case run, JMeter profiles, OTel trace export, Newman run, six-migration clean suite, coverage and independent rereview are complete with open acceptance gaps documented
+- [x] Refreshed REQ-015 report, traceability, Postman, operations/architecture/testing docs, history, changelog, task manifest and reviewer handoffs.
+- [x] Validated report JSON, SVG XML, all five diagram source/render sets, 29 numbered console cases, 31 redacted HTTP exchanges, JMeter comparison, and workflow validator.
+- [x] Reversibly compressed retained JMeter/Collector raw outputs, reducing the report package from over 1 GB to about 100 MB.
+- [x] Updated current REQ-015 verification record and synchronized task manifest/history, with evidence checks and open gates explicit
+- [x] Closed JMeter installer review findings: captured full version output with `pipefail` and version assertion, tested malformed target refusal, fixed evidence links, and recorded independent rereview with no critical/high findings
 
-## Remaining open checks
+## Next exact step
 
-- [ ] One unified live API suite for all 29 `C14-01`–`C14-29` cases. Current live runner has 20 checks; additional business boundaries have focused unit/integration coverage.
-- [ ] JMeter 100-client and 500-client plans. `jmeter` is not installed and no `.jmx` profile exists.
-- [ ] Distributed trace/span propagation. No tracing bridge is configured; observed trace/span values are null.
-- [ ] Coordinator acceptance; user explicitly directed this continuation remain unaccepted.
+Commit reviewed changes to develop without push or merge; keep task in progress with open acceptance gaps
 
-## Environment note
+## Blockers
 
-Default sandbox Docker socket and localhost access are restricted. Testcontainers, Compose and HTTP checks passed through approved escalated invocations. No socket permissions, groups, apt locks, or daemon settings changed. `.env` is ignored and mode 0600.
+- Full JMeter profiles used the final business/tracing implementation before a logging-only trace-context adjustment; a full byte-identical rerun remains NOT_RUN.
+- Browser UI and live two-member ownership scenarios remain NOT_RUN; grouped live cases do not separately execute every requirement bullet.
+- Host-managed raw LLM request/response payloads remain NOT_CAPTURED; audit is PARTIAL.
+- JMeter archive download/checksum/extraction command exit passed, but its exact timestamp was not captured; the separate executable version and target-guard checks have an exact recorded timestamp/result.
+
+## Known constraints
+
+- Default sandbox restricts Docker and loopback; approved escalated invocations were used without modifying permissions.
 
 ## Relevant files
 
-- `reports/verification/T08-final.json`
-- `reports/sub-agents/T07/final-integrated-review.md`
-- `reports/verification/git-history.md`
-- `docs/testing/README.md`
+- `reports/verification/REQ-015-final.json`
 
-## Verification command
+## Verification commands
 
 ```bash
-env JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Pquality clean verify
+python3 scripts/workflow/verify_workflow.py; bash -n scripts/performance/install-jmeter.sh; JSON/XML/evidence checks; git diff --check
 ```
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-17T03:24:30Z
+- Updated (UTC): 2026-10-17T04:31:00Z
 - Branch: `develop`
-- Verification/Git ledger commit: `cd4032b2e25940df261b0dfca301429a54fe87ec`
+- Commit: `4cf063b`
