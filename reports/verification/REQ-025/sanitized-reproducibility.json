@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "command": "python3 scripts/audit/sanitize_codex_archive.py codex-logs.zip codex-logs.sanitized-check.zip",
+  "started_at_utc": "2026-10-17T08:11:24.418032+00:00",
+  "finished_at_utc": "2026-10-17T08:11:41.678581+00:00",
+  "exit_code": 0,
+  "first_output_sha256": "009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738",
+  "second_output_sha256": "009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738",
+  "identical_output": true,
+  "temporary_check_archive_removed": true
+}

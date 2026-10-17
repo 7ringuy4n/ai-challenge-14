@@ -1161,7 +1161,7 @@
       "role": "coordinator",
       "model": "gpt-6.1-sol",
       "reasoning_effort": "medium",
-      "status": "blocked",
+      "status": "in_review",
       "depends_on": [
         "T17"
       ],
@@ -1197,30 +1197,207 @@
           "exit_code": 0,
           "result": "PASS",
           "artifact": "reports/verification/REQ-021/repository-check.md",
-          "source_hash": "ea89eb3340b0b900f106934aee2a92203c9439e7"
+          "source_hash": "adf17bd79e850dc7b0afe3a2c58cb154569ae42f68274dd0807c6ac117e42e0f"
         },
         {
           "command": "python3 scripts/workflow/verify_workflow.py; git diff --check",
           "exit_code": 0,
           "result": "PASS",
           "artifact": "reports/verification/REQ-021/repository-check.md",
-          "source_hash": "ea89eb3340b0b900f106934aee2a92203c9439e7"
+          "source_hash": "adf17bd79e850dc7b0afe3a2c58cb154569ae42f68274dd0807c6ac117e42e0f"
         },
         {
           "command": "git push origin develop main",
           "exit_code": 130,
           "result": "BLOCKED",
           "artifact": "reports/verification/REQ-021/repository-check.md",
-          "source_hash": "ea89eb3340b0b900f106934aee2a92203c9439e7"
+          "source_hash": "adf17bd79e850dc7b0afe3a2c58cb154569ae42f68274dd0807c6ac117e42e0f"
         },
         {
           "command": "GIT_TERMINAL_PROMPT=0 timeout 15s git push https://github.com/7ringuy4n/ai-challenge-14.git develop:develop main:main",
           "result": "REJECTED_BEFORE_EXECUTION",
           "artifact": "reports/verification/REQ-021/repository-check.md",
-          "source_hash": "ea89eb3340b0b900f106934aee2a92203c9439e7"
+          "source_hash": "adf17bd79e850dc7b0afe3a2c58cb154569ae42f68274dd0807c6ac117e42e0f"
         }
       ],
-      "notes": "Local develop and main are synchronized and verified at ea89eb3340b0b900f106934aee2a92203c9439e7. GitHub refs remain unverified. First non-force SSH push hung and was interrupted; HTTPS push was rejected by auto-review because remote ancestry was unavailable and explicit push authorization was not established. No remote update is claimed."
+      "notes": "Local develop and main are synchronized and verified at ea89eb3340b0b900f106934aee2a92203c9439e7. GitHub refs remain unverified. First non-force SSH push hung and was interrupted; HTTPS push was rejected by auto-review because remote ancestry was unavailable and explicit push authorization was not established. No remote update is claimed. Remote verification blocker was subsequently resolved under T19; origin/main and origin/develop both verified at 2cafe2507708c6b773865a04b342ea623248bf02. Remote synchronization is now verified under T19; independent workflow review remains pending, so task stays in_review."
+    },
+    {
+      "id": "T19",
+      "title": "Fetch, safely push and verify authorized GitHub branch synchronization",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "in_review",
+      "depends_on": [
+        "T18"
+      ],
+      "allowed_paths": [
+        "rules/REQUIREMENT.md",
+        "rules/workflow/tasks.json",
+        "reports/verification/REQ-022/",
+        "reports/verification/REQ-017-requirement-matrix.json",
+        "reports/acceptance/FINAL-ACCEPTANCE.md",
+        "docs/CHANGELOG.md",
+        "docs/HISTORY.md",
+        "history/CHANGELOG.md",
+        "history/task_on_progress.md",
+        ".agent-memory/"
+      ],
+      "verification": [
+        "git fetch origin main develop",
+        "git merge-base --is-ancestor origin/main main",
+        "git merge-base --is-ancestor origin/develop develop",
+        "git push origin develop main",
+        "git ls-remote --heads origin main develop",
+        "python3 scripts/workflow/verify_workflow.py"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "Fetch both origin refs and prove local commits are fast-forward updates without losing remote commits",
+        "Normal non-force push succeeds for both branches and remote heads equal intended commit 2cafe2507708c6b773865a04b342ea623248bf02",
+        "Preserve codex-logs.zip outside Git",
+        "Record exact commands, remote hashes, outcomes and blockers"
+      ],
+      "evidence": [
+        {
+          "command": "GIT_SSH_COMMAND=\"ssh -o BatchMode=yes -o ConnectTimeout=10\" git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main refs/heads/develop:refs/remotes/origin/develop",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-022/remote-sync.md",
+          "source_hash": "adf17bd79e850dc7b0afe3a2c58cb154569ae42f68274dd0807c6ac117e42e0f"
+        },
+        {
+          "command": "git push --atomic --progress --porcelain origin develop main",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-022/remote-sync.md",
+          "source_hash": "adf17bd79e850dc7b0afe3a2c58cb154569ae42f68274dd0807c6ac117e42e0f"
+        },
+        {
+          "command": "git ls-remote --heads origin main develop; verify local and origin refs equal target",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-022/remote-sync.md",
+          "source_hash": "adf17bd79e850dc7b0afe3a2c58cb154569ae42f68274dd0807c6ac117e42e0f"
+        },
+        {
+          "command": "python3 scripts/workflow/verify_workflow.py; git diff --check",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-022/remote-sync.md",
+          "source_hash": "adf17bd79e850dc7b0afe3a2c58cb154569ae42f68274dd0807c6ac117e42e0f"
+        }
+      ],
+      "notes": "Authorized atomic non-force push created both previously absent origin branches. Post-push fetch and ls-remote verified both exact refs equal 2cafe2507708c6b773865a04b342ea623248bf02. codex-logs.zip stayed untracked. Evidence updates remain uncommitted to keep both branch heads at the user-specified SHA. Operational push and remote verification completed; independent workflow review remains pending, so task stays in_review."
+    },
+    {
+      "id": "T20",
+      "title": "Validate and merge supplied Codex session archive into audit evidence",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "in_review",
+      "depends_on": [
+        "T19"
+      ],
+      "allowed_paths": [
+        "codex-logs.zip",
+        "reports/audit/",
+        "docs/submission/",
+        "reports/verification/REQ-023/",
+        "reports/verification/REQ-017-llm-audit.json",
+        "reports/verification/REQ-017-current.json",
+        "reports/verification/REQ-017-requirement-matrix.json",
+        "reports/acceptance/FINAL-ACCEPTANCE.md",
+        "docs/CHANGELOG.md",
+        "docs/HISTORY.md",
+        "history/CHANGELOG.md",
+        "history/task_on_progress.md",
+        "rules/REQUIREMENT.md",
+        "rules/workflow/tasks.json",
+        ".agent-memory/",
+        "scripts/audit/import_codex_archive.py",
+        "reports/verification/REQ-024/",
+        "scripts/audit/scan_archive_sensitive_patterns.py",
+        "codex-logs.sanitized.zip",
+        "scripts/audit/sanitize_codex_archive.py",
+        "scripts/audit/verify_sanitized_archive.py",
+        "reports/audit/REQ-025-sanitized-archive.json",
+        "reports/verification/REQ-025/"
+      ],
+      "verification": [
+        "python3 scripts/audit/import_codex_archive.py --verify-import codex-logs.zip",
+        "python3 scripts/audit/scan_archive_sensitive_patterns.py codex-logs.zip --json reports/verification/REQ-024/archive-sensitivity-scan.json",
+        "python3 scripts/audit/sanitize_codex_archive.py codex-logs.zip codex-logs.sanitized.zip --report reports/verification/REQ-025/sanitization-report.json",
+        "unzip -t codex-logs.sanitized.zip",
+        "python3 scripts/audit/scan_archive_sensitive_patterns.py codex-logs.sanitized.zip --json reports/verification/REQ-025/sanitized-sensitivity-scan.json",
+        "python3 scripts/audit/verify_sanitized_archive.py codex-logs.zip codex-logs.sanitized.zip --sanitization-report reports/verification/REQ-025/sanitization-report.json --sensitivity-report reports/verification/REQ-025/sanitized-sensitivity-scan.json",
+        "python3 scripts/workflow/verify_workflow.py",
+        "git diff --check"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "All archive members are safe relative paths and ZIP integrity passes",
+        "Archive session identity, timestamps, file paths and hashes are compared against existing audit records",
+        "No existing source or audit file is overwritten; duplicates are verified or quarantined with clear provenance",
+        "LLM inventory and requirement/task/commit traceability are updated accurately",
+        "Original archive is preserved and excluded from source control unless explicitly required",
+        "The supplied ZIP and directly associated REQ-023 evidence are committed on develop after staged-diff review",
+        "The resulting develop commit is merged locally into main without rewriting history; no push occurs"
+      ],
+      "evidence": [
+        {
+          "command": "python3 scripts/audit/sanitize_codex_archive.py codex-logs.zip codex-logs.sanitized-check.zip",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-025/deterministic_second_generation.log",
+          "source_hash": "3be558ea42bd0b3a2234679b861103b552209e4b3e820daed1e797be5cb05a7b"
+        },
+        {
+          "command": "unzip -t codex-logs.sanitized.zip",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-025/sanitized_zip_crc.log",
+          "source_hash": "3be558ea42bd0b3a2234679b861103b552209e4b3e820daed1e797be5cb05a7b"
+        },
+        {
+          "command": "python3 scripts/audit/scan_archive_sensitive_patterns.py codex-logs.sanitized.zip --json reports/verification/REQ-025/sanitized-sensitivity-scan.json",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-025/sanitized_sensitive_scan.log",
+          "source_hash": "696dfbe8d663b2b271e957853be27126c14a6021ef328628fb991ec358ed0cab"
+        },
+        {
+          "command": "python3 scripts/audit/verify_sanitized_archive.py codex-logs.zip codex-logs.sanitized.zip --sanitization-report reports/verification/REQ-025/sanitization-report.json --sensitivity-report reports/verification/REQ-025/sanitized-sensitivity-scan.json",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-025/sanitized_archive_verification.log",
+          "source_hash": "2fb0d4e2726b029b2447ebb663190d4e053739867dfa0bd354bb6623353eddf1"
+        },
+        {
+          "command": "python3 scripts/workflow/verify_workflow.py",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-025/workflow_validation.log",
+          "source_hash": "3be558ea42bd0b3a2234679b861103b552209e4b3e820daed1e797be5cb05a7b"
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-025/diff_check.log",
+          "source_hash": "3be558ea42bd0b3a2234679b861103b552209e4b3e820daed1e797be5cb05a7b"
+        },
+        {
+          "command": "python3 scripts/audit/sanitize_codex_archive.py codex-logs.zip codex-logs.sanitized.zip --report reports/verification/REQ-025/sanitization-report.json",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-025/sanitization-report.json",
+          "source_hash": "3be558ea42bd0b3a2234679b861103b552209e4b3e820daed1e797be5cb05a7b"
+        }
+      ],
+      "notes": "Owner selected a sanitized ZIP; raw codex-logs.zip remains byte-for-byte unchanged and untracked. Sanitized output preserves all archive paths/session records, passes the configured zero-active-match scan and structural verifier, and regenerates deterministically. Workflow and diff checks pass. Local commit/merge remains pending; independent review is required before task acceptance."
     }
   ]
 }

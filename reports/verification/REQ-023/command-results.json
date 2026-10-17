@@ -1,0 +1,83 @@
+[
+  {
+    "name": "zip_integrity",
+    "command": "unzip -t codex-logs.zip",
+    "started_at_utc": "2026-10-17T08:00:50.694647+00:00",
+    "finished_at_utc": "2026-10-17T08:00:51.061644+00:00",
+    "exit_code": 0,
+    "result": "PASS",
+    "log": "reports/verification/REQ-023/zip_integrity.log"
+  },
+  {
+    "name": "import_plan_check",
+    "command": "python3 scripts/audit/import_codex_archive.py --check codex-logs.zip",
+    "started_at_utc": "2026-10-17T08:00:51.061862+00:00",
+    "finished_at_utc": "2026-10-17T08:00:51.866485+00:00",
+    "exit_code": 0,
+    "result": "PASS",
+    "log": "reports/verification/REQ-023/import_plan_check.log"
+  },
+  {
+    "name": "imported_transcript_verification",
+    "command": "python3 scripts/audit/import_codex_archive.py --verify-import codex-logs.zip",
+    "started_at_utc": "2026-10-17T08:00:51.866663+00:00",
+    "finished_at_utc": "2026-10-17T08:00:51.948289+00:00",
+    "exit_code": 0,
+    "result": "PASS",
+    "log": "reports/verification/REQ-023/imported_transcript_verification.log"
+  },
+  {
+    "name": "workflow_validation",
+    "command": "python3 scripts/workflow/verify_workflow.py",
+    "started_at_utc": "2026-10-17T08:00:51.948484+00:00",
+    "finished_at_utc": "2026-10-17T08:00:51.975715+00:00",
+    "exit_code": 0,
+    "result": "PASS",
+    "log": "reports/verification/REQ-023/workflow_validation.log"
+  },
+  {
+    "name": "diff_whitespace_check",
+    "command": "git diff --check",
+    "started_at_utc": "2026-10-17T08:00:51.975895+00:00",
+    "finished_at_utc": "2026-10-17T08:00:51.982838+00:00",
+    "exit_code": 0,
+    "result": "PASS",
+    "log": "reports/verification/REQ-023/diff_whitespace_check.log"
+  },
+  {
+    "name": "workflow_validation_after_evidence",
+    "command": "python3 scripts/workflow/verify_workflow.py",
+    "started_at_utc": "2026-10-17T08:00:51.984089+00:00",
+    "finished_at_utc": "2026-10-17T08:00:52.011927+00:00",
+    "exit_code": 0,
+    "result": "PASS",
+    "log": "reports/verification/REQ-023/workflow_validation_after_evidence.log"
+  },
+  {
+    "name": "diff_whitespace_after_evidence",
+    "command": "git diff --check",
+    "started_at_utc": "2026-10-17T08:00:52.012091+00:00",
+    "finished_at_utc": "2026-10-17T08:00:52.018931+00:00",
+    "exit_code": 0,
+    "result": "PASS",
+    "log": "reports/verification/REQ-023/diff_whitespace_after_evidence.log"
+  },
+  {
+    "name": "final_workflow_validation",
+    "command": "python3 scripts/workflow/verify_workflow.py",
+    "started_at_utc": "2026-10-17T08:01:20.341675+00:00",
+    "finished_at_utc": "2026-10-17T08:01:20.370884+00:00",
+    "exit_code": 0,
+    "result": "PASS",
+    "log": "reports/verification/REQ-023/final_workflow_validation.log"
+  },
+  {
+    "name": "final_diff_whitespace_check",
+    "command": "git diff --check",
+    "started_at_utc": "2026-10-17T08:01:20.371066+00:00",
+    "finished_at_utc": "2026-10-17T08:01:20.378016+00:00",
+    "exit_code": 0,
+    "result": "PASS",
+    "log": "reports/verification/REQ-023/final_diff_whitespace_check.log"
+  }
+]

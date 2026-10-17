@@ -1,0 +1,23 @@
+{
+  "scanned_at_utc": "2026-10-17T08:07:55.702482+00:00",
+  "archive": "codex-logs.sanitized.zip",
+  "archive_sha256": "633ad49d9da14fe6945b8314ef71f5326f2a770cae1cbdcf7a2c751fbce0c712",
+  "archive_member_count_including_directories": 65,
+  "archive_file_count": 64,
+  "pattern_match_counts": {
+    "private_key_pem": 0,
+    "github_token": 0,
+    "aws_access_key": 0,
+    "bearer_credential": 0,
+    "credential_assignment": 2,
+    "email_like": 0,
+    "phone_like": 0,
+    "claim_reference_like": 0
+  },
+  "files_with_pattern_matches": {
+    "credential_assignment": 1
+  },
+  "matched_values_emitted": false,
+  "disposition": "Initial scan flagged two credential_assignment patterns. Follow-up examined the matched byte structure without printing values and confirmed both were escaped newline sequences followed by [REDACTED_SECRET]; marker-aware scan subsequently returned zero active matches.",
+  "qualification": "Initial scanner version counted escaped explicit redaction markers as possible credentials; later scan distinguishes these markers."
+}

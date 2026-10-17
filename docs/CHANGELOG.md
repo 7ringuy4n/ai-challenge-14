@@ -99,3 +99,14 @@ Post-merge audit refresh: 67 project-related sessions and 9020 accessible record
 Final Git closeout: accepted develop commit 730ca6fd6569a451a286b189f9dd69893d26c197 is in main through merge 18f97aa9c8296fdc107a02192aa4e8e62dd45d78; post-merge evidence commit d0fd9dd recorded the merged reports and audit. No push.
 - 2026-10-17: Registered REQ-021 to synchronize accepted local `develop`/`main` history and verify the GitHub repository; remote verification is currently blocked by unavailable network/ref evidence.
 - 2026-10-17: Fast-forwarded local `develop` to `main` at `ea89eb3340b0b900f106934aee2a92203c9439e7`; workflow validation passed. GitHub update/verification remains blocked (remote unavailable and push rejected by automatic review); no push succeeded.
+- 2026-10-17: Authorized atomic non-force push created GitHub `main` and `develop`; post-push fetch and `ls-remote` verified both at `2cafe2507708c6b773865a04b342ea623248bf02`.
+
+## 2026-10-17 — REQ-023 Codex archive supplement
+
+- Added a non-overwriting archive importer and verified the supplied ZIP (SHA-256 `8e3e6f75cc7351fb071dd95f513d233c2d94833a4fab7ddd9c14321fafc67664`). It links 61 exact duplicates, stores two changed session snapshots separately, and records one new session. All 64 transcript hashes verify; raw host model envelopes remain NOT_CAPTURED/PARTIAL.
+
+## 2026-10-17 — REQ-024 archive tracking authorization
+
+- Owner explicitly requested tracking `codex-logs.zip` and locally merging the associated archive evidence. A value-free sensitivity scan found credential-like and email-like patterns; the unchanged raw ZIP remains unstaged pending owner disposition under the project redaction rule. The new commit must remain local unless separately authorized for push.
+
+- REQ-025: owner selected a sanitized archive. The deterministic redacted ZIP preserves 28,716 records and 64 sessions, passes the configured zero-match scan and structural verifier, and leaves the original raw ZIP unchanged/untracked. Local Git integration and independent review remain pending.

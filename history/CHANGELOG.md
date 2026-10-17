@@ -82,3 +82,14 @@ Post-merge audit refresh: 67 project-related sessions and 9020 accessible record
 Final Git closeout: accepted develop commit 730ca6fd6569a451a286b189f9dd69893d26c197 is in main through merge 18f97aa9c8296fdc107a02192aa4e8e62dd45d78; post-merge evidence commit d0fd9dd recorded the merged reports and audit. No push.
 - 2026-10-17: Registered REQ-021 for local branch synchronization and GitHub verification. Remote refs are not verifiable in this environment; preserve all history and avoid remote writes.
 - 2026-10-17: Local `develop` and `main` synchronized at `ea89eb3340b0b900f106934aee2a92203c9439e7`. Workflow validation passed (19 tasks). GitHub state remains unverified; push did not succeed and automatic review rejected a second attempt pending explicit authorization.
+- 2026-10-17: REQ-022 push passed; both origin branch heads match the requested target `2cafe2507708c6b773865a04b342ea623248bf02`. Evidence is recorded at `reports/verification/REQ-022/remote-sync.md`.
+
+## 2026-10-17 — REQ-023 Codex archive supplement
+
+The supplied `codex-logs.zip` was validated and additively reconciled into audit evidence. The ZIP remains unchanged. 61 entries match existing source hashes, two changed sessions are represented by separate sanitized snapshots, and one new session is added; 64 transcript paths and hashes verify. The original session inventory remains preserved as its historical baseline. Raw host model envelopes remain NOT_CAPTURED/PARTIAL. Independent review of this audit tooling is pending.
+
+## 2026-10-17 — REQ-024 archive tracking authorization
+
+The owner authorized tracking the original `codex-logs.zip` and locally merging its associated REQ-023 evidence. This does not authorize pushing the new commit. Preserve uncommitted work and stage only the archive-related changes. Raw archive staging is paused after value-free heuristic screening found credential-assignment-like and email-like matches; see `reports/verification/REQ-024/archive-sensitivity-scan.json`.
+
+REQ-025 selected and verified a sanitized copy; the original archive remains unchanged and untracked. Deterministic generation, ZIP CRC, zero active sensitive-pattern scan, and 28,716-record structural checks pass. Raw host model payload completeness remains PARTIAL/NOT_CAPTURED.

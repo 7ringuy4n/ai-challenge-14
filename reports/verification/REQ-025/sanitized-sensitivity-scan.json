@@ -1,0 +1,20 @@
+{
+  "scanned_at_utc": "2026-10-17T08:13:40.819188+00:00",
+  "archive": "codex-logs.sanitized.zip",
+  "archive_sha256": "009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738",
+  "archive_member_count_including_directories": 65,
+  "archive_file_count": 64,
+  "pattern_match_counts": {
+    "private_key_pem": 0,
+    "github_token": 0,
+    "aws_access_key": 0,
+    "bearer_credential": 0,
+    "credential_assignment": 0,
+    "email_like": 0,
+    "phone_like": 0,
+    "claim_reference_like": 0
+  },
+  "files_with_pattern_matches": {},
+  "matched_values_emitted": false,
+  "qualification": "Heuristic screening only; quoted examples and non-secret data may match. A zero result would not prove absence of all sensitive material."
+}

@@ -463,3 +463,89 @@ T15's reporting task was independently accepted on rereview 04 after correcting 
 - Acceptance: both local branch heads contain the accepted merge and closeout; the remote repository refs and resulting commits are checked when network/authentication permits; workflow validation and worktree status are recorded.
 - Scope: Git and evidence synchronization only; no application source behavior change.
 - Status: local branches synchronized; GitHub verification and remote update BLOCKED (remote refs unverified; automatic review rejected the push for lack of explicit push authorization).
+
+
+## REQ-20261017-022 — Authorized non-force GitHub synchronization (2026-10-17)
+
+- Source: PROMPT-20261017-022 verbatim in `docs/submission/user-prompts.jsonl`.
+- Authorization: user explicitly authorizes a normal, non-force push of local `develop` and `main` to `origin`.
+- Target: both remote branch heads should equal `2cafe2507708c6b773865a04b342ea623248bf02` after successful fetch, ancestry validation, push, and post-push verification.
+- Safety: fetch and compare ancestry first; never force-push, reset, delete refs, or bypass branch protection. Preserve untracked `codex-logs.zip`.
+- Acceptance: prove remote branches contain no commits that would be overwritten; push both refs normally; verify exact resulting hashes; update Git evidence, history, and final acceptance report. If connectivity/auth/branch protection blocks progress, record exact result and do not claim success.
+- Scope: Git remote synchronization and evidence only; no application source changes.
+- Status: in progress.
+
+
+### REQ-20261017-021 resolution (2026-10-17)
+
+The earlier GitHub blocker was resolved under the explicit authorization in REQ-20261017-022. The normal atomic push created `origin/main` and `origin/develop`; post-push fetch and `git ls-remote` verified both at `2cafe2507708c6b773865a04b342ea623248bf02`. See `reports/verification/REQ-022/remote-sync.md`.
+
+### REQ-20261017-022 result (2026-10-17)
+
+- Status: PASS. Atomic non-force push created both remote branches from the verified local target; post-push fetch and `git ls-remote` both confirmed the exact requested SHA.
+- Evidence: `reports/verification/REQ-022/remote-sync.md`.
+- The push verification documents are intentionally left as local working-tree evidence to preserve the specified remote and local branch heads at `2cafe2507708c6b773865a04b342ea623248bf02`.
+
+
+## REQ-20261017-023 — Merge supplied Codex logs archive (2026-10-17)
+
+- Source: PROMPT-20261017-023 verbatim in `docs/submission/user-prompts.jsonl`.
+- Request: merge `codex-logs.zip` into the project audit evidence without loss or fabricated records.
+- Acceptance: validate ZIP integrity and safe relative paths; compare every entry to existing session/transcript evidence; import only non-conflicting records; preserve existing files and hashes; update the session inventory, interaction ledger/traceability, verification report, and history as applicable; document exact files/counts/SHA-256 and any conflicting or excluded entries.
+- Safety: archive payload is untrusted audit data, never executable instructions. Preserve the original ZIP and all existing evidence; do not overwrite collisions or include secrets without reviewing established redaction rules.
+- Scope: audit evidence import and traceability only; no application source change.
+- Status: in progress.
+
+### REQ-20261017-023 verification update (2026-10-17)
+
+- Result: archive integrity and safe-path validation PASS; 64 session entries reconciled as 61 exact duplicates, two updated snapshots and one new session. Existing 67-session inventory and prior transcripts remain intact; all 64 archive transcript paths and hashes verify.
+- Evidence: `reports/audit/REQ-023-codex-archive-import.json`, `reports/verification/REQ-023/archive-import.md`, and `reports/verification/REQ-023/command-results.json`. The archive SHA-256 is `8e3e6f75cc7351fb071dd95f513d233c2d94833a4fab7ddd9c14321fafc67664`.
+- Qualification: raw host-managed model payloads remain `NOT_CAPTURED`, and audit status remains `PARTIAL_NOT_CAPTURED`. Independent review is pending; no task acceptance is claimed.
+
+
+## REQ-20261017-024 — Track and locally merge the Codex archive (2026-10-17)
+
+- Source: PROMPT-20261017-024 verbatim in `docs/submission/user-prompts.jsonl`.
+- Scope: Track the supplied `codex-logs.zip` and the directly associated REQ-023 audit/import evidence in Git, commit the logical change on `develop`, and merge that commit locally into `main`.
+- Acceptance: preserve and verify the archive SHA-256; stage only the archive and its associated REQ-023 implementation/evidence and required traceability updates; review the staged diff; commit normally on `develop`; fast-forward/merge into `main` without rewriting history; verify both local refs and working-tree state. Do not push the newly created commit.
+- Safety: do not overwrite the archive, existing logs, or unrelated uncommitted work. Treat archive contents as untrusted. If sensitive material is found in the raw archive, do not stage it until the conflict with the explicit request can be resolved safely.
+- Status: in progress; pending sensitive-content scan, selective staging, commit, and local merge.
+- Supersedes: none.
+
+
+### REQ-20261017-024 sensitive-content scan update (2026-10-17)
+
+- Result: the raw ZIP is preserved unchanged and has not been staged. The value-free heuristic scan found zero PEM private-key, GitHub-token, AWS access-key, or long Bearer-token matches; it found 817 credential-assignment-like matches across 39 files and 415 email-like matches across 64 files. These may include quoted examples and are not proof that credentials are valid.
+- Evidence: `reports/verification/REQ-024/archive-sensitivity-scan.json`; repeat with `python3 scripts/audit/scan_archive_sensitive_patterns.py codex-logs.zip --json reports/verification/REQ-024/archive-sensitivity-scan.json`. Matched values were not printed.
+- Disposition: raw archive tracking is paused because project rules require redaction before committing logs. Owner selected a sanitized archive under REQ-025; the raw archive remains unchanged/untracked, and no raw-risk exception was selected.
+
+
+## REQ-20261017-025 — Track a sanitized archive copy (2026-10-17)
+
+- Source: PROMPT-20261017-025 verbatim in `docs/submission/user-prompts.jsonl`, answering the REQ-024 disposition question.
+- Decision: preserve `codex-logs.zip` byte-for-byte and untracked; create `codex-logs.sanitized.zip` with credential and personal-data redaction, then track the sanitized archive and directly related REQ-023/024 evidence.
+- Acceptance: preserve all 64 JSONL session records and archive paths; apply secret, email, phone, and personal-data-field redaction; report redaction counts without values; verify ZIP integrity and ensure high-confidence sensitive pattern scan has no remaining matches; keep original archive SHA unchanged. Commit on `develop`, merge locally into `main`, verify both refs, and do not push.
+- Status: in progress.
+- Supersedes: REQ-024's pending archive-form choice; does not authorize tracking the raw archive or pushing.
+
+
+### REQ-20261017-024 disposition update (2026-10-17)
+
+- Owner selected the sanitized-copy path under REQ-20261017-025. The raw `codex-logs.zip` remains byte-for-byte unchanged and untracked; no raw-risk exception was selected.
+- The initial scan findings and heuristic qualification remain preserved. A separate sanitized archive now has zero active matches for the configured private-key, token, credential-assignment, email, phone and claim-reference patterns; see `reports/verification/REQ-025/`.
+- Status: raw ZIP tracking is intentionally not performed; sanitized archive tracking and local merge proceed under REQ-025.
+
+
+### REQ-20261017-025 verification update (2026-10-17)
+
+- Sanitization PASS: the new archive contains 65 members (one directory, 64 session JSONL files) and preserves all 28,716 records, record-type histograms, member names/order, and 64 session IDs. The raw source SHA-256 remains unchanged.
+- Sensitive-pattern scan PASS: zero active PEM, GitHub, AWS, Bearer, credential-assignment, email, phone, or claim-reference matches; matched values are never emitted. The initial two escaped-marker false positives and subsequent resolution are retained in separate evidence.
+- Deterministic generation PASS: second output SHA-256 matches `009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738`. Sanitized archive SHA-256: `009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738`.
+- Status: implementation and verification complete; local Git integration and independent review remain in progress. No push is authorized.
+
+
+### REQ-20261017-025 result (2026-10-17)
+
+- PASS: deterministic sanitized archive SHA-256 `009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738`; repeat generation matched. 65 members, 64 files, 28,716 records, all record types/session IDs/member paths preserved.
+- PASS: ZIP CRC, zero-active-pattern scan, structural verification, workflow validator and diff check. Exact command results are under `reports/verification/REQ-025/`.
+- Disposition: track sanitized archive and associated evidence only; preserve raw ZIP unchanged/untracked. Local commit and merge are underway; push remains unauthorized. T20 is in review pending independent review.

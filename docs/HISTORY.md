@@ -138,3 +138,19 @@ Final Git closeout: accepted develop commit 730ca6fd6569a451a286b189f9dd69893d26
 The owner requested synchronization of `develop` and `main` and verification of the GitHub repository. Local `develop` is an ancestor of accepted `main`; remote verification has not succeeded because DNS resolution failed, web fetch returned a cache miss, and the in-app browser timed out. The remote has not been modified.
 
 REQ-021 local outcome: `develop` was fast-forwarded to `main`; both point at `ea89eb3340b0b900f106934aee2a92203c9439e7`. The workflow validator passes. GitHub refs could not be verified (DNS error / no-ref responses / browser timeout); the non-force SSH push hung and was interrupted, and automatic approval review rejected the HTTPS push before execution because remote ancestry was unverified and explicit push authorization was not established. No push succeeded.
+
+## 2026-10-17 — REQ-022 GitHub synchronization
+
+After explicit owner authorization, an atomic, non-force push created the previously absent `origin/main` and `origin/develop`. A post-push fetch and `git ls-remote` independently verified both refs at `2cafe2507708c6b773865a04b342ea623248bf02`. The push did not include the untracked `codex-logs.zip`. No force push, reset, deletion, or protection bypass occurred. The follow-up evidence/report changes remain uncommitted to preserve both heads at the exact requested commit.
+
+## 2026-10-17 — Supplemental Codex audit archive
+
+REQ-023 adds a safe archive importer that validates ZIP member paths, refuses duplicate session IDs and existing output collisions, links exact source duplicates to existing sanitized transcripts, and creates separate sanitized transcript snapshots for changed/new sessions. Archive hash and 64 transcript hashes are recorded in `reports/audit/REQ-023-codex-archive-import.json`. The historic 67-session inventory is not overwritten; the supplemental archive contains one additional distinct session. Host-managed raw payloads stay NOT_CAPTURED/PARTIAL.
+
+## 2026-10-17 — Archive tracking scope
+
+REQ-024 authorizes committing the supplied Codex archive and directly related audit evidence to `develop`, then merging locally into `main`; it does not authorize a push.
+
+## 2026-10-17 — Sanitized archive decision
+
+The owner selected a sanitized ZIP under REQ-025. The original archive remains byte-for-byte unchanged and untracked. Sanitized output has stable generation, zero active configured sensitive-pattern matches, and preserves all 64 sessions/28,716 records and their type histograms.

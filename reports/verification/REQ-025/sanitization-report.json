@@ -1,0 +1,26 @@
+{
+  "sanitized_at_utc": "2026-10-17T08:11:13.904039+00:00",
+  "source_archive": "codex-logs.zip",
+  "source_sha256": "8e3e6f75cc7351fb071dd95f513d233c2d94833a4fab7ddd9c14321fafc67664",
+  "sanitized_archive": "codex-logs.sanitized.zip",
+  "sanitized_archive_sha256": "009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738",
+  "archive_member_count": 65,
+  "archive_file_count": 64,
+  "jsonl_record_count": 28716,
+  "redaction_counts": {
+    "authorization_value": 180,
+    "bearer_token": 69,
+    "claim_reference": 737,
+    "cookie_header": 27,
+    "credential_assignment": 1880,
+    "email": 415,
+    "generic_credential_assignment": 592,
+    "local_environment_secret_value": 3,
+    "phone": 12,
+    "private_or_encrypted_payload": 4467,
+    "sensitive_secret_field": 41878
+  },
+  "matched_values_emitted": false,
+  "encrypted_reasoning_and_private_system_developer_payloads": "OMITTED_WITH_MARKERS",
+  "raw_source_modified": false
+}

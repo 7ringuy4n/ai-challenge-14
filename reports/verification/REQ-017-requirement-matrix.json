@@ -1,6 +1,6 @@
 {
   "requirement": "REQ-20261017-017",
-  "updated_at_utc": "2026-10-17T07:17:16Z",
+  "updated_at_utc": "2026-10-17T08:12:18.001552+00:00",
   "overall_status": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION",
   "functional_requirements": [
     {
@@ -298,10 +298,12 @@
     },
     {
       "action": "Synchronize local develop/main and verify GitHub refs under REQ-021",
-      "status": "LOCAL_PASS_REMOTE_BLOCKED",
-      "remote_update": "NOT_RUN_AUTO_REVIEW_REJECTED_AND_REMOTE_UNVERIFIED",
-      "evidence": "reports/verification/REQ-021/repository-check.md",
-      "local_heads": "ea89eb3340b0b900f106934aee2a92203c9439e7"
+      "status": "COMPLETED",
+      "remote_update": "PASS_AT_EXACT_TARGET",
+      "evidence": "reports/verification/REQ-022/remote-sync.md",
+      "local_heads": "2cafe2507708c6b773865a04b342ea623248bf02",
+      "remote_main": "2cafe2507708c6b773865a04b342ea623248bf02",
+      "remote_develop": "2cafe2507708c6b773865a04b342ea623248bf02"
     }
   ]
 }

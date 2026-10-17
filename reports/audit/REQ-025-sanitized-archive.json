@@ -1,0 +1,48 @@
+{
+  "requirement": "REQ-20261017-025",
+  "generated_at_utc": "2026-10-17T08:12:17.998938+00:00",
+  "decision": "SANITIZED_COPY_SELECTED",
+  "raw_archive_path": "codex-logs.zip",
+  "raw_archive_sha256": "8e3e6f75cc7351fb071dd95f513d233c2d94833a4fab7ddd9c14321fafc67664",
+  "raw_archive_modified": false,
+  "raw_archive_git_status": "UNTRACKED_BY_DESIGN",
+  "sanitized_archive_path": "codex-logs.sanitized.zip",
+  "sanitized_archive_sha256": "009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738",
+  "archive_members": 65,
+  "files": 64,
+  "jsonl_records": 28716,
+  "redaction_counts": {
+    "authorization_value": 180,
+    "bearer_token": 69,
+    "claim_reference": 737,
+    "cookie_header": 27,
+    "credential_assignment": 1880,
+    "email": 415,
+    "generic_credential_assignment": 592,
+    "local_environment_secret_value": 3,
+    "phone": 12,
+    "private_or_encrypted_payload": 4467,
+    "sensitive_secret_field": 41878
+  },
+  "active_sensitive_pattern_matches": {
+    "private_key_pem": 0,
+    "github_token": 0,
+    "aws_access_key": 0,
+    "bearer_credential": 0,
+    "credential_assignment": 0,
+    "email_like": 0,
+    "phone_like": 0,
+    "claim_reference_like": 0
+  },
+  "record_structure": "PASS; identical member names/order, per-member line counts and record-type histograms, and all session IDs preserved",
+  "reproducibility": "PASS; second generation SHA-256 matched first",
+  "raw_host_model_payloads": "NOT_CAPTURED",
+  "audit_status": "PARTIAL_NOT_CAPTURED",
+  "evidence": [
+    "reports/verification/REQ-024/archive-sensitivity-scan.json",
+    "reports/verification/REQ-025/sanitization-report.json",
+    "reports/verification/REQ-025/sanitized-reproducibility.json",
+    "reports/verification/REQ-025/sanitized-sensitivity-scan.json",
+    "reports/verification/REQ-025/sanitized_archive_verification.log"
+  ]
+}

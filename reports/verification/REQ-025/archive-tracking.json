@@ -1,0 +1,95 @@
+{
+  "requirement": "REQ-20261017-025",
+  "recorded_at_utc": "2026-10-17T08:12:48.924409+00:00",
+  "raw_archive": {
+    "path": "codex-logs.zip",
+    "sha256": "8e3e6f75cc7351fb071dd95f513d233c2d94833a4fab7ddd9c14321fafc67664",
+    "modified": false,
+    "git_action": "leave untracked"
+  },
+  "sanitized_archive": {
+    "path": "codex-logs.sanitized.zip",
+    "sha256": "009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738",
+    "members": 65,
+    "files": 64,
+    "records": 28716
+  },
+  "verification": [
+    {
+      "name": "deterministic_second_generation",
+      "command": "python3 scripts/audit/sanitize_codex_archive.py codex-logs.zip codex-logs.sanitized-check.zip",
+      "started_at_utc": "2026-10-17T08:11:24.418032+00:00",
+      "finished_at_utc": "2026-10-17T08:11:41.678581+00:00",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "reports/verification/REQ-025/deterministic_second_generation.log",
+      "first_output_sha256": "009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738",
+      "second_output_sha256": "009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738",
+      "reproducible": true
+    },
+    {
+      "name": "sanitized_zip_crc",
+      "command": "unzip -t codex-logs.sanitized.zip",
+      "started_at_utc": "2026-10-17T08:11:41.700317+00:00",
+      "finished_at_utc": "2026-10-17T08:11:41.953242+00:00",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "reports/verification/REQ-025/sanitized_zip_crc.log"
+    },
+    {
+      "name": "sanitized_sensitive_scan",
+      "command": "python3 scripts/audit/scan_archive_sensitive_patterns.py codex-logs.sanitized.zip --json reports/verification/REQ-025/sanitized-sensitivity-scan.json",
+      "started_at_utc": "2026-10-17T08:11:41.953465+00:00",
+      "finished_at_utc": "2026-10-17T08:11:48.777947+00:00",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "reports/verification/REQ-025/sanitized_sensitive_scan.log"
+    },
+    {
+      "name": "sanitized_archive_verification",
+      "command": "python3 scripts/audit/verify_sanitized_archive.py codex-logs.zip codex-logs.sanitized.zip --sanitization-report reports/verification/REQ-025/sanitization-report.json --sensitivity-report reports/verification/REQ-025/sanitized-sensitivity-scan.json",
+      "started_at_utc": "2026-10-17T08:11:48.778118+00:00",
+      "finished_at_utc": "2026-10-17T08:11:50.310370+00:00",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "reports/verification/REQ-025/sanitized_archive_verification.log"
+    },
+    {
+      "name": "workflow_validation",
+      "command": "python3 scripts/workflow/verify_workflow.py",
+      "started_at_utc": "2026-10-17T08:11:50.314736+00:00",
+      "finished_at_utc": "2026-10-17T08:11:50.342041+00:00",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "reports/verification/REQ-025/workflow_validation.log"
+    },
+    {
+      "name": "diff_check",
+      "command": "git diff --check",
+      "started_at_utc": "2026-10-17T08:11:50.342212+00:00",
+      "finished_at_utc": "2026-10-17T08:11:50.348893+00:00",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "reports/verification/REQ-025/diff_check.log"
+    }
+  ],
+  "sensitive_scan": {
+    "private_key_pem": 0,
+    "github_token": 0,
+    "aws_access_key": 0,
+    "bearer_credential": 0,
+    "credential_assignment": 0,
+    "email_like": 0,
+    "phone_like": 0,
+    "claim_reference_like": 0
+  },
+  "decision": "Track sanitized archive plus audit/import code and traceability; do not stage raw ZIP.",
+  "git_before_commit": {
+    "current_branch": "main",
+    "main": "2cafe2507708c6b773865a04b342ea623248bf02",
+    "develop": "2cafe2507708c6b773865a04b342ea623248bf02",
+    "origin_main": "2cafe2507708c6b773865a04b342ea623248bf02",
+    "origin_develop": "2cafe2507708c6b773865a04b342ea623248bf02"
+  },
+  "push": "NOT_AUTHORIZED_FOR_NEW_COMMIT"
+}

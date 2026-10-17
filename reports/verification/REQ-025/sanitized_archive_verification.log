@@ -1,0 +1,4 @@
+PASS: 64 JSONL files, 28716 records, 64 session IDs preserved
+PASS: all ZIP CRCs and member names match; sensitive-pattern counts are zero
+Source SHA-256 unchanged: 8e3e6f75cc7351fb071dd95f513d233c2d94833a4fab7ddd9c14321fafc67664
+Sanitized SHA-256: 009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738
