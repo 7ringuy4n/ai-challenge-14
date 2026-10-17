@@ -549,3 +549,13 @@ The earlier GitHub blocker was resolved under the explicit authorization in REQ-
 - PASS: deterministic sanitized archive SHA-256 `009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738`; repeat generation matched. 65 members, 64 files, 28,716 records, all record types/session IDs/member paths preserved.
 - PASS: ZIP CRC, zero-active-pattern scan, structural verification, workflow validator and diff check. Exact command results are under `reports/verification/REQ-025/`.
 - Disposition: track sanitized archive and associated evidence only; preserve raw ZIP unchanged/untracked. Local commit and merge are underway; push remains unauthorized. T20 is in review pending independent review.
+
+
+## REQ-20261017-026 — Reconfirm archive tracking and local merge (2026-10-17)
+
+- Source: PROMPT-20261017-026, preserved verbatim.
+- Apply the existing REQ-025 sanitized-copy decision: track codex-logs.sanitized.zip, preserve the raw ZIP unchanged and untracked, and verify local develop/main integration. No new push authorization.
+- Initial inspection: both branches at a5eb0f08591f6197cef8b21eb48368b67f9d7a22; original and sanitized archive hashes match REQ-025.
+- Acceptance: verify the tracked archive blob on both branches, archive structure and existing audit references; preserve task review status.
+
+- Verification result: PASS for both tracked branch archive hashes, ZIP CRC/record preservation, imported transcript references and workflow manifest (21 tasks). Raw ZIP remains unchanged/untracked. No push. T20 stays in_review. Evidence: reports/verification/REQ-026/archive-reconfirmation.json.

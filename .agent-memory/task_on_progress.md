@@ -10,11 +10,10 @@ in_progress
 
 ## Current step
 
-Final local archive merge verified
+Repeated archive request verified
 
 ## Completed
 
-- [x] Regenerated codex-logs.sanitized.zip while preserving source member metadata. Sanitized SHA-256 is 009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738; raw ZIP SHA remains unchanged.
 - [x] Second sanitizer generation produced the same SHA-256; sanitized ZIP CRC, zero-match scan, structure/session-ID verification, workflow validator, and diff checks all passed.
 - [x] Recorded REQ-025 verification, redaction results, sanitized archive hash, workflow task evidence, LLM interaction metadata and preserved the raw-archive decision. T20 remains in_review pending independent review.
 - [x] Owner approved tracking a sanitized ZIP; generated and verified the deterministic sanitized archive and synchronized REQ-023–025 traceability while preserving the raw ZIP untracked.
@@ -26,10 +25,11 @@ Final local archive merge verified
 - [x] Fast-forwarded main to develop and verified both refs at 5371cd79da337a472937a73be5be9eb6c3c7f5e4; raw archive remains untracked with original hash.
 - [x] Added final verification commit aa9c31e724b5abc18a9cf0297fbd0cc249fcad14 and fast-forwarded main to it; final refs matched and workflow validation passed.
 - [x] Committed sanitized archive 6703222 plus traceability/evidence commits; develop and main now both point to 2c22056797c1a2a2240390da33cce3df326d2772 after fast-forward. Raw ZIP remains untracked and unchanged. Workflow validation and diff checks pass.
+- [x] REQ-026 reconfirmed both branch archive blobs, unchanged raw ZIP, structural integrity, imported transcript hashes and workflow validation; no push; T20 remains in_review.
 
 ## Next exact step
 
-No archive-tracking changes remain; T20 stays in_review pending independent review, with no acceptance or push claimed.
+Commit the reconfirmation evidence on develop and fast-forward main, then report verified final refs.
 
 ## Blockers
 
@@ -51,6 +51,6 @@ unzip -t codex-logs.zip; python3 scripts/audit/import_codex_archive.py --check c
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-17T08:16:18Z
+- Updated (UTC): 2026-10-17T08:18:12Z
 - Branch: `develop`
-- Commit: `2c22056`
+- Commit: `a5eb0f0`

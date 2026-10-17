@@ -1,0 +1,24 @@
+{
+  "requirement": "REQ-20261017-026",
+  "timestamp_utc": "2026-10-17T08:18:11.899578+00:00",
+  "heads_at_verification": {
+    "develop": "a5eb0f08591f6197cef8b21eb48368b67f9d7a22",
+    "main": "a5eb0f08591f6197cef8b21eb48368b67f9d7a22"
+  },
+  "checks": [
+    {
+      "command": "git show develop:codex-logs.sanitized.zip | sha256sum",
+      "result": "PASS",
+      "sha256": "009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738"
+    },
+    {
+      "command": "git show main:codex-logs.sanitized.zip | sha256sum",
+      "result": "PASS",
+      "sha256": "009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738"
+    }
+  ],
+  "raw_archive": "UNCHANGED_UNTRACKED",
+  "sanitized_archive": "codex-logs.sanitized.zip",
+  "push": "NOT_PERFORMED",
+  "task_status": "T20 remains in_review; independent review not claimed"
+}

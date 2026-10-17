@@ -95,3 +95,5 @@ The owner authorized tracking the original `codex-logs.zip` and locally merging 
 REQ-025 selected and verified a sanitized copy; the original archive remains unchanged and untracked. Deterministic generation, ZIP CRC, zero active sensitive-pattern scan, and 28,716-record structural checks pass. Raw host model payload completeness remains PARTIAL/NOT_CAPTURED.
 
 The sanitized archive and related REQ-023–025 evidence were committed on `develop` as `6703222`. Final verification commit `aa9c31e724b5abc18a9cf0297fbd0cc249fcad14` is the matching tip of local `develop` and `main`. The raw archive remains untracked; no push occurred. T20 remains in review pending independent review.
+
+REQ-026: Reconfirmed both local branch archive blobs match sanitized SHA-256 009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738; structural verification preserves 64 sessions/28,716 records, all 64 imported transcript hashes verify, and workflow validator passes 21 tasks. Raw ZIP remains unchanged/untracked; no push. T20 remains in_review. Evidence: reports/verification/REQ-026/archive-reconfirmation.json.

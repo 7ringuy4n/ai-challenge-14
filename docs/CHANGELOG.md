@@ -112,3 +112,5 @@ Final Git closeout: accepted develop commit 730ca6fd6569a451a286b189f9dd69893d26
 - REQ-025: owner selected a sanitized archive. The deterministic redacted ZIP preserves 28,716 records and 64 sessions, passes the configured zero-match scan and structural verifier, and leaves the original raw ZIP unchanged/untracked. Local Git integration and independent review remain pending.
 
 - Sanitized archive and related REQ-023–025 audit evidence committed on `develop` as `6703222`; final verification commit `aa9c31e724b5abc18a9cf0297fbd0cc249fcad14` is the matching tip of local `develop` and `main`. Original ZIP remains untracked; no push. T20 remains in review pending independent review.
+
+REQ-026: Reconfirmed both local branch archive blobs match sanitized SHA-256 009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738; structural verification preserves 64 sessions/28,716 records, all 64 imported transcript hashes verify, and workflow validator passes 21 tasks. Raw ZIP remains unchanged/untracked; no push. T20 remains in_review. Evidence: reports/verification/REQ-026/archive-reconfirmation.json.
