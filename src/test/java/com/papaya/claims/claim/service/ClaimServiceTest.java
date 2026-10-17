@@ -124,6 +124,19 @@ class ClaimServiceTest {
     }
 
     @Test
+    void createNormalizesWholeNumberJsonAmountToExactDecimal() {
+        Fixture fixture = new Fixture("SUBMITTED", "member-1", Map.of(), ClaimWorkflowData.empty());
+        var command = new CreateClaimCommand(new BigDecimal("500.00"), "USD",
+                new ClaimFacts(Map.of("requestedAmount", Integer.valueOf(125))));
+
+        Claim created = fixture.service.create(command, new Actor("member-1", Set.of("member"), false), "integer", "corr");
+
+        assertThat(created.facts().values().get("requestedAmount")).isEqualTo(new BigDecimal("125.00"));
+        assertThat(fixture.claims.current.claim().facts().values().get("requestedAmount")).isEqualTo(new BigDecimal("125.00"));
+        assertThat(fixture.claims.inserts).isEqualTo(1);
+    }
+
+    @Test
     void idempotencyFingerprintCanonicalizesObjectKeyOrderAndRejectsCorruptStoredResult() {
         Fixture fixture = new Fixture("SUBMITTED", "member-1",
                 Map.of("documents", Map.of("invoice", Map.of("required", true, "present", false, "valid", false))), ClaimWorkflowData.empty());

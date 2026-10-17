@@ -36,3 +36,12 @@
 - Added mandatory final-source seven-profile JMeter reruns, real browser E2E, live two-member isolation, per-requirement verification, and a complete locally accessible session audit.
 - Conditional local merge to `main` is authorized only after every gate passes. Full host-managed payload capture is an explicit gate; an irrecoverable gap blocks merge and requires the user to decide acceptance policy. Push remains unauthorized.
 - Recorded new T13–T16 execution workstreams with coordinator-owned exclusive evidence paths.
+
+
+## 2026-10-17 — REQ-017 live verification progress
+
+Implemented the approved local `CLAIMS_MEMBER_USERNAMES` configuration (default `member-demo`), fixed whole-number JSON amount normalization so persisted money has scale two, and corrected UI reason-entry availability. Fresh Compose rebuild succeeded with PostgreSQL, app, and OTEL collector healthy. The combined live API suite passed 29/29; Chrome 155 CDP passed 17/17 with 155 requests and 15 screenshots; two-principal live ownership passed 7/7 with unchanged protected database state; Postman passed 24 requests/14 assertions; smoke passed.
+
+Final-source Java 21/Maven quality verification passed 126 unit and 9 PostgreSQL/Testcontainers tests, 0 failures/errors/skips, six Liquibase changesets, 97.0134% line coverage (942/971) and 90.2022% branch coverage (580/643). OpenTelemetry evidence from the same combined live run verifies inbound parent → HTTP server → secured request → two asynchronous outbox spans and matching application log trace/span IDs. Independent T14 review found a P2 in Python `assert` checks under `-O`; it was fixed and independently rereviewed PASS.
+
+Still in progress: final-source full seven-profile JMeter rerun and local Codex session audit. Host-managed model raw payloads remain `NOT_CAPTURED`/`PARTIAL` and the user's mandatory full-capture merge condition remains unresolved. No merge or push is performed. Full status and evidence: `reports/verification/REQ-017-current.json`.

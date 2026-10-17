@@ -412,3 +412,19 @@ A broader non-root search found Java 21.0.12.1 at `/home/tringuyen/.local/java/j
 - Ownership: coordinator owns all source/config/shared requirements/manifests/reports. Verification workstreams T13–T16 have disjoint report artifacts and read-only boundaries; production source changes, if required, remain serialized under coordinator ownership.
 - Supersedes: no prior requirement; tightens completion/merge policy beyond REQ-015/016.
 - Disposition: preserve current `main` baseline and `develop` commits. An explicit historical host-managed payload condition remains binding; no downgrade or inferred capture.
+
+## REQ-20261017-018 — Approved member principal configuration (2026-10-17)
+
+- Source: PROMPT-20261017-018 verbatim approval in `docs/submission/user-prompts.jsonl`.
+- Decision: implement the approved design: a validated configurable `CLAIMS_MEMBER_USERNAMES` list, defaulting to `member-demo`; all configured local members retain the existing human password and MEMBER role. This enables two identities for live PostgreSQL ownership verification without changing the default member account.
+- Acceptance: names must be valid, unique member principals; no built-in staff/system identities can be shadowed; default profile remains compatible. Tests assert configuration validation and both principals' assigned roles. Live test proves cross-member GET/list/update/transition denial and unchanged database state.
+- Status: approved and in progress; requirement is specific to local/demo in-memory authentication, not a persistent identity-provider migration.
+- Parent: REQ-20261017-017 / T14. Implementation ownership: `src/main/java/com/papaya/claims/security/SecurityConfiguration.java`, `src/main/resources/application.yml`, `docker/compose.yml`, `src/test/java/com/papaya/claims/security/SecurityConfigurationTest.java`; browser scenario source and evidence paths are separately listed on T14.
+
+
+## REQ-20261017-019 — Approval confirmation recorded (2026-10-17)
+
+- Source: PROMPT-20261017-019 in `docs/submission/user-prompts.jsonl`.
+- Decision: user confirmed approval of the REQ-018 design; the validated local member identity list keeps the `member-demo` default and uses the configured human password with MEMBER role.
+- Disposition: continue the already authorized REQ-018 implementation and live tests; this confirmation does not change the scope or production identity-provider behavior.
+- Status: implemented; verification in progress under T14.

@@ -1,0 +1,118 @@
+{
+  "status": "PASS",
+  "startedAtUtc": "2026-10-17T05:03:27.498004+00:00",
+  "base": "http://127.0.0.1:8080",
+  "members": {
+    "alpha": {
+      "username": "member-alpha",
+      "claimId": "845f469a-6345-452b-81df-87882897ad2d"
+    },
+    "beta": {
+      "username": "member-beta",
+      "claimId": "34177943-e336-4012-ae96-1b6f0929c11d"
+    }
+  },
+  "results": [
+    {
+      "name": "other member claim is absent from list",
+      "expectedStatus": [
+        200
+      ],
+      "actualStatus": 200,
+      "result": "PASS",
+      "claimHidden": true
+    },
+    {
+      "name": "member-beta can read its own claim",
+      "expectedStatus": [
+        200
+      ],
+      "actualStatus": 200,
+      "result": "PASS",
+      "responseCode": null
+    },
+    {
+      "name": "cross-member claim detail is not disclosed",
+      "expectedStatus": [
+        404
+      ],
+      "actualStatus": 404,
+      "result": "PASS",
+      "responseCode": "NOT_FOUND"
+    },
+    {
+      "name": "cross-member audit is not disclosed",
+      "expectedStatus": [
+        404
+      ],
+      "actualStatus": 404,
+      "result": "PASS",
+      "responseCode": "NOT_FOUND"
+    },
+    {
+      "name": "cross-member facts update is denied",
+      "expectedStatus": [
+        404
+      ],
+      "actualStatus": 404,
+      "result": "PASS",
+      "responseCode": "NOT_FOUND"
+    },
+    {
+      "name": "cross-member approval transition is denied",
+      "expectedStatus": [
+        404
+      ],
+      "actualStatus": 404,
+      "result": "PASS",
+      "responseCode": "NOT_FOUND"
+    },
+    {
+      "name": "member identity cannot invoke protected system transition",
+      "expectedStatus": [
+        403
+      ],
+      "actualStatus": 403,
+      "result": "PASS",
+      "responseCode": "FORBIDDEN"
+    }
+  ],
+  "databaseEvidence": {
+    "targetClaimId": "845f469a-6345-452b-81df-87882897ad2d",
+    "before": {
+      "claim": {
+        "id": "845f469a-6345-452b-81df-87882897ad2d",
+        "member_id": "alpha",
+        "state": "SUBMITTED",
+        "version": 0,
+        "facts": {
+          "requestedAmount": 325.0
+        },
+        "updated_at": "2026-10-17T05:03:27.164715+00:00"
+      },
+      "claim_audit": 0,
+      "payment": null,
+      "outbox": []
+    },
+    "after": {
+      "claim": {
+        "id": "845f469a-6345-452b-81df-87882897ad2d",
+        "member_id": "alpha",
+        "state": "SUBMITTED",
+        "version": 0,
+        "facts": {
+          "requestedAmount": 325.0
+        },
+        "updated_at": "2026-10-17T05:03:27.164715+00:00"
+      },
+      "claim_audit": 0,
+      "payment": null,
+      "outbox": []
+    },
+    "invariant": "claim business row, claim audit count, payment request and outbox rows remained identical"
+  },
+  "redactions": [
+    "Authorization, cookie and CSRF secrets excluded/redacted; credentials are not written."
+  ],
+  "note": "Failure audit rows are permitted operational records; this comparison targets claim state and business side effects."
+}

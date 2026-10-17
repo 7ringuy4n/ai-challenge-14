@@ -81,3 +81,12 @@ final requirement/task synchronization. No push or merge was performed.
 ## 2026-10-17 — Conditional final merge and evidence gates
 
 REQ-017 requires seven JMeter profiles to rerun against a clean, exact source commit and unchanged plan hashes; real-browser positive/negative UI evidence; live PostgreSQL-backed cross-member isolation; a row for every active requirement; and an inventory/transcript/checksum audit of all accessible project-related Codex sessions and archives. It explicitly makes full historical host-managed payload evidence a mandatory condition. The latest user authorizes a local `develop` to `main` merge only after every gate passes; no push is authorized. If the required historical capture is irrecoverable, do not merge and ask for an acceptance-policy decision. T08 remains running; T13–T16 carry disjoint evidence locations and coordinator-only ownership.
+
+
+## 2026-10-17 — REQ-017 live verification progress
+
+Implemented the approved local `CLAIMS_MEMBER_USERNAMES` configuration (default `member-demo`), fixed whole-number JSON amount normalization so persisted money has scale two, and corrected UI reason-entry availability. Fresh Compose rebuild succeeded with PostgreSQL, app, and OTEL collector healthy. The combined live API suite passed 29/29; Chrome 155 CDP passed 17/17 with 155 requests and 15 screenshots; two-principal live ownership passed 7/7 with unchanged protected database state; Postman passed 24 requests/14 assertions; smoke passed.
+
+Final-source Java 21/Maven quality verification passed 126 unit and 9 PostgreSQL/Testcontainers tests, 0 failures/errors/skips, six Liquibase changesets, 97.0134% line coverage (942/971) and 90.2022% branch coverage (580/643). OpenTelemetry evidence from the same combined live run verifies inbound parent → HTTP server → secured request → two asynchronous outbox spans and matching application log trace/span IDs. Independent T14 review found a P2 in Python `assert` checks under `-O`; it was fixed and independently rereviewed PASS.
+
+Still in progress: final-source full seven-profile JMeter rerun and local Codex session audit. Host-managed model raw payloads remain `NOT_CAPTURED`/`PARTIAL` and the user's mandatory full-capture merge condition remains unresolved. No merge or push is performed. Full status and evidence: `reports/verification/REQ-017-current.json`.

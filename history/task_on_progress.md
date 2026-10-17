@@ -33,8 +33,8 @@ Run all seven JMeter profiles serially from the clean resulting develop commit, 
 
 ## Blockers
 
-- Full JMeter profiles used the final business/tracing implementation before a logging-only trace-context adjustment; a full byte-identical rerun remains NOT_RUN.
-- Browser UI and live two-member ownership scenarios remain NOT_RUN; grouped live cases do not separately execute every requirement bullet.
+- Seven JMeter final-source full-profile reruns remain NOT_RUN; approved targets are P95 <=500ms, P99 <=1000ms, errors <=1%.
+- REQ-018 local principal config, Chrome E2E, cross-member PostgreSQL ownership and grouped 29-case live suite now PASS; internal criterion-level HTTP coverage is still a mix of live and unit/PG evidence.
 - Host-managed raw LLM request/response payloads remain NOT_CAPTURED; audit is PARTIAL.
 - JMeter archive download/checksum/extraction command exit passed, but its exact timestamp was not captured; the separate executable version and target-guard checks have an exact recorded timestamp/result.
 - REQ-017 gates remain pending: final-source load rerun, browser E2E, live two-member authorization, complete per-requirement matrix, and exhaustive local session/payload audit. Merge is prohibited until every one passes.
@@ -58,3 +58,10 @@ Run all seven JMeter profiles serially from the clean resulting develop commit, 
 - Updated (UTC): 2026-10-17T04:38:07Z
 - Branch: `develop`
 - Commit: `e9e42e0`
+
+- [x] REQ-018 configurable local member principals implemented and two distinct members verified against live PostgreSQL.
+- [x] Fresh full Maven quality run passed 126 unit + 9 Testcontainers tests; six Liquibase changesets; coverage 97.0134% line / 90.2022% branch.
+- [x] Current combined live API run passed 29/29 with request/response transcript; real Chrome passed 17/17; two-member isolation passed 7/7; Postman and smoke passed.
+- [x] Fresh trace evidence confirms HTTP context propagation through the asynchronous outbox and log correlation.
+- [x] T14 reviewer P2 harness issue fixed and rereviewed PASS; optimized verifier run passes 7/7.
+- [ ] Seven final-source JMeter profiles and exhaustive accessible local Codex session audit remain.

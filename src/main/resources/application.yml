@@ -43,6 +43,7 @@ claims:
   security:
     member-ownership-enabled: true
     allow-development-users: ${CLAIMS_ALLOW_DEVELOPMENT_USERS:false}
+    member-usernames: ${CLAIMS_MEMBER_USERNAMES:member-demo}
     demo-password: ${CLAIMS_DEMO_PASSWORD:}
     system-password: ${CLAIMS_SYSTEM_PASSWORD:}
   outbox:

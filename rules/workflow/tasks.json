@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "Implement Challenge 14 on develop. Local Java 21/Maven 3.9.11 and Docker are available through the authorized invocation context; default sandbox socket/loopback access is restricted. Current PostgreSQL verification and JaCoCo pass. Host-managed raw LLM payloads remain NOT_CAPTURED/PARTIAL. REQ-20261017-017 now requires seven final-source byte-identical JMeter reruns, browser E2E, live cross-member authorization, per-requirement verification, and a local session/LLM audit. Merge develop into main only if every gate including full host-managed capture is satisfied; never push.",
+  "scope": "Implement Challenge 14 on develop. Local Java 21/Maven 3.9.11 and Docker are available through the authorized invocation context; default sandbox socket/loopback access is restricted. Current PostgreSQL verification and JaCoCo pass on the final reviewed changes (126 unit + 9 Testcontainers; 97.0134% line/90.2022% branch). Host-managed raw LLM payloads remain NOT_CAPTURED/PARTIAL. REQ-20261017-017 now requires seven final-source byte-identical JMeter reruns, browser E2E, live cross-member authorization, per-requirement verification, and a local session/LLM audit. Merge develop into main only if every gate including full host-managed capture is satisfied; never push. REQ-20261017-018 approves a configurable local member-principal list so the two-member live security test can run; preserve the single-member default.",
   "coordinator_model": "gpt-6.1-sol",
   "worker_model": "gpt-6-luna",
   "reasoning_effort": "medium",
@@ -913,19 +913,40 @@
       ],
       "allowed_paths": [
         "reports/verification/REQ-017-browser/",
-        "reports/verification/REQ-017-cross-member.json"
+        "reports/verification/REQ-017-cross-member/",
+        "docker/compose.yml",
+        "src/main/java/com/papaya/claims/security/SecurityConfiguration.java",
+        "src/main/resources/application.yml",
+        "src/test/java/com/papaya/claims/security/SecurityConfigurationTest.java",
+        "scripts/browser/",
+        "package.json",
+        "package-lock.json",
+        "src/main/java/com/papaya/claims/claim/service/ClaimServiceImpl.java",
+        "src/main/resources/static/app.js",
+        "src/test/java/com/papaya/claims/claim/service/ClaimServiceTest.java",
+        "src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java"
       ],
       "verification": [
-        "Playwright E2E command",
-        "PostgreSQL-backed live two-principal API/security command"
+        "node scripts/browser/browser-e2e.mjs (real system Chrome via CDP; not Playwright)",
+        "python3 scripts/browser/verify-cross-member.py (authenticated HTTP plus PostgreSQL snapshots)"
       ],
       "case_ids": [],
       "acceptance": [
         "Browser UI positive/negative journeys have actual screenshot/console/network evidence",
-        "Two isolated member principals prove cross-owner access and mutation denied with no database change"
+        "Two isolated member principals prove cross-owner access and mutation denied with no database change",
+        "REQ-018 approved member-usernames configuration is validated, defaults to member-demo, preserves staff/system accounts, and is exercised by two distinct live member principals"
       ],
-      "evidence": [],
-      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
+      "evidence": [
+        "reports/verification/REQ-017-browser/run-2026-10-17T050718217Z/browser-e2e.json",
+        "reports/verification/REQ-017-cross-member/run-20261017T050909578984Z/cross-member.json",
+        "reports/verification/REQ-017-postman.log",
+        "reports/verification/REQ-017-smoke.log",
+        "reports/verification/REQ-019-focused-final.log",
+        "reports/verification/REQ-019-quality-final.log",
+        "reports/verification/REQ-019-final-compose-setup.log",
+        "reports/verification/REQ-017-review.json"
+      ],
+      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review. T14 implementation and live checks passed; independent review P2 harness issue fixed and rereview passed. Latest member cross-check run uses python3 -O and passes 7/7."
     },
     {
       "id": "T15",
@@ -949,7 +970,12 @@
       "acceptance": [
         "Every active requirement ID has actual implementation/test/review and live or direct-document evidence; accurately status PASS/FAIL/BLOCKED/NOT_RUN"
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/testing/traceability-matrix.md",
+        "reports/verification/acceptance-matrix/console.log",
+        "reports/verification/acceptance-matrix/http-exchanges.jsonl",
+        "reports/telemetry/REQ-017-trace-verification.json"
+      ],
       "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
     },
     {
@@ -975,7 +1001,9 @@
       "acceptance": [
         "All locally accessible project-related session and archived-session events are inventoried and hashed; available message/tool events are captured honestly; inaccessible payloads marked NOT_CAPTURED; mandatory full-capture criterion evaluated without waiver"
       ],
-      "evidence": [],
+      "evidence": [
+        "docs/submission/llm-interactions.jsonl"
+      ],
       "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
     }
   ]

@@ -13,6 +13,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Configuration
 @EnableWebSecurity
@@ -23,16 +28,39 @@ public class SecurityConfiguration {
     @Bean
     InMemoryUserDetailsManager users(PasswordEncoder encoder,
             @Value("${claims.security.demo-password:}") String humanPassword,
-            @Value("${claims.security.system-password:}") String systemPassword) {
+            @Value("${claims.security.system-password:}") String systemPassword,
+            @Value("${claims.security.member-usernames:member-demo}") String memberUsernames) {
         requireConfiguredSecret(humanPassword, "CLAIMS_DEMO_PASSWORD");
         requireConfiguredSecret(systemPassword, "CLAIMS_SYSTEM_PASSWORD");
-        return new InMemoryUserDetailsManager(
+        List<UserDetails> configuredUsers = new ArrayList<>(List.of(
                 User.withUsername("clerk").password(encoder.encode(humanPassword)).roles("DOCUMENT_CLERK").build(),
                 User.withUsername("lead").password(encoder.encode(humanPassword)).roles("TEAM_LEAD").build(),
                 User.withUsername("assessor").password(encoder.encode(humanPassword)).roles("ASSESSOR").build(),
                 User.withUsername("finance").password(encoder.encode(humanPassword)).roles("FINANCE").build(),
-                User.withUsername("member-demo").password(encoder.encode(humanPassword)).roles("MEMBER").build(),
-                User.withUsername("system").password(encoder.encode(systemPassword)).roles("SYSTEM").build());
+                User.withUsername("system").password(encoder.encode(systemPassword)).roles("SYSTEM").build()));
+        for (String username : parseMemberUsernames(memberUsernames)) {
+            configuredUsers.add(User.withUsername(username).password(encoder.encode(humanPassword)).roles("MEMBER").build());
+        }
+        return new InMemoryUserDetailsManager(configuredUsers);
+    }
+
+    private static List<String> parseMemberUsernames(String configured) {
+        if (configured == null || configured.isBlank()) {
+            throw new IllegalArgumentException("CLAIMS_MEMBER_USERNAMES must list one or more unique member- identities");
+        }
+        List<String> usernames = new ArrayList<>();
+        Set<String> unique = new HashSet<>();
+        for (String item : configured.split(",", -1)) {
+            String username = item.trim();
+            if (!username.matches("member-[a-z0-9]+(?:-[a-z0-9]+)*")) {
+                throw new IllegalArgumentException("CLAIMS_MEMBER_USERNAMES entries must use the member- prefix and lowercase letters, digits, or hyphens");
+            }
+            if (!unique.add(username)) {
+                throw new IllegalArgumentException("CLAIMS_MEMBER_USERNAMES entries must be unique");
+            }
+            usernames.add(username);
+        }
+        return List.copyOf(usernames);
     }
 
     @Bean

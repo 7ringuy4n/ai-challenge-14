@@ -35,14 +35,16 @@ class ClaimPersistenceIT extends PersistenceITSupport {
     void repositoryRoundTripListsAndCasLeaveImmutableIdentityAndCoverageUntouched() {
         UUID id=UUID.randomUUID(); Instant now=Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
         BigDecimal nested=new BigDecimal("42.375");
+        BigDecimal wholeDollar=new BigDecimal("125.00");
         ClaimAggregate original=new ClaimAggregate(new Claim(id,"member-1","submitted",new BigDecimal("125.00"),"USD",0,
-                new ClaimFacts(Map.of("nested",Map.of("amount",nested))),now,now),ClaimWorkflowData.empty());
+                new ClaimFacts(Map.of("requestedAmount",wholeDollar,"nested",Map.of("amount",nested))),now,now),ClaimWorkflowData.empty());
         try (var s=session()) {
             var repo=claimRepository(s); repo.insert(original);
             ClaimAggregate found=repo.find(id).orElseThrow();
             assertThat(found.claim().facts().values().get("nested")).isInstanceOf(Map.class);
             Object actual=((Map<?,?>)found.claim().facts().values().get("nested")).get("amount");
             assertThat(actual).isInstanceOf(BigDecimal.class).isEqualTo(nested);
+            assertThat(found.claim().facts().values().get("requestedAmount")).isInstanceOf(BigDecimal.class).isEqualTo(wholeDollar);
             assertThat(found.claim().memberId()).isEqualTo("member-1");
             assertThat(found.claim().policyLimit()).isEqualByComparingTo("125.00");
             assertThat(found.claim().currency()).isEqualTo("USD");

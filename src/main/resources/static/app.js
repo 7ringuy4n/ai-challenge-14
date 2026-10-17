@@ -2,6 +2,7 @@
   const $ = (id) => document.getElementById(id);
   const state = { auth: '', csrfHeader: '', csrfToken: '', claims: [], selected: null, options: [], audit: [], actor: '' };
   const API = '/api/v1';
+  const commandInputGuards = new Set(['rejection_reason_present', 'information_description_present']);
   const notice = (message, error = false) => { $('notice').textContent = message; $('notice').classList.toggle('error', error); };
   const request = async (path, options = {}) => {
     const headers = new Headers(options.headers || {});
@@ -98,8 +99,10 @@
     for (const option of state.options) {
       const item = document.createElement('li'); item.className = 'option';
       item.append(el('strong', `${option.from} → ${option.to}`), el('small', `${option.transitionId} · role: ${option.authorizedRoles.join(', ')}`));
-      const status = el('small', option.available ? 'Ready' : option.failures.join(', '), option.available ? '' : 'failure'); item.append(status); optionList.append(item);
-      const choice = el('option', `${option.to} — ${option.transitionId}`); choice.value = option.to; choice.disabled = !option.available; select.append(choice);
+      const commandInputOnly = option.failures?.length > 0 && option.failures.every(failure => commandInputGuards.has(failure));
+      const canSelect = option.available || commandInputOnly;
+      const status = el('small', option.available ? 'Ready' : commandInputOnly ? 'Enter a reason to continue' : option.failures.join(', '), canSelect ? '' : 'failure'); item.append(status); optionList.append(item);
+      const choice = el('option', `${option.to} — ${option.transitionId}`); choice.value = option.to; choice.disabled = !canSelect; select.append(choice);
     }
     const audit = $('audit'); audit.replaceChildren();
     for (const entry of state.audit) {
@@ -110,6 +113,12 @@
     }
     renderFacts();
   };
+  $('transition-form').elements.targetState.addEventListener('change', (event) => {
+    const requiresReason = ['REJECTED', 'PENDING_INFO'].includes(event.currentTarget.value);
+    const reason = $('transition-form').elements.reason;
+    reason.required = requiresReason;
+    reason.placeholder = requiresReason ? 'A reason is required for this transition.' : '';
+  });
   const refreshSelected = async () => {
     const refreshed = await request(`/claims/${state.selected.id}`); state.selected = refreshed;
     state.claims = await request('/claims?page=0&size=20').then((r) => r.items); await showClaim(refreshed);

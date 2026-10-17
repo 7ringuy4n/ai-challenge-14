@@ -88,11 +88,14 @@ public class ClaimServiceImpl implements ClaimUseCases {
         validateRequestedAmount(command.facts().values().get("requestedAmount"));
         if (!command.facts().values().keySet().stream().allMatch("requestedAmount"::equals))
             throw forbidden("Only requestedAmount may be supplied when a claim is created");
-        Object requestedAmount = command.facts().values().get("requestedAmount");
-        if (!(requestedAmount instanceof BigDecimal amount) || amount.compareTo(command.policyLimit()) > 0)
+        BigDecimal amount = requestedAmountDecimal(command.facts().values().get("requestedAmount"));
+        if (amount == null || amount.compareTo(command.policyLimit()) > 0)
             throw invalid("requestedAmount must be present and no greater than the policy limit");
+        // Preserve a decimal point through JSONB so whole-dollar values deserialize as BigDecimal.
+        amount = amount.setScale(2);
+        ClaimFacts normalizedFacts = new ClaimFacts(Map.of("requestedAmount", amount));
         Claim claim = new Claim(UUID.randomUUID(), actor.id(), definition.initialState(), command.policyLimit(),
-                command.currency(), 0, command.facts(), now, now);
+                command.currency(), 0, normalizedFacts, now, now);
         claims.insert(new ClaimAggregate(claim, ClaimWorkflowData.empty()));
         writeSystemAudit("claim.create", "claim", claim.id().toString(), actor, correlationId, "success", null);
         storeReceipt(actor.id(), scope, key, fingerprint, claim);
@@ -449,8 +452,18 @@ public class ClaimServiceImpl implements ClaimUseCases {
     private static void requireRole(Actor actor, String role) { if (!actor.hasRole(role)) throw forbidden("Required role is missing"); }
     private static void validateRequestedAmount(Object amount) {
         if (amount == null) return;
-        if (!(amount instanceof BigDecimal value) || value.signum() < 0 || value.scale() > 2 || value.precision() - value.scale() > 16)
+        BigDecimal value = requestedAmountDecimal(amount);
+        if (value == null || value.signum() < 0 || value.scale() > 2 || value.precision() - value.scale() > 16)
             throw invalid("requestedAmount must be a nonnegative exact decimal fitting NUMERIC(18,2)");
+    }
+
+    private static BigDecimal requestedAmountDecimal(Object amount) {
+        if (amount instanceof BigDecimal decimal) return decimal;
+        if (amount instanceof Number number) {
+            try { return new BigDecimal(number.toString()); }
+            catch (NumberFormatException ignored) { return null; }
+        }
+        return null;
     }
 
     private static final class HexFormatSupport {

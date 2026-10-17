@@ -1,0 +1,18 @@
+{
+  "status": "FAIL",
+  "startedAtUtc": "2026-10-17T04:59:00.305Z",
+  "error": "Cannot take screenshot with 0 width.",
+  "results": [
+    {
+      "name": "real Chrome opens the claims sign-in UI",
+      "result": "FAIL",
+      "detail": "Cannot take screenshot with 0 width."
+    }
+  ],
+  "network": [],
+  "consoleErrors": [],
+  "chromeStderr": "\nDevTools listening on ws://127.0.0.1:9227/devtools/browser/d81992a3-706b-42d2-be74-638f1534fc22\n",
+  "redactions": [
+    "No credentials, cookies, CSRF tokens, request authorization headers, or request bodies were captured."
+  ]
+}

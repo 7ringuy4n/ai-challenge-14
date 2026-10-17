@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "trace_id": "45166d4eef3241f3b8f4227f3b270db3",
+  "inbound_parent_span_id": "b5af2e9f3f07413a",
+  "http_server_span": {
+    "trace_id": "45166d4eef3241f3b8f4227f3b270db3",
+    "parent_span_id": "b5af2e9f3f07413a",
+    "span_id": "e18844b501d90eec",
+    "name": "http post /api/v1/claims/{claimId}/transitions",
+    "kind": "Server"
+  },
+  "secured_request_span": {
+    "trace_id": "45166d4eef3241f3b8f4227f3b270db3",
+    "parent_span_id": "e18844b501d90eec",
+    "span_id": "adfe25aed2c9d4d2",
+    "name": "secured request",
+    "kind": "Internal"
+  },
+  "outbox_delivery_spans": [
+    {
+      "trace_id": "45166d4eef3241f3b8f4227f3b270db3",
+      "parent_span_id": "adfe25aed2c9d4d2",
+      "span_id": "468259f634f1e4bc",
+      "name": "claims.outbox.delivery",
+      "kind": "Internal"
+    },
+    {
+      "trace_id": "45166d4eef3241f3b8f4227f3b270db3",
+      "parent_span_id": "adfe25aed2c9d4d2",
+      "span_id": "dbeddf8f8524b39f",
+      "name": "claims.outbox.delivery",
+      "kind": "Internal"
+    }
+  ],
+  "inbound_parent_matches_server": true,
+  "secured_child_matches_server": true,
+  "outbox_child_matches_security": true,
+  "application_http_log": "2026-10-17T05:13:11.915Z  INFO 1 --- [claims-workflow] [nio-8080-exec-4] [                                                 ] c.p.c.common.web.CorrelationIdFilter     : http_request method=POST path=/api/v1/claims/25bef0d0-b9ef-4cfc-b300-289072a6348b/transitions status=200 durationMs=90 correlationId=accept-3afc8a5afd534d2594be0f89 traceId=45166d4eef3241f3b8f4227f3b270db3 parentSpanId=b5af2e9f3f07413a",
+  "application_outbox_logs": [
+    "2026-10-17T05:13:13.809Z  INFO 1 --- [claims-workflow] [   scheduling-1] [45166d4eef3241f3b8f4227f3b270db3-dbeddf8f8524b39f] c.p.c.claim.effects.MockEffectDelivery   : mock_effect_delivered eventId=5183c556-e25c-482e-8011-01f4baf0e292 effect=create_payment_request traceId=45166d4eef3241f3b8f4227f3b270db3 spanId=dbeddf8f8524b39f",
+    "2026-10-17T05:13:13.809Z  INFO 1 --- [claims-workflow] [   scheduling-1] [45166d4eef3241f3b8f4227f3b270db3-468259f634f1e4bc] c.p.c.claim.effects.MockEffectDelivery   : mock_effect_delivered eventId=ff30423a-5699-4d9d-8172-0d54e71fe206 effect=notify_member_approval traceId=45166d4eef3241f3b8f4227f3b270db3 spanId=468259f634f1e4bc"
+  ],
+  "outbox_log_span_ids_match_exported": [
+    true,
+    true
+  ],
+  "evidence_files": [
+    "reports/verification/acceptance-matrix/http-exchanges.jsonl",
+    "reports/verification/acceptance-matrix/trace-context.json",
+    "reports/telemetry/REQ-017-application.log",
+    "reports/telemetry/REQ-017-otel-collector.log"
+  ]
+}

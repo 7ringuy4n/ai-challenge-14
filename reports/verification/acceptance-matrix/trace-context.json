@@ -1,5 +1,5 @@
 {
-  "session_traceparent": "00-c7778ff15a314a548769de7c70793d52-9ab8d6915ec64e85-01",
-  "approval_traceparent": "00-c523f305744941f9a559a149b627fa24-69ace3b43c7a4cae-01",
-  "expected_outbox_trace_id": "c523f305744941f9a559a149b627fa24"
+  "session_traceparent": "00-5bb52d86ab27492991d74013c2296127-bda7c191456d44e1-01",
+  "approval_traceparent": "00-45166d4eef3241f3b8f4227f3b270db3-b5af2e9f3f07413a-01",
+  "expected_outbox_trace_id": "45166d4eef3241f3b8f4227f3b270db3"
 }

@@ -10,34 +10,30 @@ in_progress
 
 ## Current step
 
-Commit REQ-017 scope, ownership plan and immutable JMeter pre-run hashes
+Commit verified implementation and evidence on develop
 
 ## Completed
 
-- [x] Final clean Maven quality run: 123 unit + 9 PostgreSQL/Testcontainers tests, zero failures/errors/skips, six migrations; 97.0464% line / 90.1116% branch.
-- [x] Independent review found no critical/high issue; token redaction and stale test name findings fixed. Host-managed LLM payloads remain NOT_CAPTURED/PARTIAL.
-- [x] One live PostgreSQL-backed 29-case run, JMeter profiles, OTel trace export, Newman run, six-migration clean suite, coverage and independent rereview are complete with open acceptance gaps documented
-- [x] Refreshed REQ-015 report, traceability, Postman, operations/architecture/testing docs, history, changelog, task manifest and reviewer handoffs.
-- [x] Validated report JSON, SVG XML, all five diagram source/render sets, 29 numbered console cases, 31 redacted HTTP exchanges, JMeter comparison, and workflow validator.
-- [x] Reversibly compressed retained JMeter/Collector raw outputs, reducing the report package from over 1 GB to about 100 MB.
-- [x] Updated current REQ-015 verification record and synchronized task manifest/history, with evidence checks and open gates explicit
-- [x] Closed JMeter installer review findings: captured full version output with `pipefail` and version assertion, tested malformed target refusal, fixed evidence links, and recorded independent rereview with no critical/high findings
-- [x] Recorded the attached REQ-017 prompt verbatim as PROMPT-20261017-017, added requirement REQ-017, and split active verification into coordinator-owned T13–T16 workstreams with separate evidence paths
-- [x] REQ-017 is in the requirement ledger, work manifest, changelog and history; conditional merge scope is reconciled; task stays running
 - [x] Recorded exact SHA-256 hashes for all seven JMX plans and seven property files before any final reruns
+- [x] User approved local member principal configuration; logged as PROMPT-20261017-018 and registered REQ-018 under T14
 - [x] Captured the 14 exact JMX/property hashes before starting any benchmark; updated requirement, task dependencies/ownership, history and conditional merge policy
+- [x] User approved configurable local member identities; REQ-018 and exclusive T14 paths are registered before implementation
+- [x] Added the T14 tests first for two distinct MEMBER principals, default isolation, and invalid/duplicate identity rejection
+- [x] Implemented validated CLAIMS_MEMBER_USERNAMES with member-demo default, explicit Compose/application wiring, and distinct configured MEMBER principals; test cases cover valid, duplicate, malformed, and empty input
+- [x] Recorded user confirmation as PROMPT-20261017-019 and REQ-019; source config and focused test already implemented
+- [x] Added real Chrome CDP workflow and live API/DB verifier under T14 owned paths; fixed CSRF redaction and static syntax checks
+- [x] Full final-source Maven quality run passed 126 unit plus 9 PostgreSQL/Testcontainers tests, six migrations, and coverage gates (97.0134% line / 90.2022% branch).
+- [x] Fresh live evidence passed: 29 API cases, 17 Chrome cases, 7 two-member ownership checks, Postman, smoke, and OTel HTTP-to-outbox correlation.
+- [x] Independent review P2 was fixed and rereviewed PASS; the optimized live cross-member harness passed.
+- [x] Exporter security fixes independently rereviewed PASS; 62 local session transcripts hash-verified and contained; workflow manifest and audit integrity pass. Reviewed source/config diffs and staged evidence on develop.
 
 ## Next exact step
 
-Run all seven JMeter profiles serially from the clean resulting develop commit, then compare every plan hash with the recorded pre-run set
+Commit verified implementation and evidence on develop, then execute seven JMeter profiles from a clean checkout of that commit.
 
 ## Blockers
 
-- Full JMeter profiles used the final business/tracing implementation before a logging-only trace-context adjustment; a full byte-identical rerun remains NOT_RUN.
-- Browser UI and live two-member ownership scenarios remain NOT_RUN; grouped live cases do not separately execute every requirement bullet.
-- Host-managed raw LLM request/response payloads remain NOT_CAPTURED; audit is PARTIAL.
-- JMeter archive download/checksum/extraction command exit passed, but its exact timestamp was not captured; the separate executable version and target-guard checks have an exact recorded timestamp/result.
-- REQ-017 gates remain pending: final-source load rerun, browser E2E, live two-member authorization, complete per-requirement matrix, and exhaustive local session/payload audit. Merge is prohibited until every one passes.
+- Full host-managed raw model payload history remains unavailable and is a mandatory acceptance gate.
 
 ## Known constraints
 
@@ -45,16 +41,16 @@ Run all seven JMeter profiles serially from the clean resulting develop commit, 
 
 ## Relevant files
 
-- `reports/verification/REQ-017-jmeter-profile-hashes-before.txt`
+- `reports/verification/REQ-017-current.json`
 
 ## Verification commands
 
 ```bash
-17-task manifest validates; git diff --check passes; no benchmark has run yet
+python3 scripts/workflow/verify_workflow.py
 ```
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-17T04:38:07Z
+- Updated (UTC): 2026-10-17T05:22:30Z
 - Branch: `develop`
-- Commit: `e9e42e0`
+- Commit: `5cb58a8`

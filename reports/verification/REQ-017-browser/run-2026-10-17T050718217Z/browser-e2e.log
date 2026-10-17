@@ -1,0 +1,17 @@
+running test case 1/17: real Chrome opens the claims sign-in UI — PASS
+running test case 2/17: member-alpha signs in through the UI — PASS
+running test case 3/17: create form rejects missing required amounts — PASS
+running test case 4/17: member-alpha creates a claim from the UI — PASS
+running test case 5/17: clerk signs in and records the document roster — PASS
+running test case 6/17: clerk transitions the claim to DOCUMENTS_VERIFIED — PASS
+running test case 7/17: team lead assigns the assessor — PASS
+running test case 8/17: team lead starts assessment — PASS
+running test case 9/17: assessor saves the completed report — PASS
+running test case 10/17: assessor approves the claim — PASS
+running test case 11/17: finance initiates payment — PASS
+running test case 12/17: outbox confirmation enables payment closure in the UI — PASS
+running test case 13/17: member-beta cannot see member-alpha claims in the UI — PASS
+running test case 14/17: member-alpha creates a second claim for rejection flow — PASS
+running test case 15/17: clerk verifies the second claim documents — PASS
+running test case 16/17: team lead assigns and starts second assessment — PASS
+running test case 17/17: assessor rejects and member acknowledges through the UI — PASS
