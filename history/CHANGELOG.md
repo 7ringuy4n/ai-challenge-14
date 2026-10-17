@@ -77,3 +77,6 @@ REQ-020 final merge: after independent review-03 PASS, T13 accepted the local HA
 
 
 Post-merge audit refresh: 67 project-related sessions and 9020 accessible records exported; all stored transcript hashes/IDs/paths validate. The actively growing coordinator source log remains a documented point-in-time hash exception. Interaction ledger has 106 rows / 65 IDs, 64 with explicit requirement/task links; raw host envelopes remain NOT_CAPTURED/PARTIAL.
+
+
+Final Git closeout: accepted develop commit 730ca6fd6569a451a286b189f9dd69893d26c197 is in main through merge 18f97aa9c8296fdc107a02192aa4e8e62dd45d78; post-merge evidence commit d0fd9dd recorded the merged reports and audit. No push.

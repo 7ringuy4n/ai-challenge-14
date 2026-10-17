@@ -291,8 +291,10 @@
   "remaining_gates": [],
   "post_acceptance_actions": [
     {
-      "action": "Commit final post-merge audit/evidence on main and verify clean tree; no push",
-      "status": "IN_PROGRESS"
+      "action": "Commit accepted evidence and verify local merge; no push",
+      "status": "COMPLETED",
+      "merge_commit": "18f97aa9c8296fdc107a02192aa4e8e62dd45d78",
+      "post_merge_evidence_commit": "d0fd9dd"
     }
   ]
 }

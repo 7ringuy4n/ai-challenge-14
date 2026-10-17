@@ -27,7 +27,7 @@ The owner-approved performance thresholds remain P95 ≤500 ms, P99 ≤1,000 ms 
 | LLM raw payload completeness | **PARTIAL — NOT_CAPTURED** | Host-managed raw request/response envelopes, request IDs, system/developer envelopes and encrypted reasoning remain inaccessible. No full-capture claim is made. See [audit summary](../verification/REQ-017-llm-audit.json) and [ledger](../../docs/submission/llm-interactions.jsonl). |
 | Workflow validation | PASS — 18 unique dependency-valid tasks | `python3 scripts/workflow/verify_workflow.py`; result retained in [regression record](../verification/REQ-020/regression.json) |
 | Independent review of revised acceptance | PASS — review-03 confirmed task and criterion reconciliation | Review requests and responses are preserved under [`reports/sub-agents/T17`](../sub-agents/T17/). |
-| Git verification and conditional merge | PASS — local merge commit `18f97aa9c8296fdc107a02192aa4e8e62dd45d78` | `develop` derives from existing `main` `521cb1427f910ebbd01129cc1a950c55b899ee87`; `main` merge parents are `521cb1427f910ebbd01129cc1a950c55b899ee87` and `730ca6fd6569a451a286b189f9dd69893d26c197`. Post-merge audit/evidence commit is being recorded on main. No reset or push. |
+| Git verification and conditional merge | PASS — local merge commit `18f97aa9c8296fdc107a02192aa4e8e62dd45d78` | `develop` derives from existing `main` `521cb1427f910ebbd01129cc1a950c55b899ee87`; `main` merge parents are `521cb1427f910ebbd01129cc1a950c55b899ee87` and `730ca6fd6569a451a286b189f9dd69893d26c197`. Post-merge audit/evidence commit `d0fd9dd` is recorded on main. No reset or push. |
 
 ## Preserved original performance results
 
@@ -44,3 +44,12 @@ The latest local export preserves 67 project sessions and 9,020 accessible messa
 On 2026-10-17, `docker run --rm --network host -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/workspace" -v /tmp/claims-m2:/root/.m2 -w /workspace maven:3.9.11-eclipse-temurin-21 mvn -B -Pquality clean verify` completed successfully (exit 0): 127 unit tests, 9 PostgreSQL 16/Testcontainers integration tests, six migrations, 97.0195% line coverage and 90.2326% branch coverage. `python3 scripts/workflow/verify_workflow.py` passed with 18 tasks. No application source changed in this policy update.
 
 Independent reviews 01 and 02 found and resolved two process inconsistencies: T13/T16 task state and T13 criterion wording. Final independent review-03 passed the reconciled decision. T13 accepts only the local exception and preserves both numeric failures; T16 proof-of-work passes with raw payloads PARTIAL/NOT_CAPTURED. The acceptance evidence was committed on develop and merged into existing main at `18f97aa9c8296fdc107a02192aa4e8e62dd45d78`; no push occurred.
+
+
+## Merge and evidence commits
+
+- Accepted evidence commit on `develop`: `45f447022dfbeee6d3d0d4a6609dd31f1b0a31d5`.
+- Synchronized checkpoint commit on `develop`: `730ca6fd6569a451a286b189f9dd69893d26c197`.
+- Local `develop` → `main` merge commit: `18f97aa9c8296fdc107a02192aa4e8e62dd45d78` (parents: planning baseline `521cb1427f910ebbd01129cc1a950c55b899ee87`; accepted develop `730ca6fd6569a451a286b189f9dd69893d26c197`).
+- Post-merge evidence commit on `main`: `d0fd9dd`. A final closeout commit records the evidence commit hash in the current report.
+- Push: not performed.

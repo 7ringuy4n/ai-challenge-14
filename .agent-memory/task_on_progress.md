@@ -6,16 +6,14 @@ Complete REQ-017 acceptance under owner-approved REQ-020; preserve the original 
 
 ## Current status
 
-in_progress
+complete
 
 ## Current step
 
-Commit final post-merge evidence on main and verify the resulting clean head
+REQ-020 acceptance and authorized local merge complete; final verification
 
 ## Completed
 
-- [x] Added a sanitized aggregate monitor script collecting host CPU/memory/swap/PSI/thermal counters, JMeter process CPU/RSS, target container CPU/memory, actuator Hikari/GC/JVM metrics, and PostgreSQL waits/deadlocks/outbox without request or credential logging
-- [x] Instrumented run on clean source 0435e1b completed: 76,251 samples, P95 638ms/P99 879ms/0 errors. Captured host CPU peak 99.84%, load average peak 28.47 on 8 CPUs, JMeter CPU/RSS, app/Hikari/GC, DB wait/lock/outbox, RAM/swap and thermal throttle counters
 - [x] Preserved original stress FAIL and added REQ-020 monitored diagnostic plus evidence-backed local hardware assessment; CPU saturation confirmed while RAM, thermal, GC, DB lock, Hikari timeout, and outbox evidence were reconciled
 - [x] Refreshed the 65-session export and verified transcript hashes, unique IDs, and contained unique paths; recorded the active coordinator source log growth qualification and raw payload PARTIAL status
 - [x] Reran logged Maven quality regression: 127 unit + 9 PostgreSQL/Testcontainers, six migrations, 97.0195% lines / 90.2326% branches; workflow validator passes 18 dependency-valid tasks
@@ -26,10 +24,12 @@ Commit final post-merge evidence on main and verify the resulting clean head
 - [x] Committed REQ-020 accepted evidence and independent review to develop at 45f447022dfbeee6d3d0d4a6609dd31f1b0a31d5
 - [x] Merged accepted develop 730ca6fd6569a451a286b189f9dd69893d26c197 into the existing main baseline 521cb1427f910ebbd01129cc1a950c55b899ee87; merge commit 18f97aa9c8296fdc107a02192aa4e8e62dd45d78 created locally
 - [x] Verified post-merge audit: 67 unique sessions, 9,020 accessible records, all stored transcript hashes and paths valid, with one growing active source file disclosed; ledger 106 rows / 65 IDs
+- [x] Project accepted as ACCEPTED_WITH_PERFORMANCE_EXCEPTION after review-03 PASS; original P95 failures and raw LLM PARTIAL/NOT_CAPTURED are preserved
+- [x] Committed evidence on develop and merged into existing main at 18f97aa9c8296fdc107a02192aa4e8e62dd45d78; post-merge evidence commit d0fd9dd; no push
 
 ## Next exact step
 
-Commit current post-merge reports and audit to main, then confirm final main hash and clean status; no push
+Confirm final main HEAD, merge parents, workflow validator PASS, and clean worktree
 
 ## Blockers
 
@@ -41,17 +41,17 @@ Commit current post-merge reports and audit to main, then confirm final main has
 
 ## Relevant files
 
-- `reports/verification/REQ-020/git-evidence.md`
 - `reports/acceptance/FINAL-ACCEPTANCE.md`
+- `reports/verification/REQ-020/git-evidence.md`
 
 ## Verification commands
 
 ```bash
-python3 scripts/workflow/verify_workflow.py; git status --short --branch; git rev-parse main
+python3 scripts/workflow/verify_workflow.py; git status --short --branch; git rev-parse main; git show -s --format=%H%n%P main
 ```
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-17T07:17:17Z
+- Updated (UTC): 2026-10-17T07:18:00Z
 - Branch: `main`
-- Commit: `18f97aa`
+- Commit: `d0fd9dd`
