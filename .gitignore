@@ -1,0 +1,6 @@
+/target/
+/.idea/
+*.iml
+.env
+reports/verification/generated/
+reports/java-performance/results/

@@ -1,0 +1,816 @@
+{
+  "schema_version": 1,
+  "scope": "Implement Challenge 14 on the existing develop branch; Java 21/Maven 3.9.11 are available in the user-local toolchain; Docker daemon access is denied; no verified main/origin history exists; host-managed raw LLM payloads are unavailable and remain NOT_CAPTURED/PARTIAL.",
+  "coordinator_model": "gpt-6.1-sol",
+  "worker_model": "gpt-6-luna",
+  "reasoning_effort": "medium",
+  "max_parallel_subagents": 3,
+  "source_write_mode": "coordinator_only",
+  "artifact_root": "rules/workflow/artifacts",
+  "required_case_ids": [
+    "C14-01",
+    "C14-02",
+    "C14-03",
+    "C14-04",
+    "C14-05",
+    "C14-06",
+    "C14-07",
+    "C14-08",
+    "C14-09",
+    "C14-10",
+    "C14-11",
+    "C14-12",
+    "C14-13",
+    "C14-14",
+    "C14-15",
+    "C14-16",
+    "C14-17",
+    "C14-18",
+    "C14-19",
+    "C14-20",
+    "C14-21",
+    "C14-22",
+    "C14-23",
+    "C14-24",
+    "C14-25",
+    "C14-26",
+    "C14-27",
+    "C14-28",
+    "C14-29"
+  ],
+  "shared_paths": [
+    "pom.xml",
+    "mvnw",
+    "mvnw.cmd",
+    ".mvn/",
+    ".gitignore",
+    "AGENTS.md",
+    ".agent-memory/",
+    "rules/",
+    "README.md",
+    "docs/",
+    "requirements/",
+    "history/",
+    "reports/",
+    "src/main/java/com/papaya/claims/ClaimsApplication.java",
+    "src/main/resources/application.yml",
+    "src/main/resources/config/workflow.yml",
+    "src/main/resources/db/changelog/db.changelog-master.yml",
+    "postman/"
+  ],
+  "tasks": [
+    {
+      "id": "T00",
+      "title": "Freeze scope, compile contracts and establish build gates",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "accepted",
+      "depends_on": [],
+      "allowed_paths": [
+        "pom.xml",
+        ".gitignore",
+        "AGENTS.md",
+        "src/main/java/com/papaya/claims/ClaimsApplication.java",
+        "src/main/java/com/papaya/claims/claim/api/dto/",
+        "src/main/java/com/papaya/claims/claim/domain/Actor.java",
+        "src/main/java/com/papaya/claims/claim/domain/AuditRecord.java",
+        "src/main/java/com/papaya/claims/claim/domain/Claim.java",
+        "src/main/java/com/papaya/claims/claim/domain/ClaimFacts.java",
+        "src/main/java/com/papaya/claims/claim/domain/CreateClaimCommand.java",
+        "src/main/java/com/papaya/claims/claim/domain/PageRequest.java",
+        "src/main/java/com/papaya/claims/claim/domain/PageResult.java",
+        "src/main/java/com/papaya/claims/claim/domain/TransitionCommand.java",
+        "src/main/java/com/papaya/claims/claim/domain/TransitionResult.java",
+        "src/main/java/com/papaya/claims/claim/domain/UpdateFactsCommand.java",
+        "src/main/java/com/papaya/claims/claim/service/ClaimUseCases.java",
+        "src/main/resources/application.yml",
+        "src/main/resources/config/workflow.yml",
+        "src/main/resources/db/changelog/changes/001-initial-schema.sql",
+        "src/main/resources/db/changelog/db.changelog-master.yml",
+        "docs/api/openapi.yaml",
+        "src/test/java/com/papaya/claims/claim/api/dto/",
+        "src/test/java/com/papaya/claims/claim/domain/DomainContractTest.java",
+        "src/test/java/com/papaya/claims/config/ResourceContractTest.java",
+        "src/test/java/com/papaya/claims/testing/TestProgressListener.java",
+        "src/test/resources/META-INF/services/org.junit.platform.launcher.TestExecutionListener",
+        "rules/REQUIREMENT.md"
+      ],
+      "verification": [
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "Full Java port/value/fact/error contracts and OpenAPI are pinned and reviewed before workers start",
+        "Java21/framework/plugin versions are compatible and pinned; quality profile enforces real coverage reports",
+        "Application configuration is YAML with env; Liquibase changesets live under src/main/resources/db/changelog/; migration and runtime DB credentials are separate",
+        "Record scope, identity, cycle and after-commit semantics; initialize raw conversation capture"
+      ],
+      "evidence": [
+        {
+          "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+          "exit_code": 0,
+          "source_hash": "d87676b1625c5563ff9d5dd7b5524ee84bbbade6388f74ea47c55d1ac83497a4",
+          "artifact": "reports/verification/T00-contract-check.json",
+          "result": "PASS",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "artifact": "reports/sub-agents/T00/review-01.md",
+          "reviewer_agent": "/root/t00_review",
+          "result": "FAIL",
+          "source_hash": "d87676b1625c5563ff9d5dd7b5524ee84bbbade6388f74ea47c55d1ac83497a4"
+        },
+        {
+          "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+          "exit_code": 0,
+          "source_hash": "d044bf5dd64416870b0d55e6bc8d727493abba4f303d2861279ffc98ff44aab7",
+          "artifact": "reports/verification/T00-contract-check.json",
+          "result": "PASS",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "artifact": "reports/sub-agents/T00/review-02.md",
+          "reviewer_agent": "/root/t00_rereview",
+          "result": "FAIL",
+          "source_hash": "d044bf5dd64416870b0d55e6bc8d727493abba4f303d2861279ffc98ff44aab7"
+        },
+        {
+          "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+          "exit_code": 0,
+          "source_hash": "dcd768b587cfbdb7e155657d95821af71bdb46919b9069e3db3436656d21e3d5",
+          "artifact": "reports/verification/T00-contract-check.json",
+          "result": "PASS",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "artifact": "reports/sub-agents/T00/review-03.md",
+          "reviewer_agent": "/root/t00_review_final",
+          "result": "PASS",
+          "source_hash": "dcd768b587cfbdb7e155657d95821af71bdb46919b9069e3db3436656d21e3d5"
+        },
+        {
+          "artifact": "reports/sub-agents/T00/review-03.md",
+          "reviewer_agent": "/root/t00_review_final",
+          "result": "PASS",
+          "source_hash": "dcd768b587cfbdb7e155657d95821af71bdb46919b9069e3db3436656d21e3d5"
+        },
+        {
+          "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+          "exit_code": 0,
+          "source_hash": "b1bc449f5eaccba07ebbd1aa7969ddc15d4863db0a2388a659d074a0badebe27",
+          "artifact": "reports/verification/T00-contract-check-current.json",
+          "result": "PASS_PENDING_REVIEW",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "artifact": "reports/sub-agents/T00/review-04.md",
+          "reviewer_agent": "/root/t00_contract_review_04",
+          "result": "FAIL",
+          "source_hash": "b1bc449f5eaccba07ebbd1aa7969ddc15d4863db0a2388a659d074a0badebe27"
+        },
+        {
+          "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+          "exit_code": 0,
+          "source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+          "artifact": "reports/verification/T00-contract-check-current.json",
+          "result": "PASS_PENDING_REVIEW",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "artifact": "reports/sub-agents/T00/review-05.md",
+          "reviewer_agent": "/root/t00_contract_rereview_05",
+          "result": "PASS",
+          "source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af"
+        }
+      ],
+      "notes": "Accepted after coordinator-run Maven tests passed 11 tests, 0 failures/errors/skips, including live running test case N/TOTAL output, and independent review-05 addressed both review-04 findings. Coverage, application runtime, database migrations, Docker setup/smoke and startup remain unverified."
+    },
+    {
+      "id": "T01",
+      "title": "Config-driven engine and guard/effect strategies",
+      "role": "worker",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "medium",
+      "status": "accepted",
+      "depends_on": [
+        "T00"
+      ],
+      "allowed_paths": [
+        "src/main/java/com/papaya/claims/workflow/",
+        "src/test/java/com/papaya/claims/workflow/"
+      ],
+      "verification": [
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=WorkflowEngineTest,WorkflowConfigTest,GuardEvaluatorTest test"
+      ],
+      "case_ids": [
+        "C14-01",
+        "C14-05",
+        "C14-06",
+        "C14-07",
+        "C14-08",
+        "C14-09",
+        "C14-10",
+        "C14-11",
+        "C14-12",
+        "C14-13",
+        "C14-14",
+        "C14-15",
+        "C14-22",
+        "C14-23",
+        "C14-24"
+      ],
+      "acceptance": [
+        "All original transitions and guards are in YAML; engine has no state-specific switch",
+        "Three information requests accepted; fourth has exact escalation message",
+        "New state and edges using existing primitives work from config only; invalid config fails clearly"
+      ],
+      "evidence": [
+        {
+          "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=WorkflowEngineTest,WorkflowConfigTest,GuardEvaluatorTest test",
+          "exit_code": 0,
+          "source_hash": "70388cbebd58b763b596557d6ccc5a67b507726b4b6edc96cb41ad3161db7570",
+          "artifact": "reports/verification/T01/focused-maven.json",
+          "result": "PASS_PENDING_REVIEW",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "coverage": {
+            "line_covered": 302,
+            "line_total": 344,
+            "line_percent": 87.7907,
+            "branch_covered": 187,
+            "branch_total": 294,
+            "branch_percent": 63.6054,
+            "artifact": "reports/verification/T01/jacoco.xml",
+            "gate": "BELOW_95_LINE_90_BRANCH"
+          }
+        },
+        {
+          "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+          "exit_code": 0,
+          "source_hash": "70388cbebd58b763b596557d6ccc5a67b507726b4b6edc96cb41ad3161db7570",
+          "artifact": "reports/verification/T01/all-unit-tests.log",
+          "result": "PASS_PENDING_REVIEW",
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "artifact": "reports/sub-agents/T01/re-review-final-03.md",
+          "reviewer_agent": "/root/t01_final_review",
+          "result": "PASS",
+          "source_hash": "70388cbebd58b763b596557d6ccc5a67b507726b4b6edc96cb41ad3161db7570"
+        }
+      ],
+      "notes": "AD-01 clarifies trusted guard facts and was independently PASS reviewed in reports/sub-agents/T00/ad-01-rereview-03.md. Attempt 05 remains blocked/obsolete; attempt 06 is the active fresh-context implementation attempt. REQ-010 is included. Attempt 06 submitted, but candidate patch contains only GuardEvaluatorTest.java while handoff claims production implementation. Independent review will report the mismatch; patch is not accepted. Independent review-06 FAIL: only a guard test was submitted, production package absent, test refers to undefined types. New implementation attempt required; see reports/sub-agents/T01/review-06.md. Attempt 07 contains 8 production classes and apply-checks, but is declared PARTIAL with missing tests, wiring, strict document contract and cycle/validation details. Independent review pending. Independent review-07 FAIL; coordinator applied the foundation for immediate remediation of P1s and completion. See reports/sub-agents/T01/review-07.md; task remains unaccepted. Coordinator remediated review-07 and review-remediation-01 issues, added registries/effect intents, and focused tests pass 15/15 on source hash 9728d7dae7c72728b4553cdd3607519cff7b07e486e41b460b8992a0a5bc7115. Fresh independent rereview pending; full quality/DB checks not run. Latest source hash 70388cbebd58b763b596557d6ccc5a67b507726b4b6edc96cb41ad3161db7570; focused 16 and full unit 27 pass. JaCoCo: overall 87.79% line / 63.61% branch, below required gates. Coverage and integrated acceptance remain open; fresh independent review requested. Fresh independent review-final-03 PASS on current source hash 70388cbebd58b763b596557d6ccc5a67b507726b4b6edc96cb41ad3161db7570; no source defects. T01 accepted at scoped level by coordinator. Whole application remains unaccepted; coverage below thresholds and integration/startup/DB checks NOT_RUN.",
+      "contract_version": "CH14-Contracts-v1+AD-01",
+      "base_source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+      "current_attempt": "07",
+      "packet_path": "rules/workflow/artifacts/T01/07/TASK-PACKET.md",
+      "base_file_hashes": {
+        "src/main/resources/config/workflow.yml": "53a7ba8b87618cef629102ec8183345964196081a00e8ce4fb2085e6aafc1908",
+        "docs/challenge-14/CONTRACTS.md": "f64a027ac12c3a8f41e2ab528b72e6c41e3945a76f0652673e0c569d088d7c83",
+        "docs/challenge-14/FACTS-AND-PERSISTENCE.md": "934134482c3ceb375b21300b04ba7312f2ed64b150ecda64901401f4d439f6cb",
+        "src/main/resources/application.yml": "330b8eb6efb6ef9839869265739dc6a1d93e87646d4569e6eecb1d4f87cfabb6"
+      }
+    },
+    {
+      "id": "T02",
+      "title": "PostgreSQL/MyBatis persistence and immutable audit",
+      "role": "worker",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "medium",
+      "status": "running",
+      "depends_on": [
+        "T00"
+      ],
+      "allowed_paths": [
+        "src/test/java/com/papaya/claims/claim/domain/persistence/"
+      ],
+      "verification": [
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dit.test=ClaimPersistenceIT,AuditImmutabilityIT,IdempotencyIT,PaymentOutboxIT verify"
+      ],
+      "case_ids": [
+        "C14-13",
+        "C14-16",
+        "C14-17",
+        "C14-18",
+        "C14-20"
+      ],
+      "acceptance": [
+        "Liquibase YAML and SQL create claim/audit/outbox/payment/idempotency schema with runtime grants",
+        "CAS, unique constraints, append audit and transactional rollback verified on PostgreSQL Testcontainers",
+        "Audit mutation denied for runtime DB user; no cascading deletion of audit"
+      ],
+      "evidence": [
+        {
+          "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+          "exit_code": 0,
+          "source_hash": "1e706a59c0e6db83b1e55ff83a87b7908be1c5287e313cecfe34534e59ad9bd1",
+          "artifact": "reports/verification/T02-current.json",
+          "result": "PASS_UNIT_PHASE_ONLY",
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B jacoco:report",
+          "exit_code": 0,
+          "source_hash": "1e706a59c0e6db83b1e55ff83a87b7908be1c5287e313cecfe34534e59ad9bd1",
+          "artifact": "reports/verification/T02-current.json",
+          "result": "PASS_REPORT_GENERATED",
+          "coverage_line": 81.6216,
+          "coverage_branch": 61.9205,
+          "gate": "BELOW_95_LINE_90_BRANCH"
+        },
+        {
+          "command": "docker compose --env-file .env.example -f docker/compose.yml config --quiet",
+          "exit_code": 0,
+          "source_hash": "1e706a59c0e6db83b1e55ff83a87b7908be1c5287e313cecfe34534e59ad9bd1",
+          "artifact": "reports/verification/T02-current.json",
+          "result": "PASS_STATIC_COMPOSE_CONFIG"
+        },
+        {
+          "command": "docker info",
+          "exit_code": 1,
+          "source_hash": "1e706a59c0e6db83b1e55ff83a87b7908be1c5287e313cecfe34534e59ad9bd1",
+          "artifact": "reports/verification/docker-info-blocked.log",
+          "result": "BLOCKED_DOCKER_SOCKET_PERMISSION_DENIED"
+        },
+        {
+          "attempt": "14",
+          "candidate": "rules/workflow/artifacts/T02/14/candidate.patch",
+          "handoff": "rules/workflow/artifacts/T02/14/handoff.json",
+          "status": "submitted_pending_review",
+          "patch_sha256": "42182abf6471707a834db7e6266b55f438b8e3607cb88374c651a64a95d447e6"
+        },
+        {
+          "attempt": "review-15",
+          "review": "reports/sub-agents/T02/re-review-15.md",
+          "status": "pass_source_review",
+          "source_hash": "PENDING_CURRENT_SOURCE_HASH"
+        },
+        {
+          "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+          "exit_code": 0,
+          "source_hash": "900ac547584e85a54115a7abfcd767cba440d631be0e3c6a56a0aa645045ae32",
+          "artifact": "reports/verification/application-unit-tests.log",
+          "result": "PASS",
+          "tests": 42,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "artifact": "reports/sub-agents/T02/re-review-17.md",
+          "reviewer_agent": "/root/final_impl_review",
+          "result": "PASS_FOCUSED_SOURCE_AND_PROXY_REGRESSION_WITH_RUNTIME_GAPS",
+          "source_hash": "900ac547584e85a54115a7abfcd767cba440d631be0e3c6a56a0aa645045ae32",
+          "review_packet": "rules/workflow/artifacts/T02/17/REVIEW-PACKET.md"
+        }
+      ],
+      "notes": "AD-01 clarifies typed ClaimAggregate/ClaimWorkflowData and was independently PASS reviewed in reports/sub-agents/T00/ad-01-rereview-03.md. Attempt 07 remains partial/rejected; attempt 08 is fresh and must include adapters, complete Testcontainers evidence sources, scoped column grants, and REQ-010. Master changelog integration remains coordinator-owned. Attempt 08 returned PARTIAL; handoff records missing persistence layers/tests and its patch is corrupt at line 218 (`git apply --check`). Preserve as evidence; new attempt required. Attempt 09 is PARTIAL but apply-checkable: ports/aggregate and schema/grants only. Independent review-09 will decide whether this foundation is safe to integrate; adapters/XML/IT classes remain explicit blockers. Independent review-09 FAIL: migration duplicates three 001 columns and omits migration-owner grants in addition to missing adapters/XML/ITs. See reports/sub-agents/T02/review-09.md. No candidate changes integrated. Reopened as coordinator implementation work after T01 acceptance; attempt 09 remains rejected and is evidence only. New implementation must repair duplicate columns and complete real persistence adapters/transactions, migration-owner grants and PostgreSQL ITs. Coordinator will create exclusive attempt artifacts and log each host call. Attempt 11 candidate reviewed REWORK; production adapters integrated after coordinator fixed immutable CAS fields and configured the outbox lease. Draft IT excluded because migration SUPERUSER and required coverage missing. Attempt 12 is exclusive persistence-test-source work. Attempt 12 test candidate independently reviewed REWORK because tests used handwritten SQL and did not exercise MyBatis adapters/CAS. Attempt 13 replaces those tests with adapter-facing integration tests. Attempt 14 fixes the migration identity fixture by reconnecting as claims_migration after Liquibase closure; independent rereview pending. Attempt 14 standalone test patch passed independent source review-15 and was integrated; runtime PostgreSQL checks remain blocked/NOT_RUN. Latest current integrated-source suite: 42 tests pass, 0 failures/errors/skips; focused ClaimAuditAspectTest passes 3/3. Independent review-17 closes the proxy advice caveat, with fake-repository and runtime/database limitations retained. Overall coverage is 59.76% line / 45.45% branch, below gates. Task remains running pending scenario, coverage, migration, runtime, and acceptance evidence.",
+      "contract_version": "CH14-Contracts-v1+AD-01",
+      "base_source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+      "current_attempt": "14",
+      "packet_path": "rules/workflow/artifacts/T02/14/TASK-PACKET.md",
+      "base_file_hashes": {
+        "pom.xml": "77c01166431574c2c46c1c5c29ad6a53bc0937949d5f672bffb66f16bfc1a6a8",
+        "src/main/resources/application.yml": "330b8eb6efb6ef9839869265739dc6a1d93e87646d4569e6eecb1d4f87cfabb6",
+        "src/main/resources/db/changelog/changes/001-initial-schema.sql": "f332f5d990d16e5c22412ff5430a0a638e094727139922c3a3335413c7c927bc",
+        "src/main/resources/db/changelog/db.changelog-master.yml": "aa10a66465cabd11efb2f1043e0343a84c2371449f89a1714d30d01b2cf5a7f7",
+        "docs/challenge-14/CONTRACTS.md": "f64a027ac12c3a8f41e2ab528b72e6c41e3945a76f0652673e0c569d088d7c83",
+        "docs/challenge-14/FACTS-AND-PERSISTENCE.md": "934134482c3ceb375b21300b04ba7312f2ed64b150ecda64901401f4d439f6cb"
+      }
+    },
+    {
+      "id": "T03",
+      "title": "Docker packaging and environment contract",
+      "role": "worker",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "medium",
+      "status": "blocked",
+      "depends_on": [
+        "T00",
+        "T02"
+      ],
+      "allowed_paths": [
+        "docker/Dockerfile",
+        "docker/compose.yml",
+        "docker/initdb/",
+        "scripts/setup.sh",
+        "scripts/smoke.sh",
+        ".env.example"
+      ],
+      "verification": [
+        "docker compose --env-file .env.example -f docker/compose.yml config --quiet"
+      ],
+      "case_ids": [
+        "C14-28"
+      ],
+      "acceptance": [
+        "Dockerfile/Compose/environment schema align with frozen jar, port, health and migration contracts",
+        "Compose syntax validates using demonstrably dummy env values; full runtime smoke deferred to T06",
+        "No production secret committed; Docker healthchecks and durable DB volume documented in package comments"
+      ],
+      "evidence": [
+        {
+          "command": "docker compose --env-file .env.example -f docker/compose.yml config --quiet",
+          "exit_code": 0,
+          "source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+          "artifact": "reports/verification/T03-compose-static.json",
+          "result": "PASS",
+          "deployment_hash": "05d7701d4c2b3c2289644a7febc45dbced576a41d92ded72d611e6074c10c66f"
+        },
+        {
+          "command": "bash -n scripts/setup.sh scripts/smoke.sh",
+          "exit_code": 0,
+          "source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+          "artifact": "reports/verification/T03-compose-static.json",
+          "result": "PASS",
+          "deployment_hash": "05d7701d4c2b3c2289644a7febc45dbced576a41d92ded72d611e6074c10c66f"
+        }
+      ],
+      "notes": "Consumes CH14-Contracts-v1 and current application.yml read-only. Compose database roles are claims_migration and claims_runtime with separate credentials; runtime checks require Docker daemon access. New attempt starts at 05; prior drafts are unverified. Review confirmed the init-script grant exposure is fixed; application DML permissions depend on T02 changeset 002, which is not yet integrated. Scoped rereview confirms init grant finding P1 addressed; still depends on T02 explicit per-table privileges and migration integration before acceptance.",
+      "contract_version": "CH14-Contracts-v1",
+      "base_source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+      "current_attempt": "05",
+      "packet_path": "rules/workflow/artifacts/T03/05/TASK-PACKET.md",
+      "base_file_hashes": {
+        "pom.xml": "77c01166431574c2c46c1c5c29ad6a53bc0937949d5f672bffb66f16bfc1a6a8",
+        "src/main/resources/application.yml": "3e3af32ea37aae2591927ab6e4e718ac8f3503a04bb36f5ca20c440992622574",
+        "src/main/resources/config/workflow.yml": "53a7ba8b87618cef629102ec8183345964196081a00e8ce4fb2085e6aafc1908",
+        "src/main/resources/db/changelog/changes/001-initial-schema.sql": "f332f5d990d16e5c22412ff5430a0a638e094727139922c3a3335413c7c927bc",
+        "docs/challenge-14/CONTRACTS.md": "77eb655cd9afd38454f467930be37cd177b9a17ed32c6d4814a431694de64e51"
+      }
+    },
+    {
+      "id": "T04",
+      "title": "Transactional use cases, identity and mock effects",
+      "role": "worker",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "medium",
+      "status": "running",
+      "depends_on": [
+        "T01",
+        "T02"
+      ],
+      "allowed_paths": [
+        "src/main/java/com/papaya/claims/claim/service/ClaimServiceImpl.java",
+        "src/main/java/com/papaya/claims/security/",
+        "src/main/java/com/papaya/claims/observability/",
+        "src/main/java/com/papaya/claims/audit/",
+        "src/main/java/com/papaya/claims/config/WorkflowConfiguration.java",
+        "src/test/java/com/papaya/claims/claim/service/",
+        "src/test/java/com/papaya/claims/security/RoleAuthorizationTest.java",
+        "src/test/java/com/papaya/claims/security/SecurityConfigurationTest.java",
+        "src/test/java/com/papaya/claims/observability/TraceContextFilterTest.java",
+        "src/test/java/com/papaya/claims/audit/AuditableAspectTest.java",
+        "src/test/java/com/papaya/claims/claim/service/TransitionAtomicityIT.java",
+        "src/test/java/com/papaya/claims/claim/service/TransitionConcurrencyIT.java"
+      ],
+      "verification": [
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=ClaimServiceTest,RoleAuthorizationTest,SecurityConfigurationTest,TraceContextFilterTest,AuditableAspectTest test",
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dit.test=TransitionAtomicityIT,TransitionConcurrencyIT verify"
+      ],
+      "case_ids": [
+        "C14-06",
+        "C14-12",
+        "C14-18",
+        "C14-19",
+        "C14-20",
+        "C14-21",
+        "C14-25",
+        "C14-29"
+      ],
+      "acceptance": [
+        "Principal-derived actor and protected system identity; guards consume trusted facts",
+        "Claim+audit+payment+outbox atomic and optimistic version/idempotency guarded",
+        "After-commit dispatch logs mock effects; retry state observable; tracing context and CSRF contract implemented"
+      ],
+      "evidence": [],
+      "notes": "Consumes accepted T01 and T02 interfaces. Does not edit frozen ClaimUseCases or shared YAML/POM/application config; system-audit table and mapper implementation are owned by T02."
+    },
+    {
+      "id": "T05",
+      "title": "REST error mapping and web interface",
+      "role": "worker",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "medium",
+      "status": "running",
+      "depends_on": [
+        "T04"
+      ],
+      "allowed_paths": [
+        "src/main/java/com/papaya/claims/claim/api/ClaimController.java",
+        "src/main/java/com/papaya/claims/common/web/",
+        "src/main/resources/static/",
+        "src/test/java/com/papaya/claims/claim/api/ClaimControllerTest.java",
+        "src/test/java/com/papaya/claims/common/web/"
+      ],
+      "verification": [
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=ClaimControllerTest,GlobalExceptionHandlerTest,WebInterfaceTest,WebSecurityTest test"
+      ],
+      "case_ids": [
+        "C14-25",
+        "C14-26",
+        "C14-27",
+        "C14-29"
+      ],
+      "acceptance": [
+        "Web UI shows state, configured transitions/roles/guard failures and audit and advances claims",
+        "Safe BusinessException advice maps stable errors; actor spoofing rejected; authenticated mutations honor CSRF",
+        "UI consumes state data dynamically and escapes user text; no hardcoded fixed state list"
+      ],
+      "evidence": [],
+      "notes": "Consumes frozen DTO/OpenAPI/use-case contracts. Uses ClaimUseCases; does not edit claim/api/dto (T00-owned) or application config."
+    },
+    {
+      "id": "T06",
+      "title": "End-to-end scenarios and independent acceptance tests",
+      "role": "worker",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "medium",
+      "status": "planned",
+      "depends_on": [
+        "T03",
+        "T05",
+        "T09",
+        "T10"
+      ],
+      "allowed_paths": [
+        "src/test/java/com/papaya/claims/acceptance/scenario/",
+        "src/test/resources/acceptance/",
+        "scripts/run-scenarios.sh"
+      ],
+      "verification": [
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Pquality clean verify",
+        "bash scripts/setup.sh",
+        "bash scripts/smoke.sh",
+        "bash scripts/run-scenarios.sh"
+      ],
+      "case_ids": [
+        "C14-02",
+        "C14-03",
+        "C14-04",
+        "C14-05",
+        "C14-15",
+        "C14-16",
+        "C14-20",
+        "C14-21",
+        "C14-22",
+        "C14-27",
+        "C14-28"
+      ],
+      "acceptance": [
+        "Five required scenarios and additional guard/cycle/config/race cases assert real outcomes and audit",
+        "At least 15 meaningful tests with coverage gates on final source; real PostgreSQL evidence",
+        "Scenario scripts export actual claim/audit results and config-extension diff; coordinator runs commands"
+      ],
+      "evidence": [],
+      "notes": "Scenario acceptance tests and runner only. Docs and evidence reports are coordinator-owned; tests use actual PostgreSQL where required."
+    },
+    {
+      "id": "T07",
+      "title": "Independent final review of integrated application",
+      "role": "reviewer",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "medium",
+      "status": "planned",
+      "depends_on": [
+        "T06",
+        "T11",
+        "T12"
+      ],
+      "allowed_paths": [],
+      "verification": [
+        "Read source, diff, requirement matrix, JUnit/JaCoCo/scenario/Docker outputs without running builds"
+      ],
+      "case_ids": [
+        "C14-01",
+        "C14-02",
+        "C14-03",
+        "C14-04",
+        "C14-05",
+        "C14-06",
+        "C14-07",
+        "C14-08",
+        "C14-09",
+        "C14-10",
+        "C14-11",
+        "C14-12",
+        "C14-13",
+        "C14-14",
+        "C14-15",
+        "C14-16",
+        "C14-17",
+        "C14-18",
+        "C14-19",
+        "C14-20",
+        "C14-21",
+        "C14-22",
+        "C14-23",
+        "C14-24",
+        "C14-25",
+        "C14-26",
+        "C14-27",
+        "C14-28",
+        "C14-29"
+      ],
+      "acceptance": [
+        "Fresh reviewer is different from implementation authors and checks every requirement plus design/security/concurrency",
+        "Return findings and PASS/FAIL/BLOCKED; coordinator resolves findings and reruns affected checks before acceptance"
+      ],
+      "evidence": [],
+      "notes": "Independent read-only final reviewer; evidence returned to coordinator in task artifact directory."
+    },
+    {
+      "id": "T08",
+      "title": "Final verification evidence and submission package",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "running",
+      "depends_on": [
+        "T07"
+      ],
+      "allowed_paths": [
+        "README.md",
+        "docs/CHANGELOG.md",
+        "docs/HISTORY.md",
+        "docs/architecture/README.md",
+        "docs/architecture/images/",
+        "docs/challenge-14/",
+        "docs/operations/README.md",
+        "docs/testing/README.md",
+        "docs/submission/",
+        "postman/",
+        "history/",
+        "reports/"
+      ],
+      "verification": [
+        "mvn -B -Pquality clean verify",
+        "bash scripts/smoke.sh",
+        "bash scripts/run-scenarios.sh",
+        "agent-memory rebuild"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "Final reports tied to source hashes and actual command exit codes; no fabricated metrics",
+        "README, dated technical history, changelog, config-only diff and raw AI conversation ready",
+        "User can review package locally; publish to GitHub only under explicit user authorization"
+      ],
+      "evidence": [
+        {
+          "artifact": "README.md",
+          "result": "DOCUMENTATION_CREATED",
+          "source_hash": "900ac547584e85a54115a7abfcd767cba440d631be0e3c6a56a0aa645045ae32"
+        }
+      ],
+      "notes": "Coordinator-owned final documentation and submission work. OpenAPI remains frozen by T00 unless a reviewed coordinator contract change is required. Includes editable architecture/workflow diagrams plus exports and reproducible 100/500-client JMeter plans. No publishing or push. Root README and final verification status have been written; scenario suite, acceptance gates, independent final integrated review, and runtime checks remain incomplete."
+    },
+    {
+      "id": "T09",
+      "title": "Foundation boundary and malformed-input coverage",
+      "role": "worker",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "medium",
+      "status": "planned",
+      "depends_on": [
+        "T01",
+        "T02"
+      ],
+      "allowed_paths": [
+        "src/test/java/com/papaya/claims/acceptance/boundary/foundation/"
+      ],
+      "verification": [
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=FoundationBoundaryTest test",
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dit.test=PersistenceBoundaryIT verify"
+      ],
+      "case_ids": [
+        "C14-01",
+        "C14-07",
+        "C14-10",
+        "C14-16",
+        "C14-17",
+        "C14-22",
+        "C14-23",
+        "C14-24"
+      ],
+      "acceptance": [
+        "Cover actual missed fail-closed config/domain/numeric/time/immutability branches with meaningful assertions",
+        "Verify missing/list/delivered repository paths on real PostgreSQL; no replacement of SQL evidence by mocks",
+        "Preserve coverage gate integrity and existing tests"
+      ],
+      "evidence": [],
+      "notes": "Test-only foundation boundary coverage in a unique package; no production code or overlap with workflow/persistence owner tests."
+    },
+    {
+      "id": "T10",
+      "title": "Application validation and infrastructure boundary regressions",
+      "role": "worker",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "medium",
+      "status": "planned",
+      "depends_on": [
+        "T04"
+      ],
+      "allowed_paths": [
+        "src/test/java/com/papaya/claims/acceptance/boundary/application/"
+      ],
+      "verification": [
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=ApplicationBoundaryTest test"
+      ],
+      "case_ids": [
+        "C14-06",
+        "C14-18",
+        "C14-19",
+        "C14-21",
+        "C14-25",
+        "C14-29"
+      ],
+      "acceptance": [
+        "Meaningful valid/invalid lifecycle, money, role, value and missing-resource tests with stable assertions",
+        "Actual tracing and dispatcher failure/context boundary tests; no production coverage exclusions"
+      ],
+      "evidence": [],
+      "notes": "Test-only application, security, tracing, and dispatcher boundary regressions in a unique package."
+    },
+    {
+      "id": "T11",
+      "title": "Coverage-gap and validation-control-flow regression tests",
+      "role": "worker",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "medium",
+      "status": "planned",
+      "depends_on": [
+        "T01",
+        "T04"
+      ],
+      "allowed_paths": [
+        "src/test/java/com/papaya/claims/acceptance/boundary/coverage/"
+      ],
+      "verification": [
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=ValidationControlFlowTest test"
+      ],
+      "case_ids": [
+        "C14-01",
+        "C14-06",
+        "C14-23"
+      ],
+      "acceptance": [
+        "Preserve validation codes/messages/order and make abrupt failure explicit in Java control flow",
+        "Add meaningful missing malformed-config and service boundary cases; retain95/90 gates"
+      ],
+      "evidence": [],
+      "notes": "Test-only branch-coverage gap suite. Any needed production correction is proposed to the coordinator and routed through the owning task; no overlapping source edits."
+    },
+    {
+      "id": "T12",
+      "title": "Exact-decimal JSON and payment persistence regression tests",
+      "role": "worker",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "medium",
+      "status": "planned",
+      "depends_on": [
+        "T02",
+        "T05"
+      ],
+      "allowed_paths": [
+        "src/test/java/com/papaya/claims/acceptance/money/"
+      ],
+      "verification": [
+        "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dit.test=PersistenceMoneyIT verify"
+      ],
+      "case_ids": [
+        "C14-10",
+        "C14-21"
+      ],
+      "acceptance": [
+        "JSONB and receipt fact decimals remain exact BigDecimal across real PostgreSQL round trips",
+        "Near-limit financial approval rejects excess one cent and accepts equal amount; no threshold/gate exclusions"
+      ],
+      "evidence": [],
+      "notes": "Test-only PostgreSQL decimal round-trip, JSON serialization and near-limit approval regression coverage; implementation remains with T02/T05 owners."
+    }
+  ]
+}

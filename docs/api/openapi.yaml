@@ -1,0 +1,287 @@
+openapi: 3.1.0
+info:
+  title: Claims Workflow API
+  version: 1.0.0
+  description: Secured single-service claims workflow API. Correlation IDs use X-Correlation-ID and are separate from tracing identifiers.
+servers:
+  - url: http://localhost:8080/api/v1
+security:
+  - basicAuth: []
+paths:
+  /claims:
+    get:
+      summary: List visible claims
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Paged claims visible to the authenticated actor
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClaimPage' }
+        '401': { $ref: '#/components/responses/Error' }
+    post:
+      summary: Create a claim
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateClaimRequest' }
+      responses:
+        '201':
+          description: Claim created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Claim' }
+        '409': { $ref: '#/components/responses/Error' }
+  /claims/{claimId}:
+    parameters:
+      - $ref: '#/components/parameters/ClaimId'
+    get:
+      summary: Get a claim
+      responses:
+        '200':
+          description: Claim details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Claim' }
+        '404': { $ref: '#/components/responses/Error' }
+  /claims/{claimId}/facts:
+    parameters:
+      - $ref: '#/components/parameters/ClaimId'
+    put:
+      summary: Replace permitted claim facts
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateFactsRequest' }
+      responses:
+        '200':
+          description: Updated claim
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Claim' }
+        '409': { $ref: '#/components/responses/Error' }
+  /claims/{claimId}/transitions:
+    parameters:
+      - $ref: '#/components/parameters/ClaimId'
+    get:
+      summary: List configured transitions and current guard/role availability
+      responses:
+        '200':
+          description: Configured transitions for the claim's current state
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/WorkflowOption' } }
+    post:
+      summary: Execute a human-authorized configured transition
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TransitionRequest' }
+      responses:
+        '200':
+          description: Transition outcome containing the resulting claim, audit record, and replay status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TransitionResult' }
+        '409': { $ref: '#/components/responses/Error' }
+  /claims/{claimId}/rejection-acknowledgement:
+    parameters:
+      - $ref: '#/components/parameters/ClaimId'
+    post:
+      summary: Acknowledge a rejected claim as its owner member
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AcknowledgeRejectionRequest' }
+      responses:
+        '200':
+          description: Versioned claim with server-stamped acknowledgment
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Claim' }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /claims/{claimId}/system-transitions:
+    parameters:
+      - $ref: '#/components/parameters/ClaimId'
+    post:
+      summary: Execute a protected system transition
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TransitionRequest' }
+      responses:
+        '200':
+          description: Transition outcome containing the resulting claim, audit record, and replay status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TransitionResult' }
+        '403': { $ref: '#/components/responses/Error' }
+  /claims/{claimId}/audit:
+    parameters:
+      - $ref: '#/components/parameters/ClaimId'
+    get:
+      summary: Read paged immutable claim transition history
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Ordered audit history
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuditPage' }
+components:
+  securitySchemes:
+    basicAuth: { type: http, scheme: basic }
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 0, default: 0 }
+    Size:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      schema: { type: string, maxLength: 128, pattern: '^[A-Za-z0-9._:-]+$' }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 128 }
+    ClaimId:
+      name: claimId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    PageMetadata:
+      type: object
+      required: [items, total, page, size, totalPages]
+      properties:
+        items: { type: array, items: {} }
+        total: { type: integer, format: int64 }
+        page: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 100 }
+        totalPages: { type: integer, minimum: 0 }
+    ClaimPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMetadata'
+        - type: object
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/Claim' } }
+    AuditPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMetadata'
+        - type: object
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/AuditEntry' } }
+    Claim:
+      type: object
+      required: [id, state, policyLimit, currency, version, facts, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        state: { type: string }
+        policyLimit: { type: number, minimum: 0, maximum: 9999999999999999.99, multipleOf: 0.01 }
+        currency: { type: string, pattern: '^[A-Z]{3}$' }
+        version: { type: integer, format: int64 }
+        facts: { type: object, additionalProperties: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    AuditEntry:
+      type: object
+      required: [id, sequence, timestamp, toState, actorId, role, reason, correlationId]
+      properties:
+        id: { type: string, format: uuid }
+        sequence: { type: integer, format: int64, minimum: 0 }
+        timestamp: { type: string, format: date-time }
+        fromState: { type: string }
+        toState: { type: string }
+        actorId: { type: string }
+        role: { type: string }
+        reason: { type: string }
+        correlationId: { type: string }
+    CreateClaimRequest:
+      type: object
+      required: [policyLimit, currency, facts]
+      properties:
+        policyLimit: { type: number, minimum: 0, maximum: 9999999999999999.99, multipleOf: 0.01 }
+        currency: { type: string, pattern: '^[A-Z]{3}$' }
+        facts: { type: object, maxProperties: 100, additionalProperties: true }
+    UpdateFactsRequest:
+      type: object
+      required: [expectedVersion, facts]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        facts: { type: object, maxProperties: 100, additionalProperties: true }
+    TransitionRequest:
+      type: object
+      required: [targetState, expectedVersion, facts]
+      properties:
+        targetState: { type: string, maxLength: 80 }
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+        reason: { type: string, maxLength: 2000 }
+        facts: { type: object, maxProperties: 100, additionalProperties: true }
+    TransitionResult:
+      type: object
+      required: [claim, audit, replayed]
+      properties:
+        claim: { $ref: '#/components/schemas/Claim' }
+        audit: { $ref: '#/components/schemas/AuditEntry' }
+        replayed: { type: boolean }
+    WorkflowOption:
+      type: object
+      required: [transitionId, from, to, authorizedRoles, available, failures, effects]
+      properties:
+        transitionId: { type: string }
+        from: { type: string }
+        to: { type: string }
+        authorizedRoles: { type: array, items: { type: string } }
+        available: { type: boolean }
+        failures: { type: array, items: { type: string } }
+        effects: { type: array, items: { type: string } }
+    AcknowledgeRejectionRequest:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, format: int64, minimum: 0 }
+  responses:
+    Error:
+      description: Stable error envelope
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message, correlationId]
+            properties:
+              code: { type: string }
+              message: { type: string }
+              details: { type: array, items: { type: string } }
+              correlationId: { type: string }
