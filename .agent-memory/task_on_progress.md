@@ -10,11 +10,10 @@ in_progress
 
 ## Current step
 
-Validate final reporting package and commit verified evidence on develop
+REQ-017 evidence committed; acceptance gates remain open
 
 ## Completed
 
-- [x] Repeated default stress: P95 917ms, P99 1077ms, errors 0%; preserved diagnostic output.
 - [x] Ran temporary Hikari-40 and Tomcat-500 stress variants; both worsened throughput and latency. Independent reviewer advises against tuning and warns these sequential runs on evolving database state do not prove cause.
 - [x] Restored documented app defaults; health check passes.
 - [x] Refreshed local Codex export to 65 sessions/8,483 accessible records; all transcript hashes and path containment verify. Ledger has 101 rows/60 interaction IDs; host-managed raw payloads remain NOT_CAPTURED.
@@ -26,15 +25,15 @@ Validate final reporting package and commit verified evidence on develop
 - [x] T15 independent rereview found that 29/29 run trace context had no correlated exported collector spans; earlier trace evidence was from a different run
 - [x] Independent T15 review 04 accepted the reporting task; no documentation findings remain. Latest inventory export has 65 sessions/8,483 records and all transcript hashes validate.
 - [x] Synchronized final audit to 65 sessions/8,483 records and 101 ledger rows/60 IDs; marked T15 accepted after independent review 04 while retaining project NOT_ACCEPTED blockers; updated changelogs, dated requirement history, and progress mirrors
+- [x] Committed reporting, performance evidence, latest local audit export, and T15 rereview to develop at 70aa7d8. Workflow validator and artifact parsing passed after commit; working tree was clean.
 
 ## Next exact step
 
-Run workflow validator, JSON/evidence integrity checks, and diff review before a documentation-only commit
+Obtain a controlled same-data benchmark environment and supported host-managed LLM payload export or policy decision; rerun failed gates before any acceptance or merge.
 
 ## Blockers
 
-- Approved performance threshold: official stress P95 564 ms exceeds 500 ms; controlled same-data benchmark and safe remediation remain unresolved.
-- Mandatory host-managed raw LLM request/response payload capture remains NOT_CAPTURED; host exposes only partial session records. No waiver.
+- JMeter stress P95 564 ms exceeds approved 500 ms; host-managed raw LLM payloads remain NOT_CAPTURED and full audit is mandatory.
 
 ## Known constraints
 
@@ -57,6 +56,6 @@ python3 -m json.tool reports/verification/REQ-017-requirement-matrix.json
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-17T06:46:44Z
+- Updated (UTC): 2026-10-17T06:49:11Z
 - Branch: `develop`
-- Commit: `0435e1b`
+- Commit: `70aa7d8`
