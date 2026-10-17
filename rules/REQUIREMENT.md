@@ -453,3 +453,13 @@ T15's reporting task was independently accepted on rereview 04 after correcting 
 - Status: accepted with local performance exception after independent review-03 PASS; merged locally into existing `main` as 18f97aa9c8296fdc107a02192aa4e8e62dd45d78; no push.
 - Supersedes: only the prior requirement for full raw-payload completeness as an acceptance gate is revised to proof-of-work; inaccessible payloads remain honestly `NOT_CAPTURED`. Prior observed JMeter stress FAIL remains immutable history; REQ-020 evidence-based local exception classification is accepted after independent review.
 - Disposition: measured shared-host CPU saturation supports `HARDWARE_CONSTRAINED` under the revised local policy; original P95 failure (564 ms) remains unchanged and production performance remains unverified. Accessible transcript proof-of-work passes with a disclosed active-source growth qualification; raw host payload completeness remains PARTIAL/NOT_CAPTURED. A logged 127+9 Maven regression and 18-task workflow validation pass. Final acceptance is granted as `ACCEPTED_WITH_PERFORMANCE_EXCEPTION` after independent review-03 PASS. The project is `ACCEPTED_WITH_PERFORMANCE_EXCEPTION`; `develop` merged locally into existing `main` at 18f97aa9c8296fdc107a02192aa4e8e62dd45d78; no push.
+
+
+## REQ-20261017-021 — Synchronize accepted history and verify repository (2026-10-17)
+
+- Source: PROMPT-20261017-021 verbatim in `docs/submission/user-prompts.jsonl`.
+- Request: synchronize `develop` and `main` with the accepted application history and verify repository state at `https://github.com/7ringuy4n/ai-challenge-14`.
+- Safety: preserve all local and remote history; inspect remote refs before attempting updates; never force-push or discard the untracked `codex-logs.zip`. If remote inspection cannot establish safe ancestry, leave remote untouched and report the exact blocker.
+- Acceptance: both local branch heads contain the accepted merge and closeout; the remote repository refs and resulting commits are checked when network/authentication permits; workflow validation and worktree status are recorded.
+- Scope: Git and evidence synchronization only; no application source behavior change.
+- Status: in progress.

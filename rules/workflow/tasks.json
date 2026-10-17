@@ -1154,6 +1154,52 @@
         "reports/verification/REQ-020/git-evidence.md"
       ],
       "notes": "Accepted with performance exception after independent review-03 PASS. Local merge succeeded: main merge commit 18f97aa9c8296fdc107a02192aa4e8e62dd45d78 has baseline parent 521cb1427f910ebbd01129cc1a950c55b899ee87 and accepted develop parent 730ca6fd6569a451a286b189f9dd69893d26c197. No push. A post-merge evidence-only commit records final inventory and clean-tree verification."
+    },
+    {
+      "id": "T18",
+      "title": "Synchronize accepted branches and verify GitHub repository state",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "blocked",
+      "depends_on": [
+        "T17"
+      ],
+      "allowed_paths": [
+        "rules/REQUIREMENT.md",
+        "rules/workflow/tasks.json",
+        "reports/verification/REQ-020/",
+        "reports/verification/REQ-017-requirement-matrix.json",
+        "reports/acceptance/FINAL-ACCEPTANCE.md",
+        "docs/CHANGELOG.md",
+        "docs/HISTORY.md",
+        "history/CHANGELOG.md",
+        "history/task_on_progress.md",
+        ".agent-memory/"
+      ],
+      "verification": [
+        "git status --short --branch",
+        "git branch -avv",
+        "git merge-base --is-ancestor develop main",
+        "git ls-remote --heads origin main develop",
+        "python3 scripts/workflow/verify_workflow.py"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "Local develop and main both contain accepted history, without rewriting prior commits",
+        "Remote refs are inspected before any remote write; no force-push or history overwrite",
+        "Repository verification evidence records exact refs, commands, timestamp, and any access blocker",
+        "Untracked user data remains untouched"
+      ],
+      "evidence": [
+        {
+          "command": "git merge-base --is-ancestor develop main; git switch develop; git merge --ff-only main; final branch and workflow checks (see reports/verification/REQ-021/repository-check.md)",
+          "result": "BLOCKED_PENDING_LOCAL_SYNC",
+          "artifact": "reports/verification/REQ-021/repository-check.md",
+          "source_hash": "f76b13232b0e4303c58c6c0b05c3bf02cf44576e"
+        }
+      ],
+      "notes": "Remote GitHub branch state could not be verified (DNS resolution failure, web cache miss, browser timeout). Complete safe local fast-forward synchronization, then record local verification. Remote writes are NOT_RUN until ancestry is verifiable."
     }
   ]
 }

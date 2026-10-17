@@ -295,6 +295,12 @@
       "status": "COMPLETED",
       "merge_commit": "18f97aa9c8296fdc107a02192aa4e8e62dd45d78",
       "post_merge_evidence_commit": "d0fd9dd"
+    },
+    {
+      "action": "Synchronize local develop/main and verify GitHub refs under REQ-021",
+      "status": "IN_PROGRESS",
+      "remote_update": "NOT_RUN_PENDING_VERIFIABLE_REMOTE_REFS",
+      "evidence": "reports/verification/REQ-021/repository-check.md"
     }
   ]
 }
