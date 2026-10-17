@@ -370,3 +370,13 @@ A broader non-root search found Java 21.0.12.1 at `/home/tringuyen/.local/java/j
 - Status: in progress.
 - Supersedes: none.
 - Disposition: remote state must be distinguished from a failed network/auth request; if the repository has no existing history, establish a minimal planning/contract baseline on `main`, then continue implementation from it on `develop` while preserving all current files on a recoverable snapshot ref.
+
+
+## REQ-20261017-014 — 2026-10-17
+
+- Source: PROMPT-20261017-014 in `docs/submission/user-prompts.jsonl`.
+- Scope: resolve Git baseline safely and continue claims workflow implementation, meaningful coverage, PostgreSQL verification, independent review, and synchronized evidence.
+- Acceptance: implementation remains on `develop`; do not discard work or merge unfinished code into `main`; meet 95% line / 90% branch coverage, complete database/startup/scenario verification, and independent review before any acceptance.
+- Status: in progress.
+- Supersedes: none.
+- Disposition: the empty remote was preserved as evidence; planning/contracts-only main baseline `521cb1427f910ebbd01129cc1a950c55b899ee87` was initialized and `develop` continues from it. The final clean quality run passed 120 unit and 9 PostgreSQL/Testcontainers tests, applied all five Liquibase changesets, and measured 97.3799% line / 90.1478% branch coverage. Repeat Compose startup, authenticated smoke, and the 20-case live API workflow passed. Independent review found no remaining critical/high finding after the coordinator fixed and rereviewed a CAS test race. Preserve review raw payload limitations as `NOT_CAPTURED` / `PARTIAL`; JMeter 100/500-client runs and a single end-to-end run of the entire 29-case matrix are still `NOT_RUN`. Work remains in progress and is not accepted or complete.

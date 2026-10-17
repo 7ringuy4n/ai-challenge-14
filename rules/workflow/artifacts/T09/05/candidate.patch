@@ -1,0 +1,14 @@
+diff --git a/src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java b/src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java
+--- a/src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java
++++ b/src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java
+@@ -39,8 +39,9 @@ class WorkflowValidationTest {
+     void rejectsUnknownFieldsMalformedYamlAndEmptyDocuments() throws Exception {
+         rejects("unknown.yml", valid() + "surprise: true\n", "Unrecognized field");
+         rejects("malformed.yml", "version: [\n", "invalid workflow configuration");
+-        rejects("empty.yml", "", "document is empty");
++        rejects("empty.yml", "", "No content to map");
++        rejects("null.yml", "null\n", "document is empty");
+     }
+ 
+     @Test
+     void rejectsBlankRequiredFieldsAndEmptyStateCollections() throws Exception {

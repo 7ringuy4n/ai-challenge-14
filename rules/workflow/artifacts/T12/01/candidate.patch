@@ -1,0 +1,140 @@
+diff --git a/src/main/java/com/papaya/claims/persistence/PersistenceJson.java b/src/main/java/com/papaya/claims/persistence/PersistenceJson.java
+index 6c4cb10..61adbad 100644
+--- a/src/main/java/com/papaya/claims/persistence/PersistenceJson.java
++++ b/src/main/java/com/papaya/claims/persistence/PersistenceJson.java
+@@ -2,6 +2,7 @@ package com.papaya.claims.persistence;
+ 
+ import com.fasterxml.jackson.core.JsonProcessingException;
+ import com.fasterxml.jackson.core.type.TypeReference;
++import com.fasterxml.jackson.databind.DeserializationFeature;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+ import com.papaya.claims.contract.Model.AuditEntry;
+ import com.papaya.claims.contract.Model.ClaimSnapshot;
+@@ -25,7 +26,9 @@ final class PersistenceJson {
+ 
+     static Map<String, Object> readMap(ObjectMapper mapper, String value) {
+         try {
+-            return mapper.readValue(value, FACT_MAP);
++            return mapper.readerFor(FACT_MAP)
++                    .with(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
++                    .readValue(value);
+         } catch (Exception error) {
+             throw new IllegalStateException("Unable to decode persistence JSON", error);
+         }
+@@ -54,7 +57,9 @@ final class PersistenceJson {
+ 
+     static CommandReceipt receipt(ObjectMapper mapper, String json) {
+         try {
+-            return mapper.readValue(json, CommandReceipt.class);
++            return mapper.readerFor(CommandReceipt.class)
++                    .with(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
++                    .readValue(json);
+         } catch (Exception error) {
+             throw new IllegalStateException("Unable to decode command receipt", error);
+         }
+diff --git a/src/test/java/com/papaya/claims/persistence/PersistenceMoneyIT.java b/src/test/java/com/papaya/claims/persistence/PersistenceMoneyIT.java
+new file mode 100644
+index 0000000..0e88192
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/persistence/PersistenceMoneyIT.java
+@@ -0,0 +1,100 @@
++package com.papaya.claims.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++
++import com.papaya.claims.application.ClaimService;
++import com.papaya.claims.contract.Model.Actor;
++import com.papaya.claims.contract.Model.ClaimSnapshot;
++import com.papaya.claims.contract.Model.CommandReceipt;
++import com.papaya.claims.contract.Model.TransitionCommand;
++import com.papaya.claims.contract.BusinessException;
++import com.papaya.claims.engine.ConfiguredWorkflowEngine;
++import com.papaya.claims.engine.WorkflowLoader;
++import java.math.BigDecimal;
++import java.nio.file.Path;
++import java.time.Clock;
++import java.util.List;
++import java.util.Map;
++import java.util.UUID;
++import org.junit.jupiter.api.BeforeAll;
++import org.junit.jupiter.api.Test;
++import org.testcontainers.containers.PostgreSQLContainer;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++
++@Testcontainers(disabledWithoutDocker = false)
++class PersistenceMoneyIT {
++    private static final BigDecimal LIMIT = new BigDecimal("90071992547409.93");
++    private static final BigDecimal ONE_CENT_OVER = new BigDecimal("90071992547409.94");
++    private static final BigDecimal ONE_CENT_UNDER = new BigDecimal("90071992547409.92");
++
++    @Container
++    static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
++            .withDatabaseName("claims")
++            .withUsername("postgres")
++            .withPassword("integration-test-password");
++
++    private static PostgresPersistenceSupport.Harness harness;
++    private static ClaimService service;
++
++    @BeforeAll
++    static void setup() throws Exception {
++        harness = PostgresPersistenceSupport.start(postgres);
++        service = new ClaimService(
++                harness.claims(), harness.audits(), harness.commands(), harness.effects(),
++                new ConfiguredWorkflowEngine(WorkflowLoader.load(Path.of("config/workflow.yml"))),
++                harness.transactions(), Clock.systemUTC(), new MockEffectFactory(harness.json()), harness.json());
++    }
++
++    @Test
++    void jsonbFactsAndReceiptSnapshotRetainExactDecimalsAndApprovalGuardUsesThem() {
++        ClaimSnapshot equal = assessment(LIMIT);
++        harness.claims().insert(equal);
++
++        ClaimSnapshot persisted = harness.claims().find(equal.id()).orElseThrow();
++        assertThat(persisted.facts().get("assessmentAmount"))
++                .isInstanceOf(BigDecimal.class)
++                .isEqualTo(LIMIT);
++        assertThat(persisted.facts().get("policyLimit"))
++                .isInstanceOf(BigDecimal.class)
++                .isEqualTo(LIMIT);
++
++        var approved = service.transition(new Actor("assessor", "assessor"), equal.id(),
++                new TransitionCommand("APPROVED", 0, "money-equal", "exact policy limit"));
++        assertThat(approved.state()).isEqualTo("APPROVED");
++        assertThat(approved.facts().get("assessmentAmount")).isEqualTo(LIMIT);
++
++        CommandReceipt receipt = harness.commands().find(equal.id(), "assessor", "money-equal").orElseThrow();
++        assertThat(receipt.result()).isEqualTo(approved);
++        assertThat(receipt.result().facts().get("assessmentAmount"))
++                .isInstanceOf(BigDecimal.class)
++                .isEqualTo(LIMIT);
++
++        ClaimSnapshot over = assessment(ONE_CENT_OVER);
++        harness.claims().insert(over);
++        assertThatThrownBy(() -> service.transition(new Actor("assessor", "assessor"), over.id(),
++                new TransitionCommand("APPROVED", 0, "money-over", "one cent over")))
++                .isInstanceOfSatisfying(BusinessException.class, error -> assertThat(error.code()).isEqualTo("GUARD_FAILED"));
++        assertThat(harness.claims().find(over.id()).orElseThrow().state()).isEqualTo("UNDER_ASSESSMENT");
++
++        ClaimSnapshot under = assessment(ONE_CENT_UNDER);
++        harness.claims().insert(under);
++        var approvedUnder = service.transition(new Actor("assessor", "assessor"), under.id(),
++                new TransitionCommand("APPROVED", 0, "money-under", "one cent under"));
++        assertThat(approvedUnder.state()).isEqualTo("APPROVED");
++        assertThat(approvedUnder.facts().get("assessmentAmount")).isEqualTo(ONE_CENT_UNDER);
++    }
++
++    private ClaimSnapshot assessment(BigDecimal amount) {
++        Map<String, Object> facts = Map.of(
++                "requiredDocuments", List.of("receipt"),
++                "documents", Map.of("receipt", true),
++                "reportComplete", true,
++                "assessmentAmount", amount,
++                "assessmentCurrency", "USD",
++                "policyLimit", LIMIT);
++        return new ClaimSnapshot(UUID.randomUUID(), "member-001", "UNDER_ASSESSMENT", LIMIT,
++                "USD", facts, 0, 0, null, null);
++    }
++}

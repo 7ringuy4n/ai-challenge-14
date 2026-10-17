@@ -1,0 +1,28 @@
+{
+  "task": "T01",
+  "attempt": "02",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    "src/main/java/com/papaya/claims/engine/GuardEvaluator.java",
+    "src/main/java/com/papaya/claims/engine/WorkflowLoader.java",
+    "src/test/java/com/papaya/claims/engine/GuardEvaluatorTest.java",
+    "src/test/java/com/papaya/claims/engine/WorkflowConfigTest.java"
+  ],
+  "tests_proposed": [
+    "mvn -B -Dtest=WorkflowEngineTest,WorkflowConfigTest,GuardEvaluatorTest test"
+  ],
+  "test_evidence": {
+    "status": "NOT_RUN",
+    "reason": "Worker protocol prohibits build/test execution; root reported attempt 01 integration was blocked by T02 imports before engine tests could run."
+  },
+  "fix_summary": [
+    "Equality now fails closed if either fact/literal operand is null, including when both facts are absent.",
+    "Loader rejects equal guards that provide neither a non-null literal value nor otherField.",
+    "Added regression tests for both missing facts, missing right fact, omitted literal operand, and startup rejection."
+  ],
+  "base": "Current root source at dispatch; delta only.",
+  "assumptions": [
+    "A null equality literal is not a meaningful configured comparison operand and is rejected at startup."
+  ],
+  "contract_change_needed": false
+}

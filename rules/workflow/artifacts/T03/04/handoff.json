@@ -1,0 +1,41 @@
+{
+  "task": "T03",
+  "attempt": "04",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    "docker/Dockerfile",
+    "docker/maven-settings.xml"
+  ],
+  "base_hashes": {
+    "docker/Dockerfile": "967bd594cbfcfdd1dd25de8eec75fd273f089be025f67641bd8cda25c96dc61d",
+    "docs/challenge-14/CONTRACTS.md": "71ac00a58ca165a0126de13bee19e3c19c403c55c7e96ef74d61370e6967a9eb",
+    "pom.xml": "fa523a52628dd070b73ef397eb34ef2fb4e511a9cde2f9d3c53fcabe4ea40d64"
+  },
+  "tests_proposed": [
+    {
+      "command": "docker compose --env-file .env.example -f docker/compose.yml config --quiet",
+      "status": "NOT_RUN",
+      "reason": "Worker restrictions prohibit Docker commands."
+    },
+    {
+      "command": "docker compose --env-file .env -f docker/compose.yml build app",
+      "status": "NOT_RUN",
+      "reason": "Coordinator must validate the BuildKit cache mount and Maven mirror after the active initial setup/build finishes."
+    },
+    {
+      "command": "docker compose --env-file .env -f docker/compose.yml up -d --build --wait app",
+      "status": "NOT_RUN",
+      "reason": "Runtime readiness verification is coordinator-owned."
+    }
+  ],
+  "assumptions": [
+    "The project uses only released dependencies available from Maven Central; the mirror intentionally routes all Maven repositories through Central.",
+    "The BuildKit-capable Docker builder is available for the requested cache mount.",
+    "Frozen Java, Spring, MyBatis and artifact-name contracts remain unchanged."
+  ],
+  "notes": [
+    "The Dockerfile keeps the pinned Maven 3.9.11/Temurin 21 builder, Java 21 non-root runtime, healthcheck, jar path and first-setup -DskipTests behavior.",
+    "The BuildKit /root/.m2 cache mount preserves downloaded Maven artifacts across source-changing image builds; the Maven settings mirror all repositories to Central to avoid snapshot or milestone repository attempts.",
+    "No source files, build outputs, Docker state, Git state, environment files or shared project records were modified."
+  ]
+}

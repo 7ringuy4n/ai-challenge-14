@@ -1,0 +1,16 @@
+{
+  "task": "T01",
+  "attempt": "03",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    "src/test/java/com/papaya/claims/engine/WorkflowEngineTest.java"
+  ],
+  "fix_summary": "Qualified the MAX_REQUESTS_MESSAGE reference in WorkflowEngineTest with ConfiguredWorkflowEngine.",
+  "test_evidence": {
+    "status": "NOT_RUN",
+    "reason": "Worker instructions prohibit running builds or tests; coordinator reported the compiler diagnostic in reports/verification/build/t01-test.log."
+  },
+  "tests_proposed": [
+    "mvn -B -Dtest=WorkflowEngineTest,WorkflowConfigTest,GuardEvaluatorTest test"
+  ]
+}

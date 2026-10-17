@@ -1,0 +1,33 @@
+{
+  "task_id": "T03",
+  "attempt_id": "05",
+  "review_status": "REREVIEW_PENDING",
+  "fix_round": 1,
+  "commands": [
+    {
+      "command": "docker compose --env-file .env.example -f docker/compose.yml config --quiet",
+      "exit_code": 0,
+      "status": "PASS",
+      "output": ""
+    },
+    {
+      "command": "bash -n scripts/setup.sh scripts/smoke.sh",
+      "exit_code": 0,
+      "status": "PASS",
+      "output": ""
+    }
+  ],
+  "docker_runtime": "NOT_RUN",
+  "docker_runtime_reason": "Current user cannot access /var/run/docker.sock; no permissions changed.",
+  "source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+  "deployment_files": {
+    "docker/Dockerfile": "a3783bf81bc87c3173e594a9cb332d4bb7de225d1c71bb09e6d060e1a659d40a",
+    "docker/compose.yml": "09cce5b130009f2c8d8004b077d87e8a1ac1966e9403e533c52dfc9ef24b7ce3",
+    "docker/initdb/10-runtime-role.sh": "36d8ec0d43d413309a55be97a34081a556818ebc53a41d1dff4cb58c4a69ae11",
+    ".env.example": "4dec6ec1cff813cae230112afc3214817110d8bdda83435257d696f7b259c7fa",
+    "scripts/setup.sh": "2d9bf09d84a62669ad40b24ea20ed1118ad93ca416a15118a4073e9415b41f13",
+    "scripts/smoke.sh": "3fdf7829baf62e59753165cd61cbe4683897fa1e8017b599df27aa0e4c503667"
+  },
+  "deployment_hash": "05d7701d4c2b3c2289644a7febc45dbced576a41d92ded72d611e6074c10c66f",
+  "fix": "Removed all-table and all-sequence ALTER DEFAULT PRIVILEGES from docker/initdb/10-runtime-role.sh; explicit per-table grants remain in Liquibase changeset 002."
+}

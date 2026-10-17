@@ -1,0 +1,55 @@
+--- a/src/main/java/com/papaya/claims/engine/GuardEvaluator.java
++++ b/src/main/java/com/papaya/claims/engine/GuardEvaluator.java
+@@ -33,7 +33,7 @@
+         } catch (RuntimeException badFact) { return false; }
+     }
+     private static boolean equal(Object a, Object b) {
+-        if (a == null || b == null) return a == b;
++        if (a == null || b == null) return false;
+         try { if (a instanceof Number || b instanceof Number) return number(a).compareTo(number(b)) == 0; }
+         catch (RuntimeException ignored) { return false; }
+         return a.equals(b);
+--- a/src/main/java/com/papaya/claims/engine/WorkflowLoader.java
++++ b/src/main/java/com/papaya/claims/engine/WorkflowLoader.java
+@@ -70,6 +70,7 @@
+             if (Set.of("present", "isTrue", "lessOrEqual", "after", "beforeOrEqual", "allDocumentsValid").contains(g.type) && blank(g.field)) fail(path, field + ".field", "is required for " + g.type);
+             if (Set.of("lessOrEqual", "after", "beforeOrEqual").contains(g.type) && blank(g.otherField) && g.value == null) fail(path, field, "requires value or otherField");
+             if (g.type.equals("equal") && blank(g.field)) fail(path, field + ".field", "is required for equal");
++            if (g.type.equals("equal") && blank(g.otherField) && g.value == null) fail(path, field, "equal requires value or otherField");
+             validateGuards(g.guards, path, field + ".guards", depth + 1);
+         }
+     }
+--- a/src/test/java/com/papaya/claims/engine/GuardEvaluatorTest.java
++++ b/src/test/java/com/papaya/claims/engine/GuardEvaluatorTest.java
+@@ -44,4 +44,16 @@
+         assertFalse(evaluator.failures(List.of(guard("present", "assessorId", null, null)), claim(Map.of()), EngineFixtures.NOW).isEmpty());
+         assertFalse(evaluator.failures(List.of(guard("after", "informationReceivedAt", null, "bad")), claim(Map.of("informationReceivedAt", "bad")), EngineFixtures.NOW).isEmpty());
+     }
++    @Test void equalFailsWhenBothFactOperandsAreMissing() {
++        var c = claim(Map.of());
++        assertFalse(evaluator.failures(List.of(guard("equal", "missingLeft", "missingRight", null)), c, EngineFixtures.NOW).isEmpty());
++    }
++    @Test void equalFailsWhenRightFactOperandIsMissing() {
++        var c = claim(Map.of("assessmentCurrency", "USD"));
++        assertFalse(evaluator.failures(List.of(guard("equal", "assessmentCurrency", "missingRight", null)), c, EngineFixtures.NOW).isEmpty());
++    }
++    @Test void equalFailsWhenLeftFactAndLiteralOperandAreMissing() {
++        var c = claim(Map.of());
++        assertFalse(evaluator.failures(List.of(guard("equal", "missingLeft", null, null)), c, EngineFixtures.NOW).isEmpty());
++    }
+ }
+--- a/src/test/java/com/papaya/claims/engine/WorkflowConfigTest.java
++++ b/src/test/java/com/papaya/claims/engine/WorkflowConfigTest.java
+@@ -23,6 +23,12 @@
+         var path = temp.resolve("bad-guard.yml"); Files.writeString(path, yaml);
+         assertTrue(assertThrows(IllegalArgumentException.class, () -> WorkflowLoader.load(path)).getMessage().contains("guards"));
+     }
++    @Test void rejectsEqualGuardWithoutComparisonOperandAtStartup() throws Exception {
++        String yaml = Files.readString(Path.of("config/workflow.yml")).replace("        otherField: currency\n", "");
++        var path = temp.resolve("missing-equality-operand.yml"); Files.writeString(path, yaml);
++        var error = assertThrows(IllegalArgumentException.class, () -> WorkflowLoader.load(path));
++        assertTrue(error.getMessage().contains("equal requires value or otherField"));
++    }
+     @Test void acceptsConfigOnlyNewStateAndExistingPrimitives() throws Exception {
+         String yaml = Files.readString(Path.of("config/workflow.yml"))
+                 .replace("  - CLOSED\n", "  - CLOSED\n  - MANUAL_REVIEW\n")

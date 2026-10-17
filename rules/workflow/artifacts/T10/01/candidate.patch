@@ -1,0 +1,507 @@
+diff --git a/src/test/java/com/papaya/claims/application/ApplicationBoundaryTest.java b/src/test/java/com/papaya/claims/application/ApplicationBoundaryTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/application/ApplicationBoundaryTest.java
+@@ -0,0 +1,188 @@
++package com.papaya.claims.application;
++
++import static org.assertj.core.api.Assertions.*;
++import static org.mockito.ArgumentMatchers.*;
++import static org.mockito.Mockito.*;
++
++import com.fasterxml.jackson.core.JsonProcessingException;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.fasterxml.jackson.databind.json.JsonMapper;
++import com.papaya.claims.contract.*;
++import com.papaya.claims.contract.Model.*;
++import java.math.BigDecimal;
++import java.util.*;
++import org.junit.jupiter.api.Test;
++
++class ApplicationBoundaryTest {
++    private static final Actor CLERK = new Actor("clerk", "document_clerk");
++
++    @Test void createRejectsBadIdentityMoneyCurrencyAndDocumentCollectionsBeforePersistence() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimService service = service(claims);
++        List<ArgumentsForCreate> invalid = List.of(
++                new ArgumentsForCreate(null, BigDecimal.ONE, "USD", List.of("receipt")),
++                new ArgumentsForCreate(" ", BigDecimal.ONE, "USD", List.of("receipt")),
++                new ArgumentsForCreate("member" + (char) 0 + "001", BigDecimal.ONE, "USD", List.of("receipt")),
++                new ArgumentsForCreate("m".repeat(121), BigDecimal.ONE, "USD", List.of("receipt")),
++                new ArgumentsForCreate("member-001", null, "USD", List.of("receipt")),
++                new ArgumentsForCreate("member-001", new BigDecimal("-0.01"), "USD", List.of("receipt")),
++                new ArgumentsForCreate("member-001", new BigDecimal("1.001"), "USD", List.of("receipt")),
++                new ArgumentsForCreate("member-001", new BigDecimal("100000000000000000"), "USD", List.of("receipt")),
++                new ArgumentsForCreate("member-001", BigDecimal.ONE, "usd", List.of("receipt")),
++                new ArgumentsForCreate("member-001", BigDecimal.ONE, "ZZZ", List.of("receipt")),
++                new ArgumentsForCreate("member-001", BigDecimal.ONE, "USD", null),
++                new ArgumentsForCreate("member-001", BigDecimal.ONE, "USD", List.of()),
++                new ArgumentsForCreate("member-001", BigDecimal.ONE, "USD", Collections.nCopies(31, "receipt")),
++                new ArgumentsForCreate("member-001", BigDecimal.ONE, "USD", List.of("receipt", "receipt")),
++                new ArgumentsForCreate("member-001", BigDecimal.ONE, "USD", List.of(" ")),
++                new ArgumentsForCreate("member-001", BigDecimal.ONE, "USD", List.of("doc".repeat(27))),
++                new ArgumentsForCreate("member-001", BigDecimal.ONE, "USD", List.of("receipt" + (char) 0)));
++        for (ArgumentsForCreate args : invalid) {
++            assertThatThrownBy(() -> service.create(CLERK, args.memberId(), args.limit(), args.currency(), args.documents()))
++                    .as("invalid create input %s", args)
++                    .isInstanceOf(BusinessException.class)
++                    .satisfies(error -> assertThat(((BusinessException) error).status()).isEqualTo(400));
++        }
++        verify(claims, never()).insert(any());
++    }
++
++    @Test void memberMayCreateOnlyForSelfAndOtherRolesCannotCreate() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimService service = service(claims);
++        assertBusiness(() -> service.create(new Actor("member-001", "member"), "member-002", BigDecimal.ONE, "USD", List.of("receipt")), "FORBIDDEN_ROLE", 403);
++        assertBusiness(() -> service.create(new Actor("system", "system"), "member-001", BigDecimal.ONE, "USD", List.of("receipt")), "FORBIDDEN_ROLE", 403);
++        verify(claims, never()).insert(any());
++    }
++
++    @Test void getAndListFailClosedForMissingClaimsAndUnrecognizedRolesAndFilterMemberOwnership() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        UUID missing = UUID.randomUUID();
++        ClaimSnapshot first = claim("member-001");
++        ClaimSnapshot second = claim("member-002");
++        when(claims.find(missing)).thenReturn(Optional.empty());
++        when(claims.find(first.id())).thenReturn(Optional.of(first));
++        when(claims.list()).thenReturn(List.of(first, second));
++        ClaimService service = service(claims);
++
++        assertBusiness(() -> service.get(new Actor("clerk", "document_clerk"), missing), "NOT_FOUND", 404);
++        assertBusiness(() -> service.get(new Actor("member-002", "member"), first.id()), "FORBIDDEN_ROLE", 403);
++        assertBusiness(() -> service.list(new Actor("auditor", "auditor")), "FORBIDDEN_ROLE", 403);
++        assertThat(service.list(new Actor("member-001", "member"))).extracting(ClaimSnapshot::memberId).containsExactly("member-001");
++        assertThat(service.list(new Actor("clerk", "document_clerk"))).hasSize(2);
++    }
++
++    @Test void factMutationAllowsEveryRoleOnlyInItsPhaseAndUsesServerStampedInformationTime() {
++        assertPatchSucceeds("document_clerk", "clerk", "SUBMITTED", Map.of("documents", Map.of("receipt", true)), false);
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimSnapshot pending = claim("member-001", "PENDING_INFO", Map.of("requiredDocuments", List.of("receipt")));
++        when(claims.findForUpdate(pending.id())).thenReturn(Optional.of(pending));
++        when(claims.compareAndSet(any(), eq(pending.version()))).thenReturn(true);
++        ClaimSnapshot updated = service(claims).patchFacts(new Actor("clerk", "document_clerk"), pending.id(), pending.version(), Map.of("newInformation", "invoice attached"));
++        assertThat(updated.facts()).containsEntry("newInformation", "invoice attached").containsKey("informationReceivedAt");
++        assertThat(updated.facts().get("informationReceivedAt")).isInstanceOf(String.class);
++
++        assertPatchSucceeds("team_lead", "lead", "DOCUMENTS_VERIFIED", Map.of("assessorId", "assessor-1"), false);
++        assertPatchSucceeds("assessor", "assessor", "UNDER_ASSESSMENT", Map.of("reportComplete", true, "assessmentAmount", new BigDecimal("12.30"), "assessmentCurrency", "USD", "rejectionReason", "not covered", "missingInfoDescription", "send receipt"), false);
++        assertPatchSucceeds("finance", "finance", "PAYMENT_INITIATED", Map.of("paymentConfirmed", true, "paymentReference", "pay-17"), true);
++        assertPatchSucceeds("member", "member-001", "REJECTED", Map.of("memberAcknowledged", true), false);
++    }
++
++    @Test void financeRequiresExistingPaymentRequestAndNonblankReference() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        EffectRepository effects = mock(EffectRepository.class);
++        ClaimSnapshot payment = claim("member-001", "PAYMENT_INITIATED", Map.of("requiredDocuments", List.of("receipt")));
++        when(claims.findForUpdate(payment.id())).thenReturn(Optional.of(payment));
++        ClaimService service = service(claims, effects);
++
++        when(effects.paymentRequestExists(payment.id())).thenReturn(false);
++        assertBusiness(() -> service.patchFacts(new Actor("finance", "finance"), payment.id(), payment.version(), Map.of("paymentConfirmed", true, "paymentReference", "ref-1")), "CONFLICT", 409);
++        verify(claims, never()).compareAndSet(any(), anyLong());
++
++        when(effects.paymentRequestExists(payment.id())).thenReturn(true);
++        assertBusiness(() -> service.patchFacts(new Actor("finance", "finance"), payment.id(), payment.version(), Map.of("paymentConfirmed", true)), "INVALID_INPUT", 400);
++        assertBusiness(() -> service.patchFacts(new Actor("finance", "finance"), payment.id(), payment.version(), Map.of("paymentReference", " ")), "INVALID_INPUT", 400);
++        verify(claims, never()).compareAndSet(any(), anyLong());
++    }
++
++    @Test void factsRejectBadNamesTypesRangesAndDocumentShapesWithoutChangingVersion() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimSnapshot assessment = claim("member-001", "UNDER_ASSESSMENT", Map.of("requiredDocuments", List.of("receipt")));
++        when(claims.findForUpdate(assessment.id())).thenReturn(Optional.of(assessment));
++        ClaimService service = service(claims);
++        Actor assessor = new Actor("assessor", "assessor");
++        List<Map<String, Object>> badFacts = List.of(
++                Map.of("reportComplete", "true"), Map.of("assessmentAmount", "not-money"),
++                Map.of("assessmentAmount", new BigDecimal("-0.01")), Map.of("assessmentAmount", new BigDecimal("1.001")),
++                Map.of("assessmentAmount", new BigDecimal("100000000000000000")), Map.of("assessmentCurrency", "usd"),
++                Map.of("assessmentCurrency", 12), Map.of("rejectionReason", " "),
++                Map.of("rejectionReason", "x".repeat(2001)), Map.of("missingInfoDescription", "contains" + (char) 0 + "nul"),
++                Map.of("documents", "receipt"), Map.of("documents", Map.of("other", true)),
++                Map.of("documents", Map.of("receipt", "yes")), Map.of("documents", Map.of(1, true)));
++        for (Map<String, Object> updates : badFacts) {
++            assertThatThrownBy(() -> service.patchFacts(assessor, assessment.id(), assessment.version(), updates))
++                    .as("invalid fact patch %s", updates).isInstanceOf(BusinessException.class);
++        }
++        Map<String, Object> nulKey = new LinkedHashMap<>(); nulKey.put("bad" + (char) 0, true);
++        assertThatThrownBy(() -> service.patchFacts(assessor, assessment.id(), assessment.version(), nulKey))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("null characters");
++        verify(claims, never()).compareAndSet(any(), anyLong());
++    }
++
++    @Test void rejectsUpdatesFromWrongRolePhaseUnknownFactStaleVersionAndNullCommandText() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimSnapshot submitted = claim("member-001", "SUBMITTED", Map.of());
++        when(claims.findForUpdate(submitted.id())).thenReturn(Optional.of(submitted));
++        ClaimService service = service(claims);
++        assertBusiness(() -> service.patchFacts(new Actor("lead", "team_lead"), submitted.id(), submitted.version(), Map.of("assessorId", "a-1")), "CONFLICT", 409);
++        assertBusiness(() -> service.patchFacts(new Actor("clerk", "document_clerk"), submitted.id(), submitted.version(), Map.of("serverFact", true)), "INVALID_INPUT", 400);
++        assertBusiness(() -> service.patchFacts(new Actor("clerk", "document_clerk"), submitted.id(), submitted.version() + 1, Map.of("documents", Map.of("receipt", true))), "CONFLICT", 409);
++        assertBusiness(() -> service.transition(new Actor("assessor", "assessor"), submitted.id(), new TransitionCommand("VERIFIED", 0, "bad" + (char) 0, "note")), "INVALID_INPUT", 400);
++        assertBusiness(() -> service.transition(new Actor("assessor", "assessor" + (char) 0), submitted.id(), new TransitionCommand("VERIFIED", 0, "key", "note")), "INVALID_INPUT", 400);
++        verify(claims, never()).compareAndSet(any(), anyLong());
++    }
++
++    @Test void mockEffectFactoryHandlesPaymentMarkerUnknownIdsAndSerializationFailures() {
++        MockEffectFactory factory = new MockEffectFactory(JsonMapper.builder().findAndAddModules().build());
++        ClaimSnapshot claim = claim("member-001", "SUBMITTED", Map.of());
++        assertThat(factory.supports("create_payment_request")).isTrue();
++        assertThat(factory.supports("not-configured")).isFalse();
++        assertThatThrownBy(() -> factory.strategy("not-configured"))
++                .isInstanceOf(BusinessException.class).satisfies(error -> assertThat(((BusinessException) error).code()).isEqualTo("UNKNOWN_EFFECT"));
++        ObjectMapper brokenJson = mock(ObjectMapper.class);
++        try { when(brokenJson.writeValueAsString(any())).thenThrow(new JsonProcessingException("synthetic failure") {}); }
++        catch (JsonProcessingException impossible) { throw new AssertionError(impossible); }
++        MockEffectFactory brokenFactory = new MockEffectFactory(brokenJson);
++        assertThatThrownBy(() -> brokenFactory.create("notify_assessors", claim, new Actor("clerk", "document_clerk"), ""))
++                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Unable to encode effect payload");
++    }
++
++    private static void assertPatchSucceeds(String role, String user, String state, Map<String, Object> updates, boolean paymentExists) {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        EffectRepository effects = mock(EffectRepository.class);
++        ClaimSnapshot claim = claim("member-001", state, Map.of("requiredDocuments", List.of("receipt")));
++        when(claims.findForUpdate(claim.id())).thenReturn(Optional.of(claim));
++        when(claims.compareAndSet(any(), eq(claim.version()))).thenReturn(true);
++        when(effects.paymentRequestExists(claim.id())).thenReturn(paymentExists);
++        ClaimSnapshot updated = service(claims, effects).patchFacts(new Actor(user, role), claim.id(), claim.version(), updates);
++        assertThat(updated.version()).isEqualTo(claim.version() + 1);
++        assertThat(updated.facts()).containsAllEntriesOf(updates);
++        verify(claims).compareAndSet(any(), eq(claim.version()));
++    }
++
++    private static ClaimService service(ClaimRepository claims) { return service(claims, mock(EffectRepository.class)); }
++    private static ClaimService service(ClaimRepository claims, EffectRepository effects) {
++        return TransitionServiceTest.service(claims, mock(CommandRepository.class), mock(AuditRepository.class), effects);
++    }
++    private static ClaimSnapshot claim(String member) { return claim(member, "SUBMITTED", Map.of()); }
++    private static ClaimSnapshot claim(String member, String state, Map<String, Object> facts) {
++        return new ClaimSnapshot(UUID.randomUUID(), member, state, new BigDecimal("100.00"), "USD", facts, 0, 0, null, null);
++    }
++    private static void assertBusiness(Runnable action, String code, int status) {
++        assertThatThrownBy(action).isInstanceOf(BusinessException.class).satisfies(error -> {
++            BusinessException business = (BusinessException) error;
++            assertThat(business.code()).isEqualTo(code);
++            assertThat(business.status()).isEqualTo(status);
++        });
++    }
++    private record ArgumentsForCreate(String memberId, BigDecimal limit, String currency, List<String> documents) {}
++}
+diff --git a/src/test/java/com/papaya/claims/application/DispatcherBoundaryTest.java b/src/test/java/com/papaya/claims/application/DispatcherBoundaryTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/application/DispatcherBoundaryTest.java
+@@ -0,0 +1,93 @@
++package com.papaya.claims.application;
++
++import static org.assertj.core.api.Assertions.*;
++import static org.mockito.Mockito.*;
++
++import com.fasterxml.jackson.databind.json.JsonMapper;
++import com.papaya.claims.contract.EffectRepository;
++import com.papaya.claims.contract.Model.OutboxMessage;
++import java.time.Clock;
++import java.time.Instant;
++import java.time.ZoneOffset;
++import java.util.List;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++import org.springframework.transaction.PlatformTransactionManager;
++import org.springframework.transaction.TransactionDefinition;
++import org.springframework.transaction.support.AbstractPlatformTransactionManager;
++import org.springframework.transaction.support.DefaultTransactionStatus;
++import org.springframework.transaction.support.TransactionSynchronizationManager;
++
++class DispatcherBoundaryTest {
++    @Test void refusesPollingInsideAnAmbientTransactionWithoutTouchingTheRepository() {
++        EffectRepository repository = mock(EffectRepository.class);
++        try {
++            TransactionSynchronizationManager.setActualTransactionActive(true);
++            assertThatThrownBy(() -> dispatcher(repository, mock(MockEffectFactory.class)).retryPending())
++                    .isInstanceOf(IllegalStateException.class).hasMessageContaining("ambient transaction");
++        } finally {
++            TransactionSynchronizationManager.setActualTransactionActive(false);
++            TransactionSynchronizationManager.clear();
++        }
++        verifyNoInteractions(repository);
++    }
++
++    @Test void emptyPollAndNullPollResultDoNotDeliverAnything() {
++        EffectRepository empty = mock(EffectRepository.class);
++        MockEffectFactory factory = mock(MockEffectFactory.class);
++        when(empty.pending()).thenReturn(List.of());
++        dispatcher(empty, factory).retryPending();
++        verifyNoInteractions(factory);
++
++        EffectRepository nullResult = mock(EffectRepository.class);
++        when(nullResult.pending()).thenReturn(null);
++        dispatcher(nullResult, factory).retryPending();
++        verifyNoInteractions(factory);
++    }
++
++    @Test void deliveryFailureSchedulesRetryWithBoundedExponentialDelayAndSurvivesRetryPersistenceFailure() {
++        EffectRepository repository = mock(EffectRepository.class);
++        MockEffectFactory factory = mock(MockEffectFactory.class);
++        OutboxMessage message = new OutboxMessage(UUID.randomUUID(), UUID.randomUUID(), "notify_assessors", "{}", 2);
++        when(repository.pending()).thenReturn(List.of(message));
++        doThrow(new IllegalStateException("simulated delivery error")).when(factory).deliver(message);
++        doThrow(new IllegalStateException("database unavailable")).when(repository).markFailed(eq(message.id()), anyString(), any());
++
++        assertThatCode(() -> dispatcher(repository, factory).retryPending()).doesNotThrowAnyException();
++        verify(repository).markFailed(eq(message.id()), eq("IllegalStateException"), eq(Instant.parse("2026-01-02T03:04:09Z")));
++        verify(repository, never()).markDelivered(message.id());
++    }
++
++    @Test void successfulDeliveryIsMarkedDeliveredAfterDelivery() {
++        EffectRepository repository = mock(EffectRepository.class);
++        MockEffectFactory factory = mock(MockEffectFactory.class);
++        OutboxMessage message = new OutboxMessage(UUID.randomUUID(), UUID.randomUUID(), "notify_assessors", "{}", 0);
++        when(repository.pending()).thenReturn(List.of(message));
++        dispatcher(repository, factory).retryPending();
++        var order = inOrder(factory, repository);
++        order.verify(factory).deliver(message);
++        order.verify(repository).markDelivered(message.id());
++        verify(repository, never()).markFailed(eq(message.id()), anyString(), any());
++    }
++
++    @Test void constructorConfiguresFreshTransactionPropagation() {
++        EffectRepository repository = mock(EffectRepository.class);
++        var manager = new RecordingTransactionManager();
++        when(repository.pending()).thenReturn(List.of());
++        new EffectDispatcher(repository, mock(MockEffectFactory.class), Clock.systemUTC(), manager).retryPending();
++        assertThat(manager.propagations).contains(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
++    }
++
++    private static EffectDispatcher dispatcher(EffectRepository repository, MockEffectFactory factory) {
++        return new EffectDispatcher(repository, factory,
++                Clock.fixed(Instant.parse("2026-01-02T03:04:05Z"), ZoneOffset.UTC), new RecordingTransactionManager());
++    }
++
++    private static class RecordingTransactionManager extends AbstractPlatformTransactionManager {
++        private final java.util.List<Integer> propagations = new java.util.ArrayList<>();
++        @Override protected Object doGetTransaction() { return new Object(); }
++        @Override protected void doBegin(Object transaction, TransactionDefinition definition) { propagations.add(definition.getPropagationBehavior()); }
++        @Override protected void doCommit(DefaultTransactionStatus status) {}
++        @Override protected void doRollback(DefaultTransactionStatus status) {}
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/configuration/WorkflowConfigurationTest.java b/src/test/java/com/papaya/claims/configuration/WorkflowConfigurationTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/configuration/WorkflowConfigurationTest.java
+@@ -0,0 +1,45 @@
++package com.papaya.claims.configuration;
++
++import static org.assertj.core.api.Assertions.*;
++import static org.mockito.Mockito.*;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.papaya.claims.application.ClaimService;
++import com.papaya.claims.application.MockEffectFactory;
++import com.papaya.claims.contract.*;
++import java.nio.file.Path;
++import java.time.Clock;
++import java.time.temporal.ChronoUnit;
++import org.junit.jupiter.api.Test;
++import org.springframework.transaction.support.TransactionTemplate;
++
++class WorkflowConfigurationTest {
++    private final WorkflowConfiguration configuration = new WorkflowConfiguration();
++
++    @Test void workflowClockUsesUtcAndTickPrecisionCompatibleWithDatabaseMicroseconds() {
++        Clock clock = configuration.workflowClock();
++        assertThat(clock.getZone()).isEqualTo(java.time.ZoneOffset.UTC);
++        assertThat(clock.instant().getNano() % 1_000).isZero();
++    }
++
++    @Test void loadsWorkflowFromConfiguredPathAndFailsWithPathForMissingConfiguration() {
++        assertThat(configuration.workflowEngine("config/workflow.yml").initialState()).isEqualTo("SUBMITTED");
++        assertThatThrownBy(() -> configuration.workflowEngine("config/no-such-workflow.yml"))
++                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("config/no-such-workflow.yml");
++    }
++
++    @Test void claimOperationsBeanUsesTheProvidedPortsAndEngine() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        AuditRepository audits = mock(AuditRepository.class);
++        CommandRepository commands = mock(CommandRepository.class);
++        EffectRepository effects = mock(EffectRepository.class);
++        WorkflowEngine engine = configuration.workflowEngine(Path.of("config/workflow.yml").toString());
++        TransactionTemplate transactions = mock(TransactionTemplate.class);
++        Clock clock = configuration.workflowClock();
++        MockEffectFactory factory = mock(MockEffectFactory.class);
++        ObjectMapper json = new ObjectMapper();
++
++        ClaimOperations operations = configuration.claimOperations(claims, audits, commands, effects, engine, transactions, clock, factory, json);
++        assertThat(operations).isInstanceOf(ClaimService.class);
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/observability/TraceContextFilterTest.java b/src/test/java/com/papaya/claims/observability/TraceContextFilterTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/observability/TraceContextFilterTest.java
+@@ -0,0 +1,98 @@
++package com.papaya.claims.observability;
++
++import static org.assertj.core.api.Assertions.*;
++import static org.mockito.Mockito.*;
++
++import io.micrometer.tracing.Span;
++import io.micrometer.tracing.TraceContext;
++import io.micrometer.tracing.Tracer;
++import jakarta.servlet.ServletException;
++import java.io.IOException;
++import org.junit.jupiter.api.AfterEach;
++import org.junit.jupiter.api.Test;
++import org.slf4j.MDC;
++import org.springframework.mock.web.MockHttpServletRequest;
++import org.springframework.mock.web.MockHttpServletResponse;
++
++class TraceContextFilterTest {
++    @AfterEach void clearMdc() { MDC.clear(); }
++
++    @Test void reusesCurrentSpanAndExposesTraceContextOnlyDuringTheChain() throws Exception {
++        Tracer tracer = mock(Tracer.class);
++        Span span = span("existing-trace", "existing-span");
++        when(tracer.currentSpan()).thenReturn(span);
++        MockHttpServletRequest request = request();
++        MockHttpServletResponse response = new MockHttpServletResponse();
++
++        new TraceContextFilter(tracer).doFilter(request, response, (req, res) -> {
++            assertThat(req.getAttribute(TraceContextFilter.TRACE_ID_ATTRIBUTE)).isEqualTo("existing-trace");
++            assertThat(req.getAttribute(TraceContextFilter.SPAN_ID_ATTRIBUTE)).isEqualTo("existing-span");
++            assertThat(((MockHttpServletResponse) res).getHeader("X-Trace-Id")).isEqualTo("existing-trace");
++            assertThat(((MockHttpServletResponse) res).getHeader("X-Span-Id")).isEqualTo("existing-span");
++            assertThat(MDC.get("traceId")).isEqualTo("existing-trace");
++            assertThat(MDC.get("spanId")).isEqualTo("existing-span");
++        });
++
++        assertThat(MDC.get("traceId")).isNull();
++        assertThat(MDC.get("spanId")).isNull();
++        verify(tracer, never()).nextSpan();
++        verify(tracer, never()).withSpan(any());
++        verify(span, never()).end();
++    }
++
++    @Test void createsAndClosesSpanAndCleansMdcWhenFilterChainThrows() throws Exception {
++        Tracer tracer = mock(Tracer.class);
++        Span span = span("created-trace", "created-span");
++        Tracer.SpanInScope scope = mock(Tracer.SpanInScope.class);
++        when(tracer.currentSpan()).thenReturn(null);
++        when(tracer.nextSpan()).thenReturn(span);
++        when(tracer.withSpan(span)).thenReturn(scope);
++        MockHttpServletResponse response = new MockHttpServletResponse();
++        MockHttpServletRequest request = request();
++        ServletException failure = new ServletException("controller failed");
++
++        assertThatThrownBy(() -> new TraceContextFilter(tracer).doFilter(request, response, (req, res) -> {
++            assertThat(MDC.get("traceId")).isEqualTo("created-trace");
++            throw failure;
++        })).isSameAs(failure);
++
++        assertThat(MDC.get("traceId")).isNull();
++        assertThat(MDC.get("spanId")).isNull();
++        assertThat(response.getHeader("X-Trace-Id")).isEqualTo("created-trace");
++        verify(scope).close();
++        verify(span).end();
++    }
++
++    @Test void propagatesIoFailureAfterRestoringMdcAndClosingCreatedScope() throws Exception {
++        Tracer tracer = mock(Tracer.class);
++        Span span = span("trace-io", "span-io");
++        Tracer.SpanInScope scope = mock(Tracer.SpanInScope.class);
++        when(tracer.currentSpan()).thenReturn(null);
++        when(tracer.nextSpan()).thenReturn(span);
++        when(tracer.withSpan(span)).thenReturn(scope);
++        IOException failure = new IOException("client disconnected");
++        assertThatThrownBy(() -> new TraceContextFilter(tracer).doFilter(request(), new MockHttpServletResponse(), (req, res) -> { throw failure; }))
++                .isSameAs(failure);
++        assertThat(MDC.get("traceId")).isNull();
++        verify(scope).close();
++        verify(span).end();
++    }
++
++    private static MockHttpServletRequest request() {
++        MockHttpServletRequest request = new MockHttpServletRequest();
++        request.setMethod("GET"); request.setRequestURI("/api/claims");
++        return request;
++    }
++
++    private static Span span(String traceId, String spanId) {
++        Tracer tracer = mock(Tracer.class);
++        Span span = mock(Span.class);
++        TraceContext context = mock(TraceContext.class);
++        when(context.traceId()).thenReturn(traceId);
++        when(context.spanId()).thenReturn(spanId);
++        when(span.context()).thenReturn(context);
++        when(span.name("claims.http")).thenReturn(span);
++        when(span.start()).thenReturn(span);
++        return span;
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/security/SecurityBoundaryTest.java b/src/test/java/com/papaya/claims/security/SecurityBoundaryTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/security/SecurityBoundaryTest.java
+@@ -0,0 +1,58 @@
++package com.papaya.claims.security;
++
++import static org.assertj.core.api.Assertions.*;
++
++import com.fasterxml.jackson.databind.json.JsonMapper;
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
++import org.springframework.security.core.authority.SimpleGrantedAuthority;
++import org.springframework.security.core.userdetails.UserDetailsService;
++import org.springframework.security.crypto.password.PasswordEncoder;
++
++class SecurityBoundaryTest {
++    private final SecurityConfiguration configuration = new SecurityConfiguration();
++
++    @Test void refusesMissingBlankOrSharedHumanAndSystemCredentials() {
++        PasswordEncoder encoder = configuration.passwordEncoder();
++        assertThatThrownBy(() -> configuration.userDetailsService(encoder, null, "system-secret"))
++                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Separate nonempty");
++        assertThatThrownBy(() -> configuration.userDetailsService(encoder, "   ", "system-secret"))
++                .isInstanceOf(IllegalStateException.class);
++        assertThatThrownBy(() -> configuration.userDetailsService(encoder, "same-secret", "same-secret"))
++                .isInstanceOf(IllegalStateException.class);
++        assertThatThrownBy(() -> configuration.userDetailsService(encoder, "human-secret", " "))
++                .isInstanceOf(IllegalStateException.class);
++        assertThatThrownBy(() -> configuration.userDetailsService(encoder, "human-secret", null))
++                .isInstanceOf(IllegalStateException.class);
++    }
++
++    @Test void configuresDistinctHumanAndProtectedSystemAccountsWithExpectedAuthorities() {
++        PasswordEncoder encoder = configuration.passwordEncoder();
++        UserDetailsService users = configuration.userDetailsService(encoder, "human-secret", "system-secret");
++        assertThat(users.loadUserByUsername("clerk").getAuthorities()).extracting(Object::toString).containsExactly("ROLE_DOCUMENT_CLERK");
++        assertThat(users.loadUserByUsername("member-001").getAuthorities()).extracting(Object::toString).containsExactly("ROLE_MEMBER");
++        assertThat(users.loadUserByUsername("system").getAuthorities()).extracting(Object::toString).containsExactly("ROLE_SYSTEM");
++        assertThat(encoder.matches("human-secret", users.loadUserByUsername("clerk").getPassword())).isTrue();
++        assertThat(encoder.matches("system-secret", users.loadUserByUsername("system").getPassword())).isTrue();
++        assertThat(encoder.matches("human-secret", users.loadUserByUsername("system").getPassword())).isFalse();
++    }
++
++    @Test void authenticatedActorConversionRejectsAbsentAnonymousAndRolelessPrincipals() {
++        assertThatThrownBy(() -> AuthenticatedActors.from(null)).isInstanceOf(IllegalArgumentException.class);
++        assertThatThrownBy(() -> AuthenticatedActors.from(UsernamePasswordAuthenticationToken.unauthenticated("anonymousUser", "")))
++                .isInstanceOf(IllegalArgumentException.class);
++        var anonymousNamed = new UsernamePasswordAuthenticationToken("anonymousUser", "n/a", List.of(new SimpleGrantedAuthority("ROLE_MEMBER")));
++        assertThatThrownBy(() -> AuthenticatedActors.from(anonymousNamed)).isInstanceOf(IllegalArgumentException.class);
++        var roleless = new UsernamePasswordAuthenticationToken("service-user", "n/a", List.of(new SimpleGrantedAuthority("SCOPE_claims")));
++        assertThatThrownBy(() -> AuthenticatedActors.from(roleless)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("no workflow role");
++    }
++
++    @Test void authenticatedActorUsesFirstWorkflowRoleAndNormalizesItsCase() {
++        var authentication = new UsernamePasswordAuthenticationToken("lead-user", "n/a", List.of(
++                new SimpleGrantedAuthority("SCOPE_claims"), new SimpleGrantedAuthority("ROLE_TEAM_LEAD"),
++                new SimpleGrantedAuthority("ROLE_ASSESSOR")));
++        assertThat(AuthenticatedActors.from(authentication).userId()).isEqualTo("lead-user");
++        assertThat(AuthenticatedActors.from(authentication).role()).isEqualTo("team_lead");
++    }
++}

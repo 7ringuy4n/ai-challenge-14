@@ -1,0 +1,50 @@
+services:
+  database:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: claims
+      POSTGRES_USER: claims_bootstrap
+      POSTGRES_PASSWORD: ${CLAIMS_BOOTSTRAP_DB_PASSWORD:?Set CLAIMS_BOOTSTRAP_DB_PASSWORD in .env}
+      CLAIMS_MIGRATION_DB_USER: claims_migration
+      CLAIMS_MIGRATION_DB_PASSWORD: ${CLAIMS_MIGRATION_DB_PASSWORD:?Set CLAIMS_MIGRATION_DB_PASSWORD in .env}
+      CLAIMS_RUNTIME_DB_USER: claims_runtime
+      CLAIMS_RUNTIME_DB_PASSWORD: ${CLAIMS_RUNTIME_DB_PASSWORD:?Set CLAIMS_RUNTIME_DB_PASSWORD in .env}
+    volumes:
+      - claims-data:/var/lib/postgresql/data
+      - ./initdb/10-runtime-role.sh:/docker-entrypoint-initdb.d/10-runtime-role.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      CLAIMS_DATABASE_URL: ${CLAIMS_DATABASE_URL:?Set CLAIMS_DATABASE_URL in .env}
+      CLAIMS_RUNTIME_DB_USER: claims_runtime
+      CLAIMS_RUNTIME_DB_PASSWORD: ${CLAIMS_RUNTIME_DB_PASSWORD:?Set CLAIMS_RUNTIME_DB_PASSWORD in .env}
+      CLAIMS_MIGRATION_DB_USER: claims_migration
+      CLAIMS_MIGRATION_DB_PASSWORD: ${CLAIMS_MIGRATION_DB_PASSWORD:?Set CLAIMS_MIGRATION_DB_PASSWORD in .env}
+      SERVER_PORT: 8080
+      CLAIMS_DEMO_PASSWORD: ${CLAIMS_DEMO_PASSWORD:?Set CLAIMS_DEMO_PASSWORD in .env}
+      CLAIMS_SYSTEM_PASSWORD: ${CLAIMS_SYSTEM_PASSWORD:?Set CLAIMS_SYSTEM_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${SERVER_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 60s
+
+volumes:
+  claims-data:

@@ -1,0 +1,35 @@
+--- a/docker/Dockerfile
++++ b/docker/Dockerfile
+@@ -1,12 +1,15 @@
++# syntax=docker/dockerfile:1.7
+ # Build the executable jar with the pinned Java 21/Maven toolchain. Setup builds
+ # the image but does not execute the test suite; tests remain an explicit gate.
+ FROM maven:3.9.11-eclipse-temurin-21 AS build
+ WORKDIR /workspace
+ COPY pom.xml ./
++COPY docker/maven-settings.xml ./maven-settings.xml
+ COPY src/ src/
+ COPY sql/ sql/
+ COPY config/ config/
+-RUN mvn -B -DskipTests package
++RUN --mount=type=cache,target=/root/.m2 \
++    mvn -s /workspace/maven-settings.xml -B -ntp -DskipTests package
+ 
+ # Keep the runtime image small and run the application without root privileges.
+ FROM eclipse-temurin:21-jre-jammy AS runtime
+--- /dev/null
++++ b/docker/maven-settings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
++          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
++  <mirrors>
++    <mirror>
++      <id>central-only</id>
++      <name>Maven Central mirror for released project dependencies</name>
++      <url>https://repo.maven.apache.org/maven2/</url>
++      <mirrorOf>*</mirrorOf>
++    </mirror>
++  </mirrors>
++</settings>

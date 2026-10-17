@@ -1,0 +1,4 @@
+Command: python3 scripts/workflow/verify_workflow.py
+Exit code: 2
+Output: python3: can't open file '/home/tringuyen/Documents/ai-challenge-14/scripts/workflow/verify_workflow.py': [Errno 2] No such file or directory
+Inventory: scripts/ contains scripts/smoke.sh and scripts/setup.sh; no workflow validator is present.

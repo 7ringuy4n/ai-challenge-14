@@ -1,0 +1,5 @@
+# T02/09 candidate review packet
+
+Task/requirements: T02 / REQ-20261017-006 through -010. Independent read-only reviewer, gpt-6-luna/medium. Candidate base hash `f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af`, AD-01 hashes in handoff.
+
+Inspect the actual candidate patch and handoff, base schema 001, contract/addendum, prior T02 review, and only relevant deployment runtime-role setup. Verify the patch is syntactically/applicably coherent, port and aggregate types satisfy AD-01, schema/grants preserve atomicity/security and least privilege, and the handoff accurately states limitations. This attempt explicitly omits adapters/XML/IT sources; report whether the included partial is safe/coherent to integrate as an in-progress foundation and enumerate all blockers to task acceptance. Check numeric/jsonb, audit immutability/no cascade, payment/outbox grants, claim metadata columns and runtime/migration ownership. Read-only inspection only: no edits, build/test, Docker/DB/Git mutations. Return PASS/FAIL/BLOCKED for this partial candidate with exact path/line findings and missing evidence. Do not call it accepted.

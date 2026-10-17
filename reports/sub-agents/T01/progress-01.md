@@ -1,0 +1,1 @@
+The frozen T01 packet points at `com/papaya/claims/workflow/`, while prior T01 attempts are obsolete `com/papaya/claims/engine/` drafts based on nonexistent `contract.Model` APIs and an obsolete workflow YAML schema. I’m drafting against the current `Claim`/`ClaimFacts`/`Actor` domain and current catalog-based config; no source files are being edited.

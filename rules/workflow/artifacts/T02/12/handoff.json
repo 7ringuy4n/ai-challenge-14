@@ -1,0 +1,57 @@
+{
+  "task": "T02",
+  "attempt": "12",
+  "requirements": [
+    "REQ-20261017-006",
+    "REQ-20261017-007",
+    "REQ-20261017-008",
+    "REQ-20261017-009",
+    "REQ-20261017-010"
+  ],
+  "contract": "CH14-Contracts-v1+AD-01",
+  "base_persistence_source_sha256": "8be87c69eeed929fbbc2245ebad7a803f433718af5b846399567d1b0808e59f7",
+  "status": "PARTIAL",
+  "candidate_patch": "rules/workflow/artifacts/T02/12/candidate.patch",
+  "patch_paths": [
+    "src/test/java/com/papaya/claims/claim/domain/persistence/AuditImmutabilityIT.java",
+    "src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java",
+    "src/test/java/com/papaya/claims/claim/domain/persistence/IdempotencyIT.java",
+    "src/test/java/com/papaya/claims/claim/domain/persistence/PaymentOutboxIT.java",
+    "src/test/java/com/papaya/claims/claim/domain/persistence/PersistenceITSupport.java"
+  ],
+  "coverage": {
+    "migration_role": "Test fixture creates claims_migration and claims_runtime as NOSUPERUSER, NOCREATEDB, NOCREATEROLE; migration role owns public schema and Liquibase runs only through migration credentials; application test SQL uses runtime credentials.",
+    "audit": "Tests runtime UPDATE and DELETE rejection for claim_audit and system_operation_audit, then verifies both rows remain present.",
+    "idempotency": "Tests unique actor/scope/key conflict and verifies stored fingerprint and JSONB result are preserved. Repository-level storage is covered; service fingerprint comparison, replay policy, and race recovery remain service responsibilities and are not claimed implemented.",
+    "payment_outbox": "Tests payment creation/existence/confirmation and outbox due claim/lease advancement, retry scheduling/attempt count, and delivery persistence.",
+    "immutable_claim_fields": "Tests packaged ClaimMapper CAS update clause excludes member_id, policy_limit, and currency; database test confirms normal mutable state/version update preserves those stored values."
+  },
+  "verification": {
+    "patch_inspection": "PASS: all diff headers target only src/test/java/com/papaya/claims/claim/domain/persistence/; five test source files inspected.",
+    "git_apply_check": {
+      "status": "PASS",
+      "command": "git apply --check rules/workflow/artifacts/T02/12/candidate.patch",
+      "exit_code": 0
+    },
+    "maven_testcontainers": {
+      "status": "NOT_RUN",
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dit.test=ClaimPersistenceIT,AuditImmutabilityIT,IdempotencyIT,PaymentOutboxIT verify",
+      "reason": "Worker task packet prohibits builds/tests, Docker and database operations; coordinator must execute after serial source integration."
+    },
+    "runtime": {
+      "status": "NOT_RUN",
+      "reason": "No PostgreSQL/Testcontainers execution was performed by the worker."
+    }
+  },
+  "limitations": [
+    "Test source assumes coordinator applies the persistence production adapters and mapper XML to the packaged test classpath before execution; the checked-out application source did not contain these paths when the worker inspected it.",
+    "Service transaction composition, fingerprint mismatch conflict behavior, exact idempotent replay policy, and recovery after unique-conflict rollback are outside repository-level assertions and remain unverified.",
+    "Two concurrent SKIP LOCKED consumers are not exercised; the source tests lease/retry/delivery persistence using the production claim SQL shape but do not prove concurrent adapter behavior.",
+    "Liquibase/Testcontainers runtime and Java compilation are unverified; coordinator must inspect test compatibility and execute checks.",
+    "The existing adapter's lease SQL is fixed at 30 seconds; tests check future lease advancement consistent with that current SQL."
+  ],
+  "audit": {
+    "host_managed_payloads": "NOT_CAPTURED",
+    "trace_status": "PARTIAL"
+  }
+}

@@ -1,0 +1,11 @@
+flowchart LR
+  SUBMITTED -->|verify-documents · document_clerk · all documents valid| DOCUMENTS_VERIFIED
+  DOCUMENTS_VERIFIED -->|start-assessment · team_lead · assessor assigned| UNDER_ASSESSMENT
+  UNDER_ASSESSMENT -->|approve-claim · assessor · complete report + within limit| APPROVED
+  UNDER_ASSESSMENT -->|reject-claim · assessor · complete report + reason| REJECTED
+  UNDER_ASSESSMENT -->|request-information · assessor| PENDING_INFO
+  PENDING_INFO -->|return-with-information · document_clerk · new information| DOCUMENTS_VERIFIED
+  APPROVED -->|initiate-payment · finance · payment request exists| PAYMENT_INITIATED
+  PAYMENT_INITIATED -->|close-paid-claim · finance · payment confirmed| CLOSED
+  REJECTED -->|close-rejected-claim · system · appeal expired or member acknowledged| CLOSED
+  cycle["request-information is limited to 3 cycles"] -.-> PENDING_INFO

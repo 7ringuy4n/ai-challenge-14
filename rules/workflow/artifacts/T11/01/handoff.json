@@ -1,0 +1,29 @@
+{
+  "task_id": "T11",
+  "attempt": "01",
+  "author_role": "worker",
+  "model": "gpt-6-luna",
+  "reasoning_effort": "medium",
+  "status": "submitted",
+  "allowed_paths": [
+    "src/main/java/com/papaya/claims/engine/WorkflowLoader.java",
+    "src/main/java/com/papaya/claims/application/ClaimService.java",
+    "src/test/java/com/papaya/claims/engine/ValidationControlFlowTest.java",
+    "src/test/java/com/papaya/claims/application/ValidationControlFlowTest.java"
+  ],
+  "base_sha256": {
+    "src/main/java/com/papaya/claims/engine/WorkflowLoader.java": "1c9bd5a64928ea484df8da516b85a8388f57b797d87bca7207212f20b1f2dad0",
+    "src/main/java/com/papaya/claims/application/ClaimService.java": "dea4c24e9dbe3439bd22acb016dc2f62af1a76d5e8ff552352f0dbca502feb7c",
+    "src/test/java/com/papaya/claims/engine/ValidationControlFlowTest.java": null,
+    "src/test/java/com/papaya/claims/application/ValidationControlFlowTest.java": null
+  },
+  "summary": "Converted validation helpers to return exception objects and made every validation throw explicit. Added focused malformed workflow and service boundary tests.",
+  "behavior_boundary": "Preserve external signatures, validation order, exception codes/messages, and outcomes.",
+  "verification": {
+    "command": "mvn -B clean verify",
+    "status": "NOT_RUN",
+    "reason": "Worker task prohibits builds; coordinator will run the required proof."
+  },
+  "review_requested": true,
+  "coordination_note": "Coordinator integrated the source refactor and test files in the shared workspace during drafting. Candidate is based on the worker read-time source and will not apply cleanly on the already-updated live tree; verify/rebase before integration."
+}

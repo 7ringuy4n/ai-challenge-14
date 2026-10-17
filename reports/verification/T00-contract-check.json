@@ -1,0 +1,25 @@
+{
+  "task_id": "T00",
+  "attempt": "coordinator-03",
+  "status": "PASS_PENDING_REVIEW",
+  "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+  "exit_code": 0,
+  "source_hash": "dcd768b587cfbdb7e155657d95821af71bdb46919b9069e3db3436656d21e3d5",
+  "test_count": 8,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "coverage": "NOT_RUN (focused contract test run)",
+  "artifacts": [
+    "target/surefire-reports/TEST-com.papaya.claims.claim.api.dto.ClaimViewTest.xml",
+    "target/surefire-reports/TEST-com.papaya.claims.claim.api.dto.PageResponseTest.xml",
+    "target/surefire-reports/TEST-com.papaya.claims.claim.domain.DomainContractTest.xml",
+    "target/surefire-reports/TEST-com.papaya.claims.config.ResourceContractTest.xml"
+  ],
+  "environment": {
+    "java": "21.0.12.1 Eclipse Adoptium",
+    "maven": "3.9.11",
+    "repo": "/tmp/claims-m2",
+    "docker": "BLOCKED: current user is not permitted to access /var/run/docker.sock"
+  }
+}

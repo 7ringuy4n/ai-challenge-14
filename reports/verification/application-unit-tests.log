@@ -1,0 +1,115 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.papaya:claims-workflow >---------------------
+[INFO] Building claims-workflow 1.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.13:prepare-agent (default) @ claims-workflow ---
+[INFO] argLine set to -javaagent:/tmp/claims-m2/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13-runtime.jar=destfile=/home/tringuyen/Documents/ai-challenge-14/target/jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ claims-workflow ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 12 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ claims-workflow ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ claims-workflow ---
+[INFO] Copying 1 resource from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ claims-workflow ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ claims-workflow ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.papaya.claims.security.ActorFactoryTest
+running test case 1/42: marksSystemOnlyForProtectedSystemPrincipalWithSystemAuthority()
+running test case 2/42: derivesMemberIdentityFromAuthenticatedPrincipalAndRoleAuthority()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.293 s -- in com.papaya.claims.security.ActorFactoryTest
+[INFO] Running com.papaya.claims.config.ResourceContractTest
+running test case 3/42: liquibaseMasterResolvesItsIncludedSqlAndOpenApiDefinesMutationBodies()
+running test case 4/42: workflowConfigurationContainsTheEightStatesNineEdgesAndExactCycleLimit()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.153 s -- in com.papaya.claims.config.ResourceContractTest
+[INFO] Running com.papaya.claims.claim.service.ClaimServiceTest
+running test case 5/42: optionsAreDerivedFromConfiguredEdgesAndCurrentRole()
+running test case 6/42: ownerAcknowledgementPersistsMicrosecondServerTimeAndIdempotencyReceipt()
+running test case 7/42: memberCannotAcknowledgeAnotherMembersClaim()
+running test case 8/42: acknowledgementRequiresRejectedStateAndExpectedVersion()
+running test case 9/42: assessorMustMatchTheAssignmentToWriteAnAssessmentReport()
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.755 s -- in com.papaya.claims.claim.service.ClaimServiceTest
+[INFO] Running com.papaya.claims.claim.api.dto.TransitionResultViewTest
+running test case 10/42: mapsClaimAuditAndReplayStatusToTheDocumentedTransportResult()
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.010 s -- in com.papaya.claims.claim.api.dto.TransitionResultViewTest
+[INFO] Running com.papaya.claims.claim.api.dto.CreateClaimRequestValidationTest
+running test case 11/42: validatesPolicyLimitAsNonnegativeNumericEighteenTwoAtTheHttpBoundary()
+09:24:26.607 [main] INFO org.hibernate.validator.internal.util.Version -- HV000001: Hibernate Validator 8.0.3.Final
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.582 s -- in com.papaya.claims.claim.api.dto.CreateClaimRequestValidationTest
+[INFO] Running com.papaya.claims.claim.api.dto.ClaimViewTest
+running test case 12/42: copiesNestedFactValuesOnConstruction()
+running test case 13/42: rejectsPolicyLimitOutsideNumericEighteenTwo()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.019 s -- in com.papaya.claims.claim.api.dto.ClaimViewTest
+[INFO] Running com.papaya.claims.claim.api.dto.PageResponseTest
+running test case 14/42: computesPageCountAndCopiesReturnedItems()
+running test case 15/42: emptyPageHasNoPagesAndRejectsInconsistentMetadata()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in com.papaya.claims.claim.api.dto.PageResponseTest
+[INFO] Running com.papaya.claims.claim.api.ClaimControllerTest
+running test case 16/42: mutationUsesTheEffectiveCorrelationIdFromTheRequestFilter()
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.046 s -- in com.papaya.claims.claim.api.ClaimControllerTest
+[INFO] Running com.papaya.claims.claim.domain.DomainContractTest
+running test case 17/42: pageBoundsAndOverflowAreExplicit()
+running test case 18/42: actorCopiesRolesAndRequiresProtectedSystemRole()
+running test case 19/42: factsDefensivelyCopyNestedJsonCollectionsAndPreserveDecimalPrecision()
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s -- in com.papaya.claims.claim.domain.DomainContractTest
+[INFO] Running com.papaya.claims.workflow.WorkflowEngineTest
+running test case 20/42: resolvesEffectIdsThroughStrategiesIntoPureTypedIntents()
+running test case 21/42: usesConfiguredCycleTransitionIdRatherThanAStateSpecificBranch()
+running test case 22/42: evaluatesConfiguredEdgeAndReportsRoleGuardAndInvalidEdgeFailures()
+running test case 23/42: availableTransitionsIncludeAuthorizationAndGuardFailures()
+running test case 24/42: allowsThirdInformationRequestAndRejectsFourthWithExactConfiguredMessage()
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.113 s -- in com.papaya.claims.workflow.WorkflowEngineTest
+[INFO] Running com.papaya.claims.workflow.WorkflowConfigTest
+running test case 25/42: acceptsStateAndEdgeExtensionUsingExistingGuardAndEffect()
+running test case 26/42: rejectsDuplicateYamlKeysUnknownRolesAndBadInitialState()
+running test case 27/42: rejectsUnknownStrategiesDanglingStatesAndDuplicateEdges()
+running test case 28/42: startsWorkflowBeansAndBindsConfiguredAppealPeriod()
+running test case 29/42: rejectsNonpositiveAppealDurationInEvaluationContext()
+running test case 30/42: loadsFrozenWorkflowAndCyclePolicy()
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.666 s -- in com.papaya.claims.workflow.WorkflowConfigTest
+[INFO] Running com.papaya.claims.workflow.GuardEvaluatorTest
+running test case 31/42: validatesAssessorReportAndExactAmount()
+running test case 32/42: validatesReasonAndStrictlyNewInformationTimestamp()
+running test case 33/42: requiresPersistedPaymentAndConfirmedReference()
+running test case 34/42: validatesDocumentRosterIdentityShapeRequirednessAndPresence()
+running test case 35/42: enforcesAppealExpiryOrAcknowledgementAfterRejectionAtMicrosecondPrecision()
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in com.papaya.claims.workflow.GuardEvaluatorTest
+[INFO] Running com.papaya.claims.common.web.CorrelationIdFilterTest
+running test case 36/42: preservesOnlyBoundedSafeIdsAndReturnsTheEffectiveCorrelationId()
+09:24:27.908 [main] INFO com.papaya.claims.common.web.CorrelationIdFilter -- http_request method=GET path=/api/v1/claims status=200 durationMs=15 correlationId=client:trace-17 traceId=null spanId=null
+running test case 37/42: replacesMalformedOrOversizedIdsWithGeneratedUuid()
+09:24:27.917 [main] INFO com.papaya.claims.common.web.CorrelationIdFilter -- http_request method=GET path=/api/v1/claims status=200 durationMs=0 correlationId=57dcad29-c7ee-4ec9-b768-86123789cfaa traceId=null spanId=null
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.054 s -- in com.papaya.claims.common.web.CorrelationIdFilterTest
+[INFO] Running com.papaya.claims.common.web.JsonRequestSizeFilterTest
+running test case 38/42: rejectsOversizedJsonEvenWhenContentLengthIsUnknown()
+running test case 39/42: passesAWithinLimitBodyToTheNextFilterUnchanged()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.041 s -- in com.papaya.claims.common.web.JsonRequestSizeFilterTest
+[INFO] Running com.papaya.claims.audit.ClaimAuditAspectTest
+running test case 40/42: selectedMutationsDeclareRuntimeAuditActionAndResource()
+running test case 41/42: springAopProxyAuditsAnnotatedFailureAndPreservesTheBusinessException()
+running test case 42/42: failureAdviceUsesAnnotationMetadataAndReplacesUnsafeCorrelationIds()
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.303 s -- in com.papaya.claims.audit.ClaimAuditAspectTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 42, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.193 s
+[INFO] Finished at: 2026-10-17T09:24:28+07:00
+[INFO] ------------------------------------------------------------------------

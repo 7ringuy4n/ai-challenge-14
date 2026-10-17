@@ -1,0 +1,77 @@
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/persistence/UuidTypeHandler.java
+@@ -0,0 +1,49 @@
++package com.papaya.claims.persistence;
++
++import java.sql.CallableStatement;
++import java.sql.PreparedStatement;
++import java.sql.ResultSet;
++import java.sql.SQLException;
++import java.sql.Types;
++import java.util.UUID;
++import org.apache.ibatis.type.BaseTypeHandler;
++import org.apache.ibatis.type.JdbcType;
++import org.apache.ibatis.type.MappedJdbcTypes;
++import org.apache.ibatis.type.MappedTypes;
++
++@MappedTypes(UUID.class)
++@MappedJdbcTypes(value = JdbcType.OTHER, includeNullJdbcType = true)
++public final class UuidTypeHandler extends BaseTypeHandler<UUID> {
++    @Override
++    public void setNonNullParameter(
++            PreparedStatement statement, int index, UUID value, JdbcType jdbcType)
++            throws SQLException {
++        statement.setObject(index, value, Types.OTHER);
++    }
++
++    @Override
++    public UUID getNullableResult(ResultSet resultSet, String columnName) throws SQLException {
++        return readUuid(resultSet.getObject(columnName));
++    }
++
++    @Override
++    public UUID getNullableResult(ResultSet resultSet, int columnIndex) throws SQLException {
++        return readUuid(resultSet.getObject(columnIndex));
++    }
++
++    @Override
++    public UUID getNullableResult(CallableStatement statement, int columnIndex)
++            throws SQLException {
++        return readUuid(statement.getObject(columnIndex));
++    }
++
++    private UUID readUuid(Object value) {
++        if (value == null) {
++            return null;
++        }
++        if (value instanceof UUID uuid) {
++            return uuid;
++        }
++        return UUID.fromString(value.toString());
++    }
++}
+--- a/src/main/resources/mappers/AuditMapper.xml
++++ b/src/main/resources/mappers/AuditMapper.xml
+@@ -1 +1 @@
+-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd"><mapper namespace="com.papaya.claims.persistence.AuditMapper"><resultMap id="audit" type="com.papaya.claims.persistence.AuditRow"><constructor><idArg column="audit_id" javaType="java.util.UUID"/><arg column="claim_id" javaType="java.util.UUID"/><arg column="sequence" javaType="long"/><arg column="occurred_at" javaType="java.time.Instant"/><arg column="from_state" javaType="java.lang.String"/><arg column="to_state" javaType="java.lang.String"/><arg column="user_id" javaType="java.lang.String"/><arg column="role" javaType="java.lang.String"/><arg column="notes" javaType="java.lang.String"/><arg column="config_version" javaType="java.lang.String"/><arg column="trace_id" javaType="java.lang.String"/></constructor></resultMap><insert id="append">INSERT INTO claim_audit(audit_id,claim_id,sequence,occurred_at,from_state,to_state,user_id,role,notes,config_version,trace_id) VALUES(#{auditId},#{claimId},#{sequence},#{timestamp},#{fromState},#{toState},#{userId},#{role},#{notes},#{configVersion},#{traceId})</insert><select id="findByClaimId" resultMap="audit">SELECT audit_id,claim_id,sequence,occurred_at,from_state,to_state,user_id,role,notes,config_version,trace_id FROM claim_audit WHERE claim_id=#{id} ORDER BY sequence,audit_id</select></mapper>
++<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd"><mapper namespace="com.papaya.claims.persistence.AuditMapper"><resultMap id="audit" type="com.papaya.claims.persistence.AuditRow"><constructor><idArg column="audit_id" javaType="java.util.UUID"/><arg column="claim_id" javaType="java.util.UUID"/><arg column="sequence" javaType="_long"/><arg column="occurred_at" javaType="java.time.Instant"/><arg column="from_state" javaType="java.lang.String"/><arg column="to_state" javaType="java.lang.String"/><arg column="user_id" javaType="java.lang.String"/><arg column="role" javaType="java.lang.String"/><arg column="notes" javaType="java.lang.String"/><arg column="config_version" javaType="java.lang.String"/><arg column="trace_id" javaType="java.lang.String"/></constructor></resultMap><insert id="append">INSERT INTO claim_audit(audit_id,claim_id,sequence,occurred_at,from_state,to_state,user_id,role,notes,config_version,trace_id) VALUES(#{auditId},#{claimId},#{sequence},#{timestamp},#{fromState},#{toState},#{userId},#{role},#{notes},#{configVersion},#{traceId})</insert><select id="findByClaimId" resultMap="audit">SELECT audit_id,claim_id,sequence,occurred_at,from_state,to_state,user_id,role,notes,config_version,trace_id FROM claim_audit WHERE claim_id=#{id} ORDER BY sequence,audit_id</select></mapper>
+--- a/src/main/resources/mappers/ClaimMapper.xml
++++ b/src/main/resources/mappers/ClaimMapper.xml
+@@ -1 +1 @@
+-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd"><mapper namespace="com.papaya.claims.persistence.ClaimMapper"><resultMap id="claim" type="com.papaya.claims.persistence.ClaimRow"><constructor><idArg column="id" javaType="java.util.UUID"/><arg column="member_id" javaType="java.lang.String"/><arg column="state" javaType="java.lang.String"/><arg column="policy_limit" javaType="java.math.BigDecimal"/><arg column="currency" javaType="java.lang.String"/><arg column="facts" javaType="java.lang.String"/><arg column="information_requests" javaType="int"/><arg column="version" javaType="long"/><arg column="assessment_started_at" javaType="java.time.Instant"/><arg column="last_information_requested_at" javaType="java.time.Instant"/></constructor></resultMap><sql id="cols">id,member_id,state,policy_limit,currency,facts::text facts,information_requests,version,assessment_started_at,last_information_requested_at</sql><insert id="insert">INSERT INTO claims(id,member_id,state,policy_limit,currency,facts,information_requests,version,assessment_started_at,last_information_requested_at) VALUES(#{id},#{memberId},#{state},#{policyLimit},#{currency},CAST(#{facts} AS jsonb),#{informationRequests},#{version},#{assessmentStartedAt},#{lastInformationRequestedAt})</insert><select id="find" resultMap="claim">SELECT <include refid="cols"/> FROM claims WHERE id=#{id}</select><select id="findForUpdate" resultMap="claim">SELECT <include refid="cols"/> FROM claims WHERE id=#{id} FOR UPDATE</select><select id="list" resultMap="claim">SELECT <include refid="cols"/> FROM claims ORDER BY created_at,id</select><update id="compareAndSet">UPDATE claims SET member_id=#{row.memberId},state=#{row.state},policy_limit=#{row.policyLimit},currency=#{row.currency},facts=CAST(#{row.facts} AS jsonb),information_requests=#{row.informationRequests},version=#{row.version},assessment_started_at=#{row.assessmentStartedAt},last_information_requested_at=#{row.lastInformationRequestedAt},updated_at=clock_timestamp() WHERE id=#{row.id} AND version=#{expectedVersion} AND #{row.version}=#{expectedVersion}+1</update></mapper>
++<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd"><mapper namespace="com.papaya.claims.persistence.ClaimMapper"><resultMap id="claim" type="com.papaya.claims.persistence.ClaimRow"><constructor><idArg column="id" javaType="java.util.UUID"/><arg column="member_id" javaType="java.lang.String"/><arg column="state" javaType="java.lang.String"/><arg column="policy_limit" javaType="java.math.BigDecimal"/><arg column="currency" javaType="java.lang.String"/><arg column="facts" javaType="java.lang.String"/><arg column="information_requests" javaType="_int"/><arg column="version" javaType="_long"/><arg column="assessment_started_at" javaType="java.time.Instant"/><arg column="last_information_requested_at" javaType="java.time.Instant"/></constructor></resultMap><sql id="cols">id,member_id,state,policy_limit,currency,facts::text facts,information_requests,version,assessment_started_at,last_information_requested_at</sql><insert id="insert">INSERT INTO claims(id,member_id,state,policy_limit,currency,facts,information_requests,version,assessment_started_at,last_information_requested_at) VALUES(#{id},#{memberId},#{state},#{policyLimit},#{currency},CAST(#{facts} AS jsonb),#{informationRequests},#{version},#{assessmentStartedAt},#{lastInformationRequestedAt})</insert><select id="find" resultMap="claim">SELECT <include refid="cols"/> FROM claims WHERE id=#{id}</select><select id="findForUpdate" resultMap="claim">SELECT <include refid="cols"/> FROM claims WHERE id=#{id} FOR UPDATE</select><select id="list" resultMap="claim">SELECT <include refid="cols"/> FROM claims ORDER BY created_at,id</select><update id="compareAndSet">UPDATE claims SET member_id=#{row.memberId},state=#{row.state},policy_limit=#{row.policyLimit},currency=#{row.currency},facts=CAST(#{row.facts} AS jsonb),information_requests=#{row.informationRequests},version=#{row.version},assessment_started_at=#{row.assessmentStartedAt},last_information_requested_at=#{row.lastInformationRequestedAt},updated_at=clock_timestamp() WHERE id=#{row.id} AND version=#{expectedVersion} AND #{row.version}=#{expectedVersion}+1</update></mapper>
+--- a/src/main/resources/mappers/EffectMapper.xml
++++ b/src/main/resources/mappers/EffectMapper.xml
+@@ -1 +1 @@
+-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd"><mapper namespace="com.papaya.claims.persistence.EffectMapper"><resultMap id="outbox" type="com.papaya.claims.persistence.OutboxRow"><constructor><idArg column="id" javaType="java.util.UUID"/><arg column="claim_id" javaType="java.util.UUID"/><arg column="effect" javaType="java.lang.String"/><arg column="payload" javaType="java.lang.String"/><arg column="attempts" javaType="int"/><arg column="status" javaType="java.lang.String"/><arg column="next_attempt_at" javaType="java.time.Instant"/></constructor></resultMap><insert id="enqueue">INSERT INTO effect_outbox(id,claim_id,effect,payload,attempts,status,next_attempt_at) VALUES(#{id},#{claimId},#{effect},CAST(#{payload} AS jsonb),#{attempts},'pending',clock_timestamp()) ON CONFLICT(id) DO NOTHING</insert><select id="pending" resultMap="outbox">SELECT id,claim_id,effect,payload::text payload,attempts,status,next_attempt_at FROM effect_outbox WHERE status IN ('pending','failed') AND next_attempt_at&lt;=clock_timestamp() ORDER BY next_attempt_at,created_at LIMIT 100</select><update id="markDelivered">UPDATE effect_outbox SET status='delivered',delivered_at=clock_timestamp(),last_error=NULL WHERE id=#{id} AND status IN ('pending','failed')</update><update id="markFailed">UPDATE effect_outbox SET attempts=attempts+1,status='failed',last_error=#{error},next_attempt_at=#{retryAt} WHERE id=#{id} AND status IN ('pending','failed')</update><insert id="createPaymentRequest">INSERT INTO payment_requests(claim_id,request_id) VALUES(#{claimId},#{requestId}) ON CONFLICT(claim_id) DO NOTHING</insert><select id="paymentRequestExists" resultType="boolean">SELECT EXISTS(SELECT 1 FROM payment_requests WHERE claim_id=#{claimId})</select></mapper>
++<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd"><mapper namespace="com.papaya.claims.persistence.EffectMapper"><resultMap id="outbox" type="com.papaya.claims.persistence.OutboxRow"><constructor><idArg column="id" javaType="java.util.UUID"/><arg column="claim_id" javaType="java.util.UUID"/><arg column="effect" javaType="java.lang.String"/><arg column="payload" javaType="java.lang.String"/><arg column="attempts" javaType="_int"/><arg column="status" javaType="java.lang.String"/><arg column="next_attempt_at" javaType="java.time.Instant"/></constructor></resultMap><insert id="enqueue">INSERT INTO effect_outbox(id,claim_id,effect,payload,attempts,status,next_attempt_at) VALUES(#{id},#{claimId},#{effect},CAST(#{payload} AS jsonb),#{attempts},'pending',clock_timestamp()) ON CONFLICT(id) DO NOTHING</insert><select id="pending" resultMap="outbox">SELECT id,claim_id,effect,payload::text payload,attempts,status,next_attempt_at FROM effect_outbox WHERE status IN ('pending','failed') AND next_attempt_at&lt;=clock_timestamp() ORDER BY next_attempt_at,created_at LIMIT 100</select><update id="markDelivered">UPDATE effect_outbox SET status='delivered',delivered_at=clock_timestamp(),last_error=NULL WHERE id=#{id} AND status IN ('pending','failed')</update><update id="markFailed">UPDATE effect_outbox SET attempts=attempts+1,status='failed',last_error=#{error},next_attempt_at=#{retryAt} WHERE id=#{id} AND status IN ('pending','failed')</update><insert id="createPaymentRequest">INSERT INTO payment_requests(claim_id,request_id) VALUES(#{claimId},#{requestId}) ON CONFLICT(claim_id) DO NOTHING</insert><select id="paymentRequestExists" resultType="boolean">SELECT EXISTS(SELECT 1 FROM payment_requests WHERE claim_id=#{claimId})</select></mapper>
+--- a/src/test/java/com/papaya/claims/persistence/PostgresPersistenceSupport.java
++++ b/src/test/java/com/papaya/claims/persistence/PostgresPersistenceSupport.java
+@@ -48,6 +48,7 @@
+         DataSource runtimeDataSource = source(postgres, "claims_app", postgres.getPassword());
+         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
+         factoryBean.setDataSource(runtimeDataSource);
++        factoryBean.setTypeHandlersPackage("com.papaya.claims.persistence");
+         factoryBean.setMapperLocations(new PathMatchingResourcePatternResolver()
+                 .getResources("classpath*:mappers/*.xml"));
+         SqlSessionFactory factory = factoryBean.getObject();

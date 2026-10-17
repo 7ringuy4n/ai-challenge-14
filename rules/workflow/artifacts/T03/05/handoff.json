@@ -1,0 +1,51 @@
+{
+  "status": "DRAFTED_NOT_VERIFIED",
+  "task_id": "T03",
+  "attempt_id": "05",
+  "requirement_ids": [
+    "REQ-20261017-006",
+    "REQ-20261017-007",
+    "REQ-20261017-008",
+    "REQ-20261017-009"
+  ],
+  "contract_version": "CH14-Contracts-v1",
+  "candidate_patch": "rules/workflow/artifacts/T03/05/candidate.patch",
+  "candidate_patch_sha256": "2b32a69247086ac08df65f68ca5be1881c6cccc6998db5cc89ec4136c1216c53",
+  "files": {
+    "docker/Dockerfile": "a3783bf81bc87c3173e594a9cb332d4bb7de225d1c71bb09e6d060e1a659d40a",
+    "docker/compose.yml": "09cce5b130009f2c8d8004b077d87e8a1ac1966e9403e533c52dfc9ef24b7ce3",
+    "docker/initdb/10-runtime-role.sh": "db44cff98edc78102ef05ac435ef3991e04af24db090ce1b3c5f43e466b07100",
+    ".env.example": "4dec6ec1cff813cae230112afc3214817110d8bdda83435257d696f7b259c7fa",
+    "scripts/setup.sh": "2d9bf09d84a62669ad40b24ea20ed1118ad93ca416a15118a4073e9415b41f13",
+    "scripts/smoke.sh": "3fdf7829baf62e59753165cd61cbe4683897fa1e8017b599df27aa0e4c503667"
+  },
+  "checks": [
+    {
+      "command": "docker compose --env-file .env.example -f docker/compose.yml config --quiet",
+      "status": "NOT_RUN",
+      "reason": "Worker packet prohibits running checks; coordinator owns Compose syntax validation."
+    },
+    {
+      "command": "bash scripts/setup.sh",
+      "status": "NOT_RUN",
+      "reason": "Requires Docker daemon and mutates local .env/container/volume state; coordinator owns runtime checks."
+    },
+    {
+      "command": "bash scripts/smoke.sh",
+      "status": "NOT_RUN",
+      "reason": "Requires running app and local credentials; coordinator owns runtime checks."
+    }
+  ],
+  "environment_policy": "The template contains conspicuous CHANGE_ME placeholders only. Setup copies it only when .env is absent, rotates blank/CHANGE_ME passwords with openssl rand -hex 32, preserves other values, sets .env mode 0600, does not print credentials, validates Compose before startup, and waits for service health.",
+  "decisions": [
+    "PostgreSQL 16 uses a named durable volume and a first-init script to create claims_runtime and grant DML/default sequence privileges for objects created by claims_migration.",
+    "The app is built with Java 21 and runs as an unprivileged app user; host port binds only to 127.0.0.1.",
+    "Smoke authenticates using the clerk demo identity, suppresses response bodies and curl diagnostics, and checks health plus the paginated claims API."
+  ],
+  "risks": [
+    "The API route and demo principal credential wiring are inferred from the frozen contract and were not exercised.",
+    "The init script assumes the required fixed role names; changing role names in .env is unsupported.",
+    "Compose --wait support and the alpine wget health probe were not validated on this host."
+  ],
+  "audit": "Host-managed request/response payloads NOT_CAPTURED; audit PARTIAL."
+}

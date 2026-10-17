@@ -1,0 +1,31 @@
+{
+  "task": "T04",
+  "attempt": "05",
+  "author_role": "implementation_worker",
+  "status": "submitted",
+  "base_contract_sha256": "71ac00a58ca165a0126de13bee19e3c19c403c55c7e96ef74d61370e6967a9eb",
+  "base_files_sha256": {
+    "src/test/java/com/papaya/claims/application/EffectDispatcherTest.java": "aed311c59d92455f4e629f64369c3146587a7583025e8f7640e7baf08c85bb42",
+    "src/test/java/com/papaya/claims/application/FactAuthorizationTest.java": "4dfdb421804ef9d5fc26c08455717c1fa77ff7e9a9b0d1a9b885ff3589422e8a"
+  },
+  "artifact": "rules/workflow/artifacts/T04/05/candidate.patch",
+  "patch_targets": [
+    "src/test/java/com/papaya/claims/application/EffectDispatcherTest.java",
+    "src/test/java/com/papaya/claims/application/FactAuthorizationTest.java"
+  ],
+  "reported_failure_source": "reports/verification/build/t04-t09-test.log",
+  "verification": [
+    {
+      "command": "mvn -B -Dtest=EffectDispatcherTest,FactAuthorizationTest test",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol prohibits builds; coordinator reruns the affected focused tests."
+    }
+  ],
+  "implementation_notes": [
+    "Test-only delta. EffectDispatcherTest now spies on a real MockEffectFactory so delivery behavior remains real while Mockito can verify the invocation.",
+    "FactAuthorizationTest keeps the approved-state assessment freeze assertion and checks server-owned paymentRequestCreated in UNDER_ASSESSMENT, where the assessor fact policy permits phase validation to reach the field allowlist."
+  ],
+  "known_limits": [
+    "No tests were run by the worker. Other non-T04 failure(s) in the combined T04/T09 log are outside this patch."
+  ]
+}

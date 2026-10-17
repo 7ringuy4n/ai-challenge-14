@@ -1,0 +1,486 @@
+diff --git a/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java b/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java
+@@ -0,0 +1,93 @@
++package com.papaya.claims.contract;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++
++import com.papaya.claims.contract.Model.Actor;
++import com.papaya.claims.contract.Model.ClaimSnapshot;
++import com.papaya.claims.contract.Model.Decision;
++import com.papaya.claims.contract.Model.TransitionCommand;
++import java.math.BigDecimal;
++import java.math.BigInteger;
++import java.time.Instant;
++import java.util.ArrayList;
++import java.util.LinkedHashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++
++class ModelBoundaryTest {
++    private static ClaimSnapshot claim(BigDecimal limit, int requests, long version, Map<String, Object> facts) {
++        return new ClaimSnapshot(UUID.randomUUID(), "member-1", "UNDER_ASSESSMENT", limit,
++                "USD", facts, requests, version, null, null);
++    }
++
++    @Test
++    void rejectsCurrencyScaleAndNegativeCountersAtConstructionBoundary() {
++        assertThatThrownBy(() -> claim(new BigDecimal("1.001"), 0, 0, Map.of()))
++                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_AMOUNT");
++        assertThatThrownBy(() -> claim(BigDecimal.ONE, -1, 0, Map.of()))
++                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_VERSION");
++        assertThatThrownBy(() -> claim(BigDecimal.ONE, 0, -1, Map.of()))
++                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_VERSION");
++        assertThatThrownBy(() -> new ClaimSnapshot(UUID.randomUUID(), "member", "RECEIVED",
++                BigDecimal.ONE, "usd", Map.of(), 0, 0, null, null))
++                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_CURRENCY");
++    }
++
++    @Test
++    void enforcesCommandLengthsAndNonnegativeExpectedVersion() {
++        assertThatThrownBy(() -> new TransitionCommand("A".repeat(81), 0, "key", ""))
++                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_COMMAND");
++        assertThatThrownBy(() -> new TransitionCommand("APPROVED", 0, "k".repeat(121), ""))
++                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_COMMAND");
++        assertThatThrownBy(() -> new TransitionCommand("APPROVED", -1, "key", ""))
++                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_COMMAND");
++        assertThatThrownBy(() -> new TransitionCommand("APPROVED", 0, "key", "n".repeat(2001)))
++                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_COMMAND");
++    }
++
++    @Test
++    void rejectsBlankFactKeysAndFreezesNestedMapAndListCopies() {
++        assertThatThrownBy(() -> Model.freezeMap(Map.of(" \t", true)))
++                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_INPUT");
++
++        var nested = new LinkedHashMap<String, Object>();
++        var values = new ArrayList<Object>(List.of(new BigInteger("9000000000000000000"), new BigDecimal("1.2300")));
++        nested.put("values", values);
++        var source = new LinkedHashMap<String, Object>();
++        source.put("nested", nested);
++        ClaimSnapshot snapshot = claim(BigDecimal.TEN, 0, 0, source);
++        values.set(0, 2);
++        nested.put("later", true);
++        source.put("new", "fact");
++
++        Map<?, ?> frozenNested = (Map<?, ?>) snapshot.facts().get("nested");
++        List<?> frozenValues = (List<?>) frozenNested.get("values");
++        assertThat(frozenValues).containsExactly(new BigInteger("9000000000000000000"), new BigDecimal("1.2300"));
++        assertThat(frozenNested).doesNotContainKey("later");
++        assertThat(snapshot.facts()).doesNotContainKey("new");
++        assertThatThrownBy(() -> frozenNested.put("x", true)).isInstanceOf(UnsupportedOperationException.class);
++        assertThatThrownBy(() -> ((List<Object>) frozenValues).add(false)).isInstanceOf(UnsupportedOperationException.class);
++    }
++
++    @Test
++    void transitionClearsOnlyNamedFactsAndAdvancesSnapshotVersion() {
++        ClaimSnapshot original = claim(BigDecimal.TEN, 1, 7,
++                Map.of("reportComplete", true, "amount", new BigDecimal("3.50"), "keep", "value"));
++        Instant started = Instant.parse("2026-10-16T12:00:00.123456789Z");
++        Decision decision = new Decision("UNDER_ASSESSMENT", "PENDING_INFO", 2, started,
++                started, List.of("request_information"), List.of("reportComplete", "amount"));
++
++        ClaimSnapshot transitioned = original.transition(decision);
++
++        assertThat(transitioned.state()).isEqualTo("PENDING_INFO");
++        assertThat(transitioned.version()).isEqualTo(8);
++        assertThat(transitioned.informationRequests()).isEqualTo(2);
++        assertThat(transitioned.facts()).containsOnlyKeys("keep").containsEntry("keep", "value");
++        assertThat(transitioned.assessmentStartedAt()).isEqualTo(Instant.parse("2026-10-16T12:00:00.123456Z"));
++        assertThat(transitioned.lastInformationRequestedAt()).isEqualTo(transitioned.assessmentStartedAt());
++        assertThat(original.facts()).containsKeys("reportComplete", "amount", "keep");
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/engine/GuardBoundaryTest.java b/src/test/java/com/papaya/claims/engine/GuardBoundaryTest.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/engine/GuardBoundaryTest.java
+@@ -0,0 +1,86 @@
++package com.papaya.claims.engine;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import com.papaya.claims.contract.Model.ClaimSnapshot;
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.List;
++import java.util.Map;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++
++class GuardBoundaryTest {
++    private final GuardEvaluator evaluator = new GuardEvaluator();
++
++    private ClaimSnapshot claim(Map<String, Object> facts) {
++        return new ClaimSnapshot(UUID.randomUUID(), "member-1", "UNDER_ASSESSMENT",
++                new BigDecimal("100.00"), "USD", facts, 0, 0, null, null);
++    }
++
++    private WorkflowDefinition.Guard guard(String type, String field, String otherField, Object value) {
++        return new WorkflowDefinition.Guard(type, field, otherField, value, List.of(), null);
++    }
++
++    private boolean passes(WorkflowDefinition.Guard guard, Map<String, Object> facts) {
++        return evaluator.failures(List.of(guard), claim(facts), Instant.parse("2026-10-16T00:00:00Z")).isEmpty();
++    }
++
++    @Test
++    void presentRejectsBlankStringsAndEmptyCollectionsButAcceptsNonemptyValues() {
++        assertThat(passes(guard("present", "text", null, null), Map.of("text", " \t"))).isFalse();
++        assertThat(passes(guard("present", "items", null, null), Map.of("items", List.of()))).isFalse();
++        assertThat(passes(guard("present", "items", null, null), Map.of("items", List.of("document")))).isTrue();
++        assertThat(passes(guard("present", "count", null, null), Map.of("count", 0))).isTrue();
++    }
++
++    @Test
++    void isTrueAcceptsOnlyBooleanTrue() {
++        assertThat(passes(guard("isTrue", "flag", null, null), Map.of("flag", false))).isFalse();
++        assertThat(passes(guard("isTrue", "flag", null, null), Map.of("flag", "true"))).isFalse();
++        assertThat(passes(guard("isTrue", "flag", null, null), Map.of("flag", 1))).isFalse();
++        assertThat(passes(guard("isTrue", "flag", null, null), Map.of("flag", true))).isTrue();
++    }
++
++    @Test
++    void numericEqualityUsesValueAcrossJsonNumberRepresentations() {
++        assertThat(passes(guard("equal", "left", null, new BigDecimal("12.500")),
++                Map.of("left", 12.5d))).isTrue();
++        assertThat(passes(guard("equal", "left", "right", null),
++                Map.of("left", 12, "right", new BigDecimal("12.01")))).isFalse();
++        assertThat(passes(guard("equal", "left", "right", null),
++                Map.of("left", "not-a-number", "right", 12))).isFalse();
++    }
++
++    @Test
++    void documentGuardFailsClosedForEmptyRequiredListAndMissingDocumentMap() {
++        var documents = guard("allDocumentsValid", "requiredDocuments", null, null);
++        assertThat(passes(documents, Map.of("requiredDocuments", List.of(), "documents", Map.of()))).isFalse();
++        assertThat(passes(documents, Map.of("requiredDocuments", List.of("invoice")))).isFalse();
++        assertThat(passes(documents, Map.of("requiredDocuments", List.of("invoice"),
++                "documents", Map.of("invoice", true)))).isTrue();
++    }
++
++    @Test
++    void anyWithoutSatisfiedChildrenFailsClosed() {
++        var any = new WorkflowDefinition.Guard("any", null, null, null,
++                List.of(guard("isTrue", "acknowledged", null, null), guard("present", "reason", null, null)), null);
++        assertThat(evaluator.failures(List.of(any), claim(Map.of()), Instant.EPOCH)).hasSize(1);
++        assertThat(evaluator.failures(List.of(any), claim(Map.of("acknowledged", true)), Instant.EPOCH)).isEmpty();
++    }
++
++    @Test
++    void timestampGuardsFailClosedForMalformedValuesAndCompareAtMicrosecondPrecision() {
++        var afterLastRequest = guard("after", "receivedAt", "lastInformationRequestedAt", null);
++        ClaimSnapshot malformed = new ClaimSnapshot(UUID.randomUUID(), "member-1", "PENDING_INFO",
++                BigDecimal.TEN, "USD", Map.of("receivedAt", "yesterday"), 1, 0, null,
++                Instant.parse("2026-10-16T00:00:00Z"));
++        assertThat(evaluator.failures(List.of(afterLastRequest), malformed, Instant.EPOCH)).hasSize(1);
++
++        ClaimSnapshot exactAtRoundedBoundary = new ClaimSnapshot(UUID.randomUUID(), "member-1", "PENDING_INFO",
++                BigDecimal.TEN, "USD", Map.of("receivedAt", "2026-10-16T00:00:00.0000008Z"), 1, 0, null,
++                Instant.parse("2026-10-16T00:00:00.000000Z"));
++        assertThat(evaluator.failures(List.of(afterLastRequest), exactAtRoundedBoundary,
++                Instant.parse("2026-10-16T00:00:01Z"))).isEmpty();
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java b/src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java
+@@ -0,0 +1,87 @@
++package com.papaya.claims.engine;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.util.stream.IntStream;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.io.TempDir;
++
++class WorkflowValidationTest {
++    @TempDir Path temp;
++
++    private Path write(String name, String yaml) throws Exception {
++        Path path = temp.resolve(name);
++        Files.writeString(path, yaml);
++        return path;
++    }
++
++    private String valid() {
++        return "version: 'test'\ninitialState: A\nstates: [A, B]\nroles: [clerk]\n"
++                + "maxInformationRequests: 3\ntransitions:\n"
++                + "  - from: A\n    to: B\n    role: clerk\n    guards: []\n    effects: []\n";
++    }
++
++    private String transition(String extra) {
++        return valid().replace("    guards: []\n    effects: []\n", extra + "\n    effects: []\n");
++    }
++
++    private void rejects(String name, String yaml, String diagnostic) throws Exception {
++        var error = org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
++                () -> WorkflowLoader.load(write(name, yaml)));
++        assertThat(error.getMessage()).contains(name, diagnostic);
++    }
++
++    @Test
++    void rejectsUnknownFieldsMalformedYamlAndEmptyDocuments() throws Exception {
++        rejects("unknown.yml", valid() + "surprise: true\n", "Unrecognized field");
++        rejects("malformed.yml", "version: [\n", "invalid workflow configuration");
++        rejects("empty.yml", "", "document is empty");
++    }
++
++    @Test
++    void rejectsBlankRequiredFieldsAndEmptyStateCollections() throws Exception {
++        rejects("blank-version.yml", valid().replace("version: 'test'", "version: '  '"), "version is required");
++        rejects("blank-edge.yml", valid().replace("    from: A", "    from: '  '"), "transitions[0].from is required");
++        rejects("empty-states.yml", valid().replace("states: [A, B]", "states: []"), "states must contain at least one state");
++    }
++
++    @Test
++    void rejectsDuplicateStatesAndDuplicateEdges() throws Exception {
++        rejects("duplicate-states.yml", valid().replace("states: [A, B]", "states: [A, A]"), "contains duplicate state");
++        String duplicateEdge = valid() + "  - from: A\n    to: B\n    role: clerk\n    guards: []\n    effects: []\n";
++        rejects("duplicate-edge.yml", duplicateEdge, "duplicate from/to edge");
++    }
++
++    @Test
++    void rejectsDanglingStateNegativeCounterUnknownRoleAndTimer() throws Exception {
++        rejects("dangling.yml", valid().replace("    to: B", "    to: C"), "from/to must name configured states");
++        rejects("negative-count.yml", valid().replace("maxInformationRequests: 3", "maxInformationRequests: -1"), "maxInformationRequests must be nonnegative");
++        rejects("unknown-role.yml", valid().replace("    role: clerk", "    role: guest"), "must name a configured role");
++        rejects("timer.yml", valid().replace("    effects: []", "    effects: []\n    timerAction: LATER"), "must be NONE, START, or RESET");
++    }
++
++    @Test
++    void rejectsEmptyAnyAndMissingGuardFieldsOrOperands() throws Exception {
++        rejects("empty-any.yml", transition("    guards:\n      - type: any\n        guards: []"), "any requires child guards");
++        rejects("missing-field.yml", transition("    guards:\n      - type: present"), "field is required for present");
++        rejects("missing-operand.yml", transition("    guards:\n      - type: equal\n        field: left"), "equal requires value or otherField");
++        rejects("missing-number-operand.yml", transition("    guards:\n      - type: lessOrEqual\n        field: amount"), "requires value or otherField");
++    }
++
++    @Test
++    void rejectsGuardNestingBeyondConfiguredMaximum() throws Exception {
++        String guard = "      - type: isTrue\n        field: ready\n";
++        for (int level = 0; level < 13; level++) {
++            guard = "      - type: any\n        guards:\n" + indent(guard, 4);
++        }
++        rejects("deep-guards.yml", transition("    guards:\n" + guard.stripTrailing()), "guard nesting exceeds 12");
++    }
++
++    private String indent(String text, int spaces) {
++        String prefix = " ".repeat(spaces);
++        return text.lines().map(line -> prefix + line).reduce((left, right) -> left + "\n" + right).orElse("");
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/engine/DefinitionImmutabilityTest.java b/src/test/java/com/papaya/claims/engine/DefinitionImmutabilityTest.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/engine/DefinitionImmutabilityTest.java
+@@ -0,0 +1,60 @@
++package com.papaya.claims.engine;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++
++import java.util.ArrayList;
++import java.util.LinkedHashMap;
++import java.util.List;
++import java.util.Map;
++import org.junit.jupiter.api.Test;
++
++class DefinitionImmutabilityTest {
++    @Test
++    void configurationCollectionsAndNestedGuardValuesAreDefensiveCopies() {
++        var nestedMap = new LinkedHashMap<String, Object>();
++        var nestedItems = new ArrayList<Object>(List.of("invoice"));
++        nestedMap.put("required", nestedItems);
++        var rawValue = new ArrayList<Object>();
++        rawValue.add(nestedMap);
++        var children = new ArrayList<WorkflowDefinition.Guard>();
++        children.add(new WorkflowDefinition.Guard("present", "assessorId", null, null, List.of(), null));
++        var guards = new ArrayList<>(children);
++        var effects = new ArrayList<>(List.of("notify_assessors"));
++        var clears = new ArrayList<>(List.of("reportComplete"));
++        var transition = new WorkflowDefinition.Transition("A", "B", "clerk", guards, effects,
++                false, WorkflowDefinition.TimerAction.NONE, clears);
++        var transitions = new ArrayList<>(List.of(transition));
++        var states = new ArrayList<>(List.of("A", "B"));
++        var roles = new ArrayList<>(List.of("clerk"));
++        var definition = new WorkflowDefinition("v1", "A", states, roles, 3, transitions);
++        var guard = new WorkflowDefinition.Guard("equal", "actual", null, rawValue, children, "must match");
++
++        nestedItems.add("tampered");
++        nestedMap.put("extra", true);
++        rawValue.add("later");
++        children.clear();
++        guards.clear();
++        effects.clear();
++        clears.clear();
++        transitions.clear();
++        states.add("C");
++        roles.clear();
++
++        assertThat(definition.states()).containsExactly("A", "B");
++        assertThat(definition.roles()).containsExactly("clerk");
++        assertThat(definition.transitions()).containsExactly(transition);
++        assertThat(transition.guards()).hasSize(1);
++        assertThat(transition.effects()).containsExactly("notify_assessors");
++        assertThat(transition.clearFacts()).containsExactly("reportComplete");
++        assertThat((List<?>) ((Map<?, ?>) ((List<?>) guard.value()).get(0)).get("required"))
++                .containsExactly("invoice");
++        assertThat(guard.guards()).hasSize(1);
++        assertThatThrownBy(() -> ((List<Object>) ((Map<?, ?>) ((List<?>) guard.value()).get(0)).get("required")).add("x"))
++                .isInstanceOf(UnsupportedOperationException.class);
++        assertThatThrownBy(() -> ((List<Object>) guard.value()).add("x"))
++                .isInstanceOf(UnsupportedOperationException.class);
++        assertThatThrownBy(() -> ((List<WorkflowDefinition.Guard>) transition.guards()).clear())
++                .isInstanceOf(UnsupportedOperationException.class);
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/persistence/PersistenceBoundaryTest.java b/src/test/java/com/papaya/claims/persistence/PersistenceBoundaryTest.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/persistence/PersistenceBoundaryTest.java
+@@ -0,0 +1,68 @@
++package com.papaya.claims.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.when;
++
++import com.fasterxml.jackson.core.JsonProcessingException;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import java.sql.CallableStatement;
++import java.sql.PreparedStatement;
++import java.sql.ResultSet;
++import java.util.UUID;
++import org.apache.ibatis.type.JdbcType;
++import org.junit.jupiter.api.Test;
++
++class PersistenceBoundaryTest {
++    @Test
++    void uuidHandlerReadsNativeUuidTextAndNullAcrossAllResultOverloads() throws Exception {
++        UuidTypeHandler handler = new UuidTypeHandler();
++        UUID expected = UUID.randomUUID();
++        ResultSet resultSet = mock(ResultSet.class);
++        when(resultSet.getObject("id")).thenReturn(expected);
++        when(resultSet.getObject(1)).thenReturn(expected.toString());
++        CallableStatement callable = mock(CallableStatement.class);
++        when(callable.getObject(1)).thenReturn(expected);
++
++        assertThat(handler.getNullableResult(resultSet, "id")).isEqualTo(expected);
++        assertThat(handler.getNullableResult(resultSet, 1)).isEqualTo(expected);
++        assertThat(handler.getNullableResult(callable, 1)).isEqualTo(expected);
++
++        when(resultSet.getObject("missing")).thenReturn(null);
++        assertThat(handler.getNullableResult(resultSet, "missing")).isNull();
++    }
++
++    @Test
++    void uuidHandlerRejectsMalformedDatabaseTextAndBindsUuidAsPostgresOther() throws Exception {
++        UuidTypeHandler handler = new UuidTypeHandler();
++        ResultSet resultSet = mock(ResultSet.class);
++        when(resultSet.getObject("id")).thenReturn("not-a-uuid");
++        assertThatThrownBy(() -> handler.getNullableResult(resultSet, "id"))
++                .isInstanceOf(IllegalArgumentException.class);
++
++        PreparedStatement statement = mock(PreparedStatement.class);
++        UUID value = UUID.randomUUID();
++        handler.setNonNullParameter(statement, 4, value, JdbcType.OTHER);
++        org.mockito.Mockito.verify(statement).setObject(4, value, java.sql.Types.OTHER);
++    }
++
++    @Test
++    void jsonAdaptersWrapEncodeDecodeAndReceiptFailuresWithStableContext() {
++        ObjectMapper failingWriter = mock(ObjectMapper.class);
++        try {
++            when(failingWriter.writeValueAsString(org.mockito.ArgumentMatchers.any()))
++                    .thenThrow(new JsonProcessingException("forced serialization failure") {});
++        } catch (JsonProcessingException impossible) {
++            throw new AssertionError(impossible);
++        }
++        assertThatThrownBy(() -> PersistenceJson.write(failingWriter, java.util.Map.of("x", 1)))
++                .isInstanceOf(IllegalStateException.class).hasMessage("Unable to encode persistence JSON");
++
++        ObjectMapper mapper = new ObjectMapper();
++        assertThatThrownBy(() -> PersistenceJson.readMap(mapper, "{"))
++                .isInstanceOf(IllegalStateException.class).hasMessage("Unable to decode persistence JSON");
++        assertThatThrownBy(() -> PersistenceJson.receipt(mapper, "{"))
++                .isInstanceOf(IllegalStateException.class).hasMessage("Unable to decode command receipt");
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/persistence/PersistenceBoundaryIT.java b/src/test/java/com/papaya/claims/persistence/PersistenceBoundaryIT.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/persistence/PersistenceBoundaryIT.java
+@@ -0,0 +1,56 @@
++package com.papaya.claims.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import com.papaya.claims.contract.Model.ClaimSnapshot;
++import com.papaya.claims.contract.Model.OutboxMessage;
++import java.math.BigDecimal;
++import java.util.List;
++import java.util.Map;
++import java.util.UUID;
++import org.junit.jupiter.api.BeforeAll;
++import org.junit.jupiter.api.Test;
++import org.testcontainers.containers.PostgreSQLContainer;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++
++@Testcontainers(disabledWithoutDocker = false)
++class PersistenceBoundaryIT {
++    @Container
++    static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
++            .withDatabaseName("claims")
++            .withUsername("postgres")
++            .withPassword("integration-test-password");
++
++    private static PostgresPersistenceSupport.Harness harness;
++
++    @BeforeAll
++    static void setUp() throws Exception {
++        harness = PostgresPersistenceSupport.start(postgres);
++    }
++
++    @Test
++    void emptyAndPopulatedClaimListsAbsentReceiptAndDeliveredOutboxAreReadFromPostgres() {
++        assertThat(harness.claims().list()).isEmpty();
++
++        ClaimSnapshot first = claim("member-1");
++        ClaimSnapshot second = claim("member-2");
++        harness.claims().insert(first);
++        harness.claims().insert(second);
++
++        assertThat(harness.claims().list()).containsExactlyInAnyOrder(first, second);
++        assertThat(harness.commands().find(first.id(), "clerk", "absent-key")).isEmpty();
++
++        UUID outboxId = UUID.randomUUID();
++        OutboxMessage message = new OutboxMessage(outboxId, first.id(), "notify_approval", "{\"ok\":true}", 0);
++        harness.effects().enqueue(List.of(message));
++        assertThat(harness.effects().pending()).contains(message);
++        harness.effects().markDelivered(outboxId);
++        assertThat(harness.effects().pending()).doesNotContain(message);
++    }
++
++    private ClaimSnapshot claim(String memberId) {
++        return new ClaimSnapshot(UUID.randomUUID(), memberId, "RECEIVED", new BigDecimal("25.00"),
++                "USD", Map.of("source", "boundary"), 0, 0, null, null);
++    }
++}

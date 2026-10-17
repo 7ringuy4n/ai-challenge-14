@@ -1,0 +1,44 @@
+diff --git a/src/test/java/com/papaya/claims/workflow/GuardEvaluatorTest.java b/src/test/java/com/papaya/claims/workflow/GuardEvaluatorTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/workflow/GuardEvaluatorTest.java
+@@ -0,0 +1,39 @@
++package com.papaya.claims.workflow;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import java.math.BigDecimal;
++import java.time.Duration;
++import java.time.Instant;
++import java.util.Map;
++import java.util.Set;
++import com.papaya.claims.claim.domain.Actor;
++import com.papaya.claims.claim.domain.Claim;
++import com.papaya.claims.claim.domain.ClaimFacts;
++import com.papaya.claims.claim.domain.TransitionCommand;
++import org.junit.jupiter.api.Test;
++
++class GuardEvaluatorTest {
++    private final GuardEvaluator guards = new GuardEvaluator();
++    private WorkflowEvaluationContext context(Map<String,Object> facts, String reason, WorkflowEvidence evidence) {
++        Instant now = Instant.parse("2026-10-17T12:00:00Z");
++        Claim claim = new Claim(java.util.UUID.randomUUID(), "member-1", "UNDER_ASSESSMENT", new BigDecimal("10.00"), "USD", 0, new ClaimFacts(facts), now, now);
++        return new WorkflowEvaluationContext(claim, new Actor("assessor-1", Set.of("assessor"), false), new TransitionCommand("APPROVED", 0, reason, null), evidence, now, Duration.ofDays(30));
++    }
++    @Test void rejectsMalformedDocumentsAndNonExactOrOutOfLimitAmounts() {
++        WorkflowEvidence evidence = WorkflowEvidence.empty();
++        assertThat(guards.passes("all_required_documents_present", context(Map.of("documents", Map.of("bad id", Map.of("required",true,"present",true,"valid",true))), "", evidence))).isFalse();
++        assertThat(guards.passes("all_required_documents_present", context(Map.of("documents", Map.of("d", Map.of("required",true,"present",true))), "", evidence))).isFalse();
++        assertThat(guards.passes("amount_within_policy_limit", context(Map.of("requestedAmount", "1.00"), "", evidence))).isFalse();
++        assertThat(guards.passes("amount_within_policy_limit", context(Map.of("requestedAmount", new BigDecimal("-0.01")), "", evidence))).isFalse();
++        assertThat(guards.passes("amount_within_policy_limit", context(Map.of("requestedAmount", new BigDecimal("10.00")), "", evidence))).isTrue();
++    }
++    @Test void rejectsBlankReasonsAndUntrustedOrMissingEvidence() {
++        WorkflowEvidence empty = WorkflowEvidence.empty();
++        assertThat(guards.passes("rejection_reason_present", context(Map.of(), "  ", empty))).isFalse();
++        assertThat(guards.passes("information_description_present", context(Map.of(), "", empty))).isFalse();
++        assertThat(guards.passes("new_information_received", context(Map.of(), "", new WorkflowEvidence(1, Instant.parse("2026-10-17T11:00:00Z"), Instant.parse("2026-10-17T10:59:59Z"), null, null, null, false, null, null)))).isFalse();
++        assertThat(guards.passes("payment_request_exists", context(Map.of(), "", empty))).isFalse();
++        assertThat(guards.passes("payment_confirmed", context(Map.of(), "", new WorkflowEvidence(0,null,null,null,null,null,true,"  ",Instant.parse("2026-10-17T11:30:00Z"))))).isFalse();
++        assertThat(guards.passes("appeal_period_expired_or_member_acknowledged", context(Map.of(), "", empty))).isFalse();
++    }
++}

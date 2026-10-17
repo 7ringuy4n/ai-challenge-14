@@ -1,0 +1,22 @@
+flowchart LR
+  Browser[Browser UI<br/>Basic sign-in • CSRF • Idempotency-Key] --> API[REST + security<br/>Authenticated Actor<br/>bounded JSON + effective correlation ID]
+  API --> UseCases[Transactional Claim Use Cases<br/>role / state / guard / version checks<br/>advisory idempotency lock + row lock]
+  subgraph TX[One PostgreSQL transaction]
+    Claim[claims<br/>version CAS]
+    Audit[claim_audit + system_operation_audit]
+    Receipt[command_receipts<br/>actor + scope + key + fingerprint]
+    Payment[payment_requests]
+    Outbox[local_outbox]
+    Claim --> Audit
+    Claim --> Receipt
+    Claim --> Payment
+    Payment --> Outbox
+  end
+  UseCases --> Claim
+  TX --> DB[(PostgreSQL 16<br/>Liquibase • restricted runtime role<br/>append-only audit triggers)]
+  Outbox -->|after commit| Dispatcher[Scheduled dispatcher<br/>lease • retry • bounded batch]
+  Dispatcher --> Mock[Mock effect delivery<br/>payment reference]
+  Mock -->|confirm payment| DB
+  UseCases -. rejected operation .-> Failure[FailureAuditWriter<br/>REQUIRES_NEW]
+  Failure -. append failure .-> Audit
+  API -.-> Obs[Correlation ID • request logs<br/>Micrometer observations • Prometheus]

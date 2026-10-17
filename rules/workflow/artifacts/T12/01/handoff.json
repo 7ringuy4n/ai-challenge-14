@@ -1,0 +1,39 @@
+{
+  "task_id": "T12",
+  "attempt": "01",
+  "status": "submitted",
+  "model": "gpt-6-luna",
+  "reasoning_effort": "medium",
+  "contract_version": "docs/challenge-14/CONTRACTS.md sha256: 71ac00a58ca165a0126de13bee19e3c19c403c55c7e96ef74d61370e6967a9eb",
+  "base_files": {
+    "src/main/java/com/papaya/claims/persistence/PersistenceJson.java": "sha256: 1706ab275fa0fe194d13bcc9f4763da05c821b47e5df4f069607e2579ec55256",
+    "config/workflow.yml": "sha256: f766660bcc277e78fa0660ddffd54b9385b5d1cbd6e45d2fa8849af8466f5efb"
+  },
+  "patch_paths": [
+    "src/main/java/com/papaya/claims/persistence/PersistenceJson.java",
+    "src/test/java/com/papaya/claims/persistence/PersistenceMoneyIT.java"
+  ],
+  "criteria_addressed": [
+    "C14-10: Decode JSONB fact decimals as BigDecimal without mutating the shared ObjectMapper.",
+    "C14-21: Preserve exact financial decimals through JSONB and receipt snapshot round trips; exercise exact, one-cent-under, and one-cent-over approval decisions against PostgreSQL."
+  ],
+  "tests_added": [
+    "PersistenceMoneyIT.jsonbFactsAndReceiptSnapshotRetainExactDecimalsAndApprovalGuardUsesThem"
+  ],
+  "checks_executed": [],
+  "checks_not_run": [
+    {
+      "status": "NOT_RUN",
+      "command": "mvn -B -Pquality clean verify",
+      "reason": "Coordinator-owned build and PostgreSQL/Testcontainers execution."
+    }
+  ],
+  "decisions": [
+    "Each decode call derives an immutable ObjectReader from the supplied mapper and enables USE_BIG_DECIMAL_FOR_FLOATS, preserving modules and configuration on the supplied mapper.",
+    "The test uses PostgresPersistenceSupport.start once in @BeforeAll, which applies migrations and exercises the runtime role grants with the real PostgreSQL container."
+  ],
+  "risks": [
+    "The integration test requires Docker and remains unexecuted until coordinator verification."
+  ],
+  "requested_shared_changes": []
+}

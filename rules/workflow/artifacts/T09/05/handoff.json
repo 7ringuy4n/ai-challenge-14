@@ -1,0 +1,16 @@
+{
+  "task": "T09",
+  "attempt": "05",
+  "status": "submitted",
+  "author": "foundation_tests_worker",
+  "summary": "Aligned the empty-input validation test with Jackson's observed wrapped diagnostic and added a separate explicit YAML null case to exercise WorkflowLoader's raw-null document validation branch.",
+  "patch": "rules/workflow/artifacts/T09/05/candidate.patch",
+  "allowed_patch_paths": [
+    "src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java"
+  ],
+  "proposed_checks": [
+    {"status": "NOT_RUN", "command": "mvn -B -Dtest=WorkflowValidationTest test", "reason": "Worker instructions prohibit running builds; coordinator owns verification."}
+  ],
+  "findings": [],
+  "known_limits": ["Patch has not been compiled or executed; only the prior failure log was inspected."]
+}

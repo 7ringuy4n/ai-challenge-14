@@ -1,0 +1,35 @@
+{
+  "task": "T01",
+  "attempt": "01",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    "config/workflow.yml",
+    "src/main/java/com/papaya/claims/engine/ConfiguredWorkflowEngine.java",
+    "src/main/java/com/papaya/claims/engine/EffectRegistry.java",
+    "src/main/java/com/papaya/claims/engine/GuardEvaluator.java",
+    "src/main/java/com/papaya/claims/engine/WorkflowDefinition.java",
+    "src/main/java/com/papaya/claims/engine/WorkflowLoader.java",
+    "src/test/java/com/papaya/claims/engine/EngineFixtures.java",
+    "src/test/java/com/papaya/claims/engine/GuardEvaluatorTest.java",
+    "src/test/java/com/papaya/claims/engine/WorkflowConfigTest.java",
+    "src/test/java/com/papaya/claims/engine/WorkflowEngineTest.java"
+  ],
+  "tests_proposed": [
+    "mvn -B -Dtest=WorkflowEngineTest,WorkflowConfigTest,GuardEvaluatorTest test"
+  ],
+  "test_evidence": {
+    "status": "NOT_RUN",
+    "reason": "Worker protocol prohibits builds and test execution; coordinator must apply patch and run the named Maven command."
+  },
+  "assumptions": [
+    "requiredDocuments and documents are trusted claim facts; timestamp facts use ISO-8601 strings.",
+    "Effect IDs are validated through the immutable EffectRegistry capability set; dispatch remains an application/outbox responsibility.",
+    "The frozen guard DSL permits otherField as the right-hand operand for lessOrEqual, after, and beforeOrEqual."
+  ],
+  "contract_change_needed": false,
+  "notes": [
+    "The YAML defines all nine original edges and demonstrates arbitrary additional states/edges with existing primitives.",
+    "Approval checks reportComplete, assessmentAmount <= policyLimit, matching currency, and all required documents valid.",
+    "The fourth information request returns the exact frozen escalation text."
+  ]
+}

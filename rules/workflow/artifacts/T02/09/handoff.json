@@ -1,0 +1,114 @@
+{
+  "task": "T02",
+  "attempt": "09",
+  "requirements": [
+    "REQ-20261017-006",
+    "REQ-20261017-007",
+    "REQ-20261017-008",
+    "REQ-20261017-009",
+    "REQ-20261017-010"
+  ],
+  "contract": "CH14-Contracts-v1+AD-01",
+  "base_source_sha256": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+  "status": "PARTIAL",
+  "candidate_patch": "rules/workflow/artifacts/T02/09/candidate.patch",
+  "patch_paths": [
+    "src/main/java/com/papaya/claims/claim/domain/ClaimAggregate.java",
+    "src/main/java/com/papaya/claims/claim/domain/ClaimWorkflowData.java",
+    "src/main/java/com/papaya/claims/claim/domain/ClaimRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/ClaimAuditRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRecord.java",
+    "src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/IdempotencyRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/PaymentRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/OutboxRepository.java",
+    "src/main/resources/db/changelog/changes/002-persistence.sql"
+  ],
+  "repository_signatures": {
+    "ClaimRepository": [
+      "insert(ClaimAggregate)",
+      "find(UUID)",
+      "findForUpdate(UUID)",
+      "listVisible(PageRequest,Actor)",
+      "compareAndSet(ClaimAggregate,long)"
+    ],
+    "ClaimAuditRepository": [
+      "append(AuditRecord)",
+      "findByClaim(UUID,PageRequest)"
+    ],
+    "SystemOperationAuditRepository": [
+      "append(SystemOperationAuditRecord)"
+    ],
+    "IdempotencyRepository": [
+      "find(actorId,scope,key)",
+      "insert(Receipt)"
+    ],
+    "PaymentRepository": [
+      "create(claimId,requestId,currency,amount)",
+      "exists(claimId)",
+      "confirm(claimId,reference)"
+    ],
+    "OutboxRepository": [
+      "enqueue(Message)",
+      "claimDue(now,limit)",
+      "markDelivered(id,at)",
+      "markFailed(id,error,retryAt)"
+    ]
+  },
+  "schema_objects": [
+    "claims workflow evidence columns",
+    "claim_audit",
+    "system_operation_audit",
+    "command_receipts",
+    "payment_requests",
+    "local_outbox",
+    "append-only audit triggers",
+    "due outbox index",
+    "unique actor/scope/key and claim payment constraints"
+  ],
+  "grants": [
+    "runtime audit tables SELECT/INSERT only",
+    "payment UPDATE limited to status/reference/confirmed_at",
+    "outbox UPDATE limited to attempts/available_at/delivered_at/last_error",
+    "no cascade from claims to either audit table",
+    "no default privilege grants"
+  ],
+  "tests_proposed": [
+    "ClaimPersistenceIT",
+    "AuditImmutabilityIT",
+    "IdempotencyIT",
+    "PaymentOutboxIT"
+  ],
+  "verification": {
+    "status": "NOT_RUN",
+    "checks": [
+      {
+        "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dit.test=ClaimPersistenceIT,AuditImmutabilityIT,IdempotencyIT,PaymentOutboxIT verify",
+        "status": "NOT_RUN",
+        "reason": "Worker packet prohibits builds/tests, Docker and database operations; coordinator must run after independent review and integration."
+      },
+      {
+        "command": "git apply --check rules/workflow/artifacts/T02/09/candidate.patch",
+        "status": "PASS",
+        "reason": "Read-only applicability check completed; all 10 diff headers and new-file hunk counts were independently inspected."
+      }
+    ]
+  },
+  "limitations": [
+    "Mapper interfaces, persistence rows/type handlers/adapters, and all MyBatis XML are absent.",
+    "The four requested PostgreSQL Testcontainers integration test classes are absent.",
+    "The schema/grants are drafted but not validated against effective role membership or the migration owner setup.",
+    "Migration ownership/grants do not yet establish a distinct migration role grant model; coordinator must reconcile with deployment provisioning.",
+    "Claim persistence implementation and transaction composition are not provided."
+  ],
+  "decisions_and_risks": [
+    "No FK from claim_audit to claims is deliberate to avoid cascading deletion of audit history.",
+    "JSONB payload and receipt result remain structurally constrained to objects; exact numeric roundtrip still needs PostgreSQL IT coverage.",
+    "Runtime DML grant on claims mirrors existing claim mutation needs but must be verified against production column-level contract."
+  ],
+  "coordinator_action": "After completion/review, include changes/002-persistence.sql in db.changelog-master.yml. This worker intentionally did not edit the master changelog.",
+  "audit": {
+    "host_managed_payloads": "NOT_CAPTURED",
+    "trace_status": "PARTIAL"
+  }
+}

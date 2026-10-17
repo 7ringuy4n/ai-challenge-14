@@ -1,0 +1,53 @@
+name: claims-challenge14
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: claims
+      POSTGRES_USER: claims_owner
+      POSTGRES_PASSWORD: ${DB_MIGRATION_PASSWORD:?Set DB_MIGRATION_PASSWORD in .env}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - claims_challenge14_postgres_data:/var/lib/postgresql/data
+      - ./initdb/10-create-runtime-role.sh:/docker-entrypoint-initdb.d/10-create-runtime-role.sh:ro
+      - ./initdb/reconcile-roles.sh:/opt/claims/reconcile-roles.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U claims_owner -d claims"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/claims
+      DB_USER: claims_app
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      DB_MIGRATION_USER: claims_owner
+      DB_MIGRATION_PASSWORD: ${DB_MIGRATION_PASSWORD:?Set DB_MIGRATION_PASSWORD in .env}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:?Set DEMO_PASSWORD in .env}
+      SYSTEM_PASSWORD: ${SYSTEM_PASSWORD:?Set SYSTEM_PASSWORD in .env}
+      SERVER_PORT: 8080
+      WORKFLOW_CONFIG_PATH: config/workflow.yml
+    ports:
+      - "127.0.0.1:${HOST_PORT:-18080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 4s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  # Named volume survives container recreation and repeated setup runs.
+  claims_challenge14_postgres_data:
+    name: claims_challenge14_postgres_data

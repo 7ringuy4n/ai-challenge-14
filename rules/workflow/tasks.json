@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "Implement Challenge 14 on the existing develop branch; Java 21/Maven 3.9.11 are available in the user-local toolchain; Docker daemon access is denied; no verified main/origin history exists; host-managed raw LLM payloads are unavailable and remain NOT_CAPTURED/PARTIAL.",
+  "scope": "Implement Challenge 14 on develop. Local Java 21/Maven 3.9.11 and Docker are available through the authorized invocation context; default sandbox socket/loopback access is restricted. Current PostgreSQL verification and JaCoCo pass. Host-managed raw LLM payloads remain NOT_CAPTURED/PARTIAL.",
   "coordinator_model": "gpt-6.1-sol",
   "worker_model": "gpt-6-luna",
   "reasoning_effort": "medium",
@@ -388,7 +388,7 @@
           "review_packet": "rules/workflow/artifacts/T02/17/REVIEW-PACKET.md"
         }
       ],
-      "notes": "AD-01 clarifies typed ClaimAggregate/ClaimWorkflowData and was independently PASS reviewed in reports/sub-agents/T00/ad-01-rereview-03.md. Attempt 07 remains partial/rejected; attempt 08 is fresh and must include adapters, complete Testcontainers evidence sources, scoped column grants, and REQ-010. Master changelog integration remains coordinator-owned. Attempt 08 returned PARTIAL; handoff records missing persistence layers/tests and its patch is corrupt at line 218 (`git apply --check`). Preserve as evidence; new attempt required. Attempt 09 is PARTIAL but apply-checkable: ports/aggregate and schema/grants only. Independent review-09 will decide whether this foundation is safe to integrate; adapters/XML/IT classes remain explicit blockers. Independent review-09 FAIL: migration duplicates three 001 columns and omits migration-owner grants in addition to missing adapters/XML/ITs. See reports/sub-agents/T02/review-09.md. No candidate changes integrated. Reopened as coordinator implementation work after T01 acceptance; attempt 09 remains rejected and is evidence only. New implementation must repair duplicate columns and complete real persistence adapters/transactions, migration-owner grants and PostgreSQL ITs. Coordinator will create exclusive attempt artifacts and log each host call. Attempt 11 candidate reviewed REWORK; production adapters integrated after coordinator fixed immutable CAS fields and configured the outbox lease. Draft IT excluded because migration SUPERUSER and required coverage missing. Attempt 12 is exclusive persistence-test-source work. Attempt 12 test candidate independently reviewed REWORK because tests used handwritten SQL and did not exercise MyBatis adapters/CAS. Attempt 13 replaces those tests with adapter-facing integration tests. Attempt 14 fixes the migration identity fixture by reconnecting as claims_migration after Liquibase closure; independent rereview pending. Attempt 14 standalone test patch passed independent source review-15 and was integrated; runtime PostgreSQL checks remain blocked/NOT_RUN. Latest current integrated-source suite: 42 tests pass, 0 failures/errors/skips; focused ClaimAuditAspectTest passes 3/3. Independent review-17 closes the proxy advice caveat, with fake-repository and runtime/database limitations retained. Overall coverage is 59.76% line / 45.45% branch, below gates. Task remains running pending scenario, coverage, migration, runtime, and acceptance evidence.",
+      "notes": "AD-01 clarifies typed ClaimAggregate/ClaimWorkflowData and was independently PASS reviewed in reports/sub-agents/T00/ad-01-rereview-03.md. Attempt 07 remains partial/rejected; attempt 08 is fresh and must include adapters, complete Testcontainers evidence sources, scoped column grants, and REQ-010. Master changelog integration remains coordinator-owned. Attempt 08 returned PARTIAL; handoff records missing persistence layers/tests and its patch is corrupt at line 218 (`git apply --check`). Preserve as evidence; new attempt required. Attempt 09 is PARTIAL but apply-checkable: ports/aggregate and schema/grants only. Independent review-09 will decide whether this foundation is safe to integrate; adapters/XML/IT classes remain explicit blockers. Independent review-09 FAIL: migration duplicates three 001 columns and omits migration-owner grants in addition to missing adapters/XML/ITs. See reports/sub-agents/T02/review-09.md. No candidate changes integrated. Reopened as coordinator implementation work after T01 acceptance; attempt 09 remains rejected and is evidence only. New implementation must repair duplicate columns and complete real persistence adapters/transactions, migration-owner grants and PostgreSQL ITs. Coordinator will create exclusive attempt artifacts and log each host call. Attempt 11 candidate reviewed REWORK; production adapters integrated after coordinator fixed immutable CAS fields and configured the outbox lease. Draft IT excluded because migration SUPERUSER and required coverage missing. Attempt 12 is exclusive persistence-test-source work. Attempt 12 test candidate independently reviewed REWORK because tests used handwritten SQL and did not exercise MyBatis adapters/CAS. Attempt 13 replaces those tests with adapter-facing integration tests. Attempt 14 fixes the migration identity fixture by reconnecting as claims_migration after Liquibase closure; independent rereview pending. Attempt 14 standalone test patch passed independent source review-15 and was integrated; runtime PostgreSQL checks remain blocked/NOT_RUN. Latest current integrated-source suite: 42 tests pass, 0 failures/errors/skips; focused ClaimAuditAspectTest passes 3/3. Independent review-17 closes the proxy advice caveat, with fake-repository and runtime/database limitations retained. Overall coverage is 59.76% line / 45.45% branch, below gates. Task remains running pending scenario, coverage, migration, runtime, and acceptance evidence. Final integrated evidence: PostgreSQL 16/Testcontainers integration tests passed 9/9, all five Liquibase changesets applied, and rollback, same-key lock, CAS, audit immutability, outbox/payment and runtime grants were exercised. Task is kept running pending full requirement-matrix acceptance.",
       "contract_version": "CH14-Contracts-v1+AD-01",
       "base_source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
       "current_attempt": "14",
@@ -408,7 +408,7 @@
       "role": "worker",
       "model": "gpt-6-luna",
       "reasoning_effort": "medium",
-      "status": "blocked",
+      "status": "running",
       "depends_on": [
         "T00",
         "T02"
@@ -450,7 +450,7 @@
           "deployment_hash": "05d7701d4c2b3c2289644a7febc45dbced576a41d92ded72d611e6074c10c66f"
         }
       ],
-      "notes": "Consumes CH14-Contracts-v1 and current application.yml read-only. Compose database roles are claims_migration and claims_runtime with separate credentials; runtime checks require Docker daemon access. New attempt starts at 05; prior drafts are unverified. Review confirmed the init-script grant exposure is fixed; application DML permissions depend on T02 changeset 002, which is not yet integrated. Scoped rereview confirms init grant finding P1 addressed; still depends on T02 explicit per-table privileges and migration integration before acceptance.",
+      "notes": "Consumes CH14-Contracts-v1 and current application.yml read-only. Compose database roles are claims_migration and claims_runtime with separate credentials; runtime checks require Docker daemon access. New attempt starts at 05; prior drafts are unverified. Review confirmed the init-script grant exposure is fixed; application DML permissions depend on T02 changeset 002, which is not yet integrated. Scoped rereview confirms init grant finding P1 addressed; still depends on T02 explicit per-table privileges and migration integration before acceptance. Repeat setup passed on existing Compose volume with app and PostgreSQL healthy; user-local runtime secret file remains ignored. Default sandbox blocks socket access; documented setup passed only through authorized escalation. Task remains running pending full task acceptance.",
       "contract_version": "CH14-Contracts-v1",
       "base_source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
       "current_attempt": "05",
@@ -508,7 +508,7 @@
         "After-commit dispatch logs mock effects; retry state observable; tracing context and CSRF contract implemented"
       ],
       "evidence": [],
-      "notes": "Consumes accepted T01 and T02 interfaces. Does not edit frozen ClaimUseCases or shared YAML/POM/application config; system-audit table and mapper implementation are owned by T02."
+      "notes": "Consumes accepted T01 and T02 interfaces. Does not edit frozen ClaimUseCases or shared YAML/POM/application config; system-audit table and mapper implementation are owned by T02. Final clean quality run passed with 120 unit tests and 9 PostgreSQL integration tests; live 20-case workflow reached CLOSED after outbox confirmation. Task remains in progress; overall project/task state is not accepted."
     },
     {
       "id": "T05",
@@ -542,7 +542,7 @@
         "UI consumes state data dynamically and escapes user text; no hardcoded fixed state list"
       ],
       "evidence": [],
-      "notes": "Consumes frozen DTO/OpenAPI/use-case contracts. Uses ClaimUseCases; does not edit claim/api/dto (T00-owned) or application config."
+      "notes": "Consumes frozen DTO/OpenAPI/use-case contracts. Uses ClaimUseCases; does not edit claim/api/dto (T00-owned) or application config. Live authenticated smoke and 20 API workflow checks passed after repeat startup. Full 29-case acceptance matrix is not run as one HTTP suite; task remains in progress."
     },
     {
       "id": "T06",
@@ -550,7 +550,7 @@
       "role": "worker",
       "model": "gpt-6-luna",
       "reasoning_effort": "medium",
-      "status": "planned",
+      "status": "running",
       "depends_on": [
         "T03",
         "T05",
@@ -587,7 +587,7 @@
         "Scenario scripts export actual claim/audit results and config-extension diff; coordinator runs commands"
       ],
       "evidence": [],
-      "notes": "Scenario acceptance tests and runner only. Docs and evidence reports are coordinator-owned; tests use actual PostgreSQL where required."
+      "notes": "Scenario acceptance tests and runner only. Docs and evidence reports are coordinator-owned; tests use actual PostgreSQL where required. Live Python runner passed 20/20 HTTP checks after second setup, and the complete Maven suite passed. This does not constitute a single live run of all 29 C14 cases; keep task in progress."
     },
     {
       "id": "T07",
@@ -595,7 +595,7 @@
       "role": "reviewer",
       "model": "gpt-6-luna",
       "reasoning_effort": "medium",
-      "status": "planned",
+      "status": "running",
       "depends_on": [
         "T06",
         "T11",
@@ -641,7 +641,7 @@
         "Return findings and PASS/FAIL/BLOCKED; coordinator resolves findings and reruns affected checks before acceptance"
       ],
       "evidence": [],
-      "notes": "Independent read-only final reviewer; evidence returned to coordinator in task artifact directory."
+      "notes": "Independent read-only final reviewer; evidence returned to coordinator in task artifact directory. Integrated reviewer found no critical/high issue; one P2 CAS test race was fixed and focused rereview confirmed closure. Advisory-lock negative wait retains a timing sensitivity; review is preserved in reports/sub-agents/T07/final-integrated-review.md. Full 29-case requirement-by-requirement review remains open; task not accepted."
     },
     {
       "id": "T08",
@@ -668,9 +668,11 @@
         "reports/"
       ],
       "verification": [
-        "mvn -B -Pquality clean verify",
+        "env JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Pquality clean verify",
+        "bash scripts/setup.sh",
         "bash scripts/smoke.sh",
-        "bash scripts/run-scenarios.sh",
+        "python3 scripts/run-scenarios.py",
+        "python3 scripts/workflow/verify_workflow.py",
         "agent-memory rebuild"
       ],
       "case_ids": [],
@@ -681,12 +683,18 @@
       ],
       "evidence": [
         {
-          "artifact": "README.md",
-          "result": "DOCUMENTATION_CREATED",
-          "source_hash": "900ac547584e85a54115a7abfcd767cba440d631be0e3c6a56a0aa645045ae32"
+          "artifact": "reports/verification/T08-final.json",
+          "result": "PASS_WITH_OPEN_NOT_RUN_ITEMS",
+          "source_hash": "354c3d032a26c9ab807e0742aea4063ad87594fc6b838e99535855bb2e5e671c",
+          "unit_tests": 120,
+          "integration_tests": 9,
+          "line_coverage_percent": 97.3799,
+          "branch_coverage_percent": 90.1478,
+          "scenario_cases": 20,
+          "review": "NO_CRITICAL_OR_HIGH; P2_TEST_RACE_FIXED_AND_REREVIEWED"
         }
       ],
-      "notes": "Coordinator-owned final documentation and submission work. OpenAPI remains frozen by T00 unless a reviewed coordinator contract change is required. Includes editable architecture/workflow diagrams plus exports and reproducible 100/500-client JMeter plans. No publishing or push. Root README and final verification status have been written; scenario suite, acceptance gates, independent final integrated review, and runtime checks remain incomplete."
+      "notes": "Coordinator-owned verification and submission evidence is in reports/verification/T08-final.json. Final clean quality, Compose repeat startup, smoke, 20 API scenarios, validator and reviewer checks pass at scope hash 354c3d032a26c9ab807e0742aea4063ad87594fc6b838e99535855bb2e5e671c. JMeter runs and one combined 29-case live acceptance run are NOT_RUN. Status remains running and the project is not accepted."
     },
     {
       "id": "T09",

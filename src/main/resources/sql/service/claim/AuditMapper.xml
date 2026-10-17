@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.papaya.claims.claim.domain.mapper.AuditMapper">
+  <resultMap id="auditRow" type="com.papaya.claims.claim.domain.persistence.AuditRow">
+    <id property="id" column="id" javaType="java.util.UUID" typeHandler="com.papaya.claims.claim.domain.persistence.UuidTypeHandler"/><result property="claimId" column="claim_id" javaType="java.util.UUID" typeHandler="com.papaya.claims.claim.domain.persistence.UuidTypeHandler"/><result property="sequence" column="sequence"/>
+    <result property="occurredAt" column="occurred_at"/><result property="fromState" column="from_state"/>
+    <result property="toState" column="to_state"/><result property="actorId" column="actor_id"/>
+    <result property="role" column="role"/><result property="reason" column="reason"/>
+    <result property="correlationId" column="correlation_id"/><result property="workflowVersion" column="workflow_version"/>
+  </resultMap>
+  <insert id="append" parameterType="com.papaya.claims.claim.domain.persistence.AuditRow">
+    INSERT INTO claim_audit(id,claim_id,sequence,occurred_at,from_state,to_state,actor_id,role,reason,correlation_id,workflow_version)
+    VALUES(#{id},#{claimId},#{sequence},#{occurredAt},#{fromState},#{toState},#{actorId},#{role},#{reason},#{correlationId},#{workflowVersion})
+  </insert>
+  <select id="page" resultMap="auditRow">SELECT id,claim_id,sequence,occurred_at,from_state,to_state,actor_id,role,reason,correlation_id,workflow_version
+    FROM claim_audit WHERE claim_id=#{claimId} ORDER BY sequence ASC,id ASC LIMIT #{limit} OFFSET #{offset}</select>
+  <select id="count" resultType="long">SELECT count(*) FROM claim_audit WHERE claim_id=#{claimId}</select>
+</mapper>

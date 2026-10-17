@@ -20,30 +20,26 @@ out of scope under the current requirements.
 
 ## Git instruction resolution
 
-The change request asks to update `main` from `origin/main` and derive `develop`
-from it. The user's later explicit decision for this implementation is to continue
-on `develop`, not reset branches, and not fabricate missing `main`/`origin`
-history. The current checkout reports branch `develop`, but has no commit at
-`HEAD`, no `refs/heads/main`, no `refs/remotes/origin/main`, and no advertised
-remote branch references. Internal `refs/codex/*` objects are not verified
-`main` history. The worktree files are untracked. No operation in the current
-implementation step requires a valid `main` base; therefore work continues on
-`develop` without creating commits, merging, resetting, or pushing. If later work
-requires a main-based diff, merge, or synchronization, stop and request the user
-to identify/restore a verified base first.
+The initial checkout had no commits and `origin` advertised no refs. The user
+authorized a planning/contracts-only main baseline. `main` is now at
+`521cb1427f910ebbd01129cc1a950c55b899ee87`; `develop` descends directly from
+that commit. Application implementation remains exclusively on `develop`.
+Detailed operations and the recovery snapshot are recorded in
+`reports/verification/git-history.md`.
 
 ## Verification limits
 
-Java 21 and Maven 3.9.11 are available in the user's local toolchain and a
-42-test Maven run passed on the current integrated source hash. Docker CLI exists but
-access to `/var/run/docker.sock` is denied. PostgreSQL/Testcontainers, Liquibase
-startup, Compose setup/smoke, and runtime verification remain unverified until
-Docker access is available. Host-managed model request/response payloads are
+Java 21 and Maven 3.9.11 are available locally. The latest clean Maven run passed
+120 unit and 9 PostgreSQL/Testcontainers integration tests; JaCoCo measured
+97.3799% line and 90.1478% branch coverage. Compose migration/startup, repeat
+setup, smoke, and 20 live API scenarios passed when run with approved escalation
+because the default sandbox blocks Docker socket and localhost access. No
+permissions were changed. Host-managed model request/response payloads remain
 unavailable; invocation audit remains `PARTIAL`, with raw payload fields marked
 `NOT_CAPTURED`.
 
 
-The current implementation work does not require a main-based Git operation. Before any later operation that depends on verified `main` history, the user must identify or restore the intended base; no such operation has been attempted.
+This statement describes the state before the later baseline decision below and is superseded by PROMPT-20261017-013.
 
 ## 2026-10-17 Git baseline resolution
 
@@ -70,3 +66,6 @@ user authorized a fresh main baseline. Application implementation must remain on
 develop; the new main commit is limited to project rules, requirements, contracts,
 API schema, and original plan. A full pre-branch recovery tree was preserved at
 `refs/codex/snapshots/pre-main-final-20261017` before the branch switch.
+
+
+After baseline initialization, `main` is at `521cb1427f910ebbd01129cc1a950c55b899ee87`; `develop` descends directly from it. The source-free main tree contains only project requirements, governance, task plan, and API/design contracts. Current app work stays on develop. Full Git operation detail is in `reports/verification/git-history.md`.

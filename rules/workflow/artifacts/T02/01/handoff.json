@@ -1,0 +1,61 @@
+{
+  "task": "T02",
+  "attempt": "01",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    "src/main/resources/db/changelog/changes/001-claims.sql",
+    "src/main/resources/db/changelog/changes/001-claims.yml",
+    "src/main/resources/db/changelog/db.changelog-master.yml",
+    "src/main/java/com/papaya/claims/persistence/AuditMapper.java",
+    "src/main/java/com/papaya/claims/persistence/AuditRow.java",
+    "src/main/java/com/papaya/claims/persistence/ClaimMapper.java",
+    "src/main/java/com/papaya/claims/persistence/ClaimRow.java",
+    "src/main/java/com/papaya/claims/persistence/CommandMapper.java",
+    "src/main/java/com/papaya/claims/persistence/EffectMapper.java",
+    "src/main/java/com/papaya/claims/persistence/MyBatisAuditRepository.java",
+    "src/main/java/com/papaya/claims/persistence/MyBatisClaimRepository.java",
+    "src/main/java/com/papaya/claims/persistence/MyBatisCommandRepository.java",
+    "src/main/java/com/papaya/claims/persistence/MyBatisEffectRepository.java",
+    "src/main/java/com/papaya/claims/persistence/OutboxRow.java",
+    "src/main/java/com/papaya/claims/persistence/PersistenceJson.java",
+    "src/main/java/com/papaya/claims/persistence/ReceiptRow.java",
+    "src/main/resources/mappers/AuditMapper.xml",
+    "src/main/resources/mappers/ClaimMapper.xml",
+    "src/main/resources/mappers/CommandMapper.xml",
+    "src/main/resources/mappers/EffectMapper.xml",
+    "src/test/java/com/papaya/claims/persistence/AuditImmutabilityIT.java",
+    "src/test/java/com/papaya/claims/persistence/ClaimPersistenceIT.java",
+    "src/test/java/com/papaya/claims/persistence/PostgresPersistenceSupport.java",
+    "src/test/resources/persistence/README.txt"
+  ],
+  "tests_proposed": [
+    {
+      "class": "com.papaya.claims.persistence.ClaimPersistenceIT",
+      "cases": [
+        "JSONB claim round-trip",
+        "FOR UPDATE inside transaction and version CAS",
+        "transaction rollback",
+        "claim/user/idempotency-key receipt uniqueness and snapshot readback",
+        "payment request uniqueness and outbox retry scheduling"
+      ],
+      "evidence": "NOT_RUN: coordinator applies patch and runs Maven Failsafe with Docker."
+    },
+    {
+      "class": "com.papaya.claims.persistence.AuditImmutabilityIT",
+      "cases": [
+        "runtime append/read and update/delete denied",
+        "owner update blocked by database trigger"
+      ],
+      "evidence": "NOT_RUN: coordinator applies patch and runs Maven Failsafe with Docker."
+    }
+  ],
+  "assumptions": [
+    "The bootstrap creates claims_owner and claims_app before Liquibase and grants claims_owner CREATE on public schema. Test support mirrors that bootstrap prerequisite.",
+    "Failed outbox records remain eligible for retry once next_attempt_at is reached; pending() includes both pending and failed statuses, and markDelivered handles either status.",
+    "Claim and audit UUIDs and audit sequence are supplied by the application; claims_app has no UPDATE/DELETE privileges on claim_audit."
+  ],
+  "known_limitations": [
+    "No build, test, Docker, database, or Git command was run, per worker packet.",
+    "The package resource target configured in pom.xml is db/; tests resolve the changelog from db/db.changelog-master.yml."
+  ]
+}

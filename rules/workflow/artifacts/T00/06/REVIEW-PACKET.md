@@ -1,0 +1,5 @@
+# Independent review — CH14-Contracts-v1 / AD-01
+
+Requirement: REQ-20261017-010 and original Challenge 14 requirements. Selected reviewer: gpt-6-luna / medium, independent, read-only.
+
+Review the addendum at `docs/challenge-14/FACTS-AND-PERSISTENCE.md`, the insertion in `docs/challenge-14/CONTRACTS.md`, and the appeal-period configuration in `src/main/resources/application.yml`. File hashes: `{"docs/challenge-14/CONTRACTS.md": "f64a027ac12c3a8f41e2ab528b72e6c41e3945a76f0652673e0c569d088d7c83", "docs/challenge-14/FACTS-AND-PERSISTENCE.md": "0d416d22ea0160bc6ff46bb439a3dbec96134e5a17bfc84a288ab2ca53d57541", "src/main/resources/application.yml": "330b8eb6efb6ef9839869265739dc6a1d93e87646d4569e6eecb1d4f87cfabb6"}`. Check for contradictions with original transition table/cycle policy, unsafe trust boundaries, undefined data semantics, API/service/persistence inconsistencies, and whether the typed evidence model is implementable by T01/T02/T04. Return PASS/FAIL and concrete findings. Use read-only file inspection; do not modify files or run builds/tests/Docker/database commands. Host-managed payloads will be NOT_CAPTURED; trace remains PARTIAL.

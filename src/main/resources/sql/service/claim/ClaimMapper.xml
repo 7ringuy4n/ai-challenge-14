@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.papaya.claims.claim.domain.mapper.ClaimMapper">
+  <resultMap id="claimRow" type="com.papaya.claims.claim.domain.persistence.ClaimRow">
+    <id property="id" column="id" javaType="java.util.UUID" typeHandler="com.papaya.claims.claim.domain.persistence.UuidTypeHandler"/><result property="memberId" column="member_id"/><result property="state" column="state"/>
+    <result property="policyLimit" column="policy_limit"/><result property="currency" column="currency"/>
+    <result property="version" column="version"/><result property="factsJson" column="facts_json"/>
+    <result property="informationRequests" column="information_requests"/>
+    <result property="lastInformationRequestedAt" column="last_information_requested_at"/>
+    <result property="lastInformationReceivedAt" column="last_information_received_at"/>
+    <result property="assessmentStartedAt" column="assessment_started_at"/><result property="rejectedAt" column="rejected_at"/>
+    <result property="memberAcknowledgedRejectionAt" column="member_acknowledged_rejection_at"/>
+    <result property="createdAt" column="created_at"/><result property="updatedAt" column="updated_at"/>
+  </resultMap>
+  <sql id="columns">id, member_id, state, policy_limit, currency, version, facts::text AS facts_json,
+    information_requests, last_information_requested_at, last_information_received_at, assessment_started_at,
+    rejected_at, member_acknowledged_rejection_at, created_at, updated_at</sql>
+  <insert id="insert" parameterType="com.papaya.claims.claim.domain.persistence.ClaimRow">
+    INSERT INTO claims(id,member_id,state,policy_limit,currency,version,facts,information_requests,
+      last_information_requested_at,last_information_received_at,assessment_started_at,rejected_at,
+      member_acknowledged_rejection_at,created_at,updated_at)
+    VALUES(#{id},#{memberId},#{state},#{policyLimit},#{currency},#{version},CAST(#{factsJson} AS jsonb),#{informationRequests},
+      #{lastInformationRequestedAt},#{lastInformationReceivedAt},#{assessmentStartedAt},#{rejectedAt},
+      #{memberAcknowledgedRejectionAt},#{createdAt},#{updatedAt})
+  </insert>
+  <select id="find" resultMap="claimRow">SELECT <include refid="columns"/> FROM claims WHERE id=#{id}</select>
+  <select id="findForUpdate" resultMap="claimRow">SELECT <include refid="columns"/> FROM claims WHERE id=#{id} FOR UPDATE</select>
+  <select id="pageAll" resultMap="claimRow">SELECT <include refid="columns"/> FROM claims ORDER BY created_at DESC,id LIMIT #{limit} OFFSET #{offset}</select>
+  <select id="countAll" resultType="long">SELECT count(*) FROM claims</select>
+  <select id="pageMember" resultMap="claimRow">SELECT <include refid="columns"/> FROM claims WHERE member_id=#{memberId} ORDER BY created_at DESC,id LIMIT #{limit} OFFSET #{offset}</select>
+  <select id="countMember" resultType="long">SELECT count(*) FROM claims WHERE member_id=#{memberId}</select>
+  <update id="compareAndSet">
+    UPDATE claims SET state=#{row.state}, facts=CAST(#{row.factsJson} AS jsonb),information_requests=#{row.informationRequests},
+      last_information_requested_at=#{row.lastInformationRequestedAt},last_information_received_at=#{row.lastInformationReceivedAt},
+      assessment_started_at=#{row.assessmentStartedAt},rejected_at=#{row.rejectedAt},
+      member_acknowledged_rejection_at=#{row.memberAcknowledgedRejectionAt},updated_at=#{row.updatedAt},version=version+1
+    WHERE id=#{row.id} AND version=#{expectedVersion}
+  </update>
+</mapper>

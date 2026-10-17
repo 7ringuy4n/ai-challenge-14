@@ -1,0 +1,5 @@
+# Independent review — T02/07 persistence draft
+
+Requirement: REQ-20261017-010 and Challenge 14 persistence, idempotency, audit, payment and outbox contracts. Task T02. Selected reviewer: gpt-6-luna / medium, independent and read-only.
+
+Inspect `candidate.patch` (SHA-256: fd6aab8b7f8e964ecad87c8d5f977d192514bb5caeda1f3305c47c4bd25d94a9), `handoff.json`, the exact task packet, T00 domain values, 001 migration/master changelog, application YAML, and `docs/challenge-14/CONTRACTS.md`. Read-only shell/file inspection is permitted. Do not edit files or run builds, tests, Docker/Compose, setup, or database commands. Review schema integrity, grants, immutable audit protections, foreign keys/cascades, idempotency uniqueness/fingerprint boundaries, amount types, workflow integration, and whether patch completeness matches T02 acceptance. Return PASS/FAIL/BLOCKED with prioritized findings and file/line references. Explicitly classify missing mapper interfaces/XML/adapters and Testcontainers checks as incomplete/NOT_RUN; do not treat this partial draft as accepted. Host-managed raw payloads are NOT_CAPTURED and trace audit is PARTIAL.

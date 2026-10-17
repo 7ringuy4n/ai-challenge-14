@@ -1,0 +1,16 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.papaya:claims-workflow >---------------------
+[INFO] Building claims-workflow 1.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.13:report (default-cli) @ claims-workflow ---
+[INFO] Loading execution data file /home/tringuyen/Documents/ai-challenge-14/target/jacoco.exec
+[INFO] Analyzed bundle 'claims-workflow' with 32 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.069 s
+[INFO] Finished at: 2026-10-17T08:44:34+07:00
+[INFO] ------------------------------------------------------------------------

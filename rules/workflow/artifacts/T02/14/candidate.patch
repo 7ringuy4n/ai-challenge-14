@@ -1,0 +1,280 @@
+diff --git a/src/test/java/com/papaya/claims/claim/domain/persistence/AuditImmutabilityIT.java b/src/test/java/com/papaya/claims/claim/domain/persistence/AuditImmutabilityIT.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/claim/domain/persistence/AuditImmutabilityIT.java
+@@ -0,0 +1,35 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.catchThrowable;
++
++import com.papaya.claims.claim.domain.AuditRecord;
++import java.time.Instant;
++import java.util.List;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++
++class AuditImmutabilityIT extends PersistenceITSupport {
++    @Test
++    void auditRepositoryAppendsAndReadsAndRuntimeCannotRewriteEitherAuditTable() throws Exception {
++        UUID claimId=rawClaim(); Instant now=Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
++        AuditRecord record=new AuditRecord(UUID.randomUUID(),claimId,0,now,null,"submitted","member-1","member","created","corr-1","v1");
++        try(var s=session()) {
++            var repo=auditRepository(s); repo.append(record);
++            assertThat(repo.findByClaim(claimId,new com.papaya.claims.claim.domain.PageRequest(0,10)).items()).containsExactly(record);
++        }
++        try(var c=runtime(); var p=c.prepareStatement("INSERT INTO system_operation_audit(id,action,resource,resource_id,actor_id,correlation_id,outcome,occurred_at) VALUES(?, 'claim.read','claim',?,'member-1','corr-1','SUCCESS',clock_timestamp())")) {
++            p.setObject(1,UUID.randomUUID()); p.setString(2,claimId.toString()); p.executeUpdate();
++        }
++        try(var c=runtime(); var s=c.createStatement()) {
++            for(String table: List.of("claim_audit","system_operation_audit")) {
++                String where=table.equals("claim_audit") ? "claim_id='"+claimId+"'" : "resource_id='"+claimId+"'";
++                assertThat(catchThrowable(()->s.executeUpdate("UPDATE "+table+" SET "+(table.equals("claim_audit")?"reason='rewritten'":"outcome='FAILED'")+" WHERE "+where))).as(table+" UPDATE").isNotNull();
++                assertThat(catchThrowable(()->s.executeUpdate("DELETE FROM "+table+" WHERE "+where))).as(table+" DELETE").isNotNull();
++            }
++            try(var r=s.executeQuery("SELECT (SELECT count(*) FROM claim_audit WHERE claim_id='"+claimId+"'),(SELECT count(*) FROM system_operation_audit WHERE resource_id='"+claimId+"')")) {
++                assertThat(r.next()).isTrue(); assertThat(r.getLong(1)).isEqualTo(1); assertThat(r.getLong(2)).isEqualTo(1);
++            }
++        }
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java b/src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java
+@@ -0,0 +1,58 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.catchThrowable;
++
++import com.papaya.claims.claim.domain.*;
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.Map;
++import java.util.Set;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++
++class ClaimPersistenceIT extends PersistenceITSupport {
++    @Test
++    void migrationOwnsSchemaAndRuntimeCannotCreateObjects() throws Exception {
++        try (var c=runtime(); var s=c.createStatement(); var r=s.executeQuery("SELECT rolname,rolsuper,rolcreatedb,rolcreaterole FROM pg_roles WHERE rolname IN ('claims_migration','claims_runtime') ORDER BY rolname")) {
++            assertThat(r.next()).isTrue(); assertThat(r.getString(1)).isEqualTo("claims_migration");
++            assertThat(r.getBoolean(2)).isFalse(); assertThat(r.getBoolean(3)).isFalse(); assertThat(r.getBoolean(4)).isFalse();
++            assertThat(r.next()).isTrue(); assertThat(r.getString(1)).isEqualTo("claims_runtime");
++            assertThat(r.getBoolean(2)).isFalse(); assertThat(r.getBoolean(3)).isFalse(); assertThat(r.getBoolean(4)).isFalse(); assertThat(r.next()).isFalse();
++        }
++        try (var c=runtime(); var s=c.createStatement(); var r=s.executeQuery("SELECT has_schema_privilege('claims_migration','public','CREATE'),has_schema_privilege('claims_runtime','public','USAGE'),has_schema_privilege('claims_runtime','public','CREATE')")) {
++            assertThat(r.next()).isTrue(); assertThat(r.getBoolean(1)).isTrue(); assertThat(r.getBoolean(2)).isTrue(); assertThat(r.getBoolean(3)).isFalse();
++        }
++        try (var c=runtime(); var s=c.createStatement()) {
++            assertThat(catchThrowable(() -> s.execute("CREATE TABLE runtime_must_not_create(id integer)"))).isNotNull();
++        }
++    }
++
++    @Test
++    void repositoryRoundTripListsAndCasLeaveImmutableIdentityAndCoverageUntouched() {
++        UUID id=UUID.randomUUID(); Instant now=Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
++        BigDecimal nested=new BigDecimal("42.375");
++        ClaimAggregate original=new ClaimAggregate(new Claim(id,"member-1","submitted",new BigDecimal("125.00"),"USD",0,
++                new ClaimFacts(Map.of("nested",Map.of("amount",nested))),now,now),ClaimWorkflowData.empty());
++        try (var s=session()) {
++            var repo=claimRepository(s); repo.insert(original);
++            ClaimAggregate found=repo.find(id).orElseThrow();
++            assertThat(found.claim().facts().values().get("nested")).isInstanceOf(Map.class);
++            Object actual=((Map<?,?>)found.claim().facts().values().get("nested")).get("amount");
++            assertThat(actual).isInstanceOf(BigDecimal.class).isEqualTo(nested);
++            assertThat(found.claim().memberId()).isEqualTo("member-1");
++            assertThat(found.claim().policyLimit()).isEqualByComparingTo("125.00");
++            assertThat(found.claim().currency()).isEqualTo("USD");
++            assertThat(repo.listVisible(new PageRequest(0,10),new Actor("member-1",Set.of("member"),false)).items()).extracting(a->a.claim().id()).contains(id);
++            ClaimAggregate attempted=new ClaimAggregate(new Claim(id,"attacker","assessing",new BigDecimal("1.00"),"EUR",0,
++                    new ClaimFacts(Map.of("changed",true)),now,now),ClaimWorkflowData.empty());
++            assertThat(repo.compareAndSet(attempted,0)).isTrue();
++            Claim unchanged=repo.find(id).orElseThrow().claim();
++            assertThat(unchanged.state()).isEqualTo("assessing");
++            assertThat(unchanged.memberId()).isEqualTo("member-1");
++            assertThat(unchanged.policyLimit()).isEqualByComparingTo("125.00");
++            assertThat(unchanged.currency()).isEqualTo("USD");
++            assertThat(repo.compareAndSet(attempted,0)).isFalse();
++        }
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/claim/domain/persistence/IdempotencyIT.java b/src/test/java/com/papaya/claims/claim/domain/persistence/IdempotencyIT.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/claim/domain/persistence/IdempotencyIT.java
+@@ -0,0 +1,23 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.catchThrowable;
++
++import com.papaya.claims.claim.domain.IdempotencyRepository.Receipt;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++
++class IdempotencyIT extends PersistenceITSupport {
++    @Test
++    void repositoryRoundTripsReceiptAndPropagatesUniqueConflict() {
++        String fingerprint="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
++        String result="{\"claimId\":\""+UUID.randomUUID()+"\",\"state\":\"approved\",\"version\":7}";
++        Receipt receipt=new Receipt(UUID.randomUUID(),"actor-1","claim.transition","request-1",fingerprint,result);
++        try(var s=session()) {
++            var repo=idempotencyRepository(s); repo.insert(receipt);
++            assertThat(repo.find("actor-1","claim.transition","request-1")).contains(receipt);
++            assertThat(catchThrowable(()->repo.insert(new Receipt(UUID.randomUUID(),"actor-1","claim.transition","request-1","different-fingerprint","{}")))).isNotNull();
++            assertThat(repo.find("actor-1","claim.transition","request-1")).contains(receipt);
++        }
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/claim/domain/persistence/PaymentOutboxIT.java b/src/test/java/com/papaya/claims/claim/domain/persistence/PaymentOutboxIT.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/claim/domain/persistence/PaymentOutboxIT.java
+@@ -0,0 +1,45 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import com.papaya.claims.claim.domain.OutboxRepository.Message;
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++
++class PaymentOutboxIT extends PersistenceITSupport {
++    @Test
++    void paymentRepositoryCreatesChecksAndConfirmsPayment() throws Exception {
++        UUID claimId=rawClaim(); UUID request=UUID.randomUUID();
++        try(var s=session()) {
++            var payments=paymentRepository(s);
++            payments.create(claimId,request,"USD",new BigDecimal("125.00"));
++            assertThat(payments.exists(claimId)).isTrue();
++            assertThat(payments.confirm(claimId,"PAY-123")).isTrue();
++            var confirmation=payments.confirmation(claimId).orElseThrow();
++            assertThat(confirmation.reference()).isEqualTo("PAY-123"); assertThat(confirmation.confirmedAt()).isNotNull();
++            assertThat(payments.confirm(claimId,"PAY-456")).isFalse();
++        }
++    }
++
++    @Test
++    void outboxRepositoryUsesConfiguredLeaseAndSupportsRetryAndDelivery() {
++        UUID claimId=rawClaim(); UUID id=UUID.randomUUID(); Instant now=Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
++        try(var s=session()) {
++            var outbox=outboxRepository(s,5000);
++            outbox.enqueue(new Message(id,claimId,"notify","{\"event\":\"ready\"}",0,now));
++            var claimed=outbox.claimDue(now.plusMillis(1),10);
++            assertThat(claimed).hasSize(1);
++            assertThat(claimed.get(0).id()).isEqualTo(id);
++            assertThat(claimed.get(0).attempts()).isEqualTo(1);
++            assertThat(claimed.get(0).availableAt()).isAfter(now.plusMillis(4000));
++            Instant retry=now.plusSeconds(10);
++            assertThat(outbox.markFailed(id,"temporary delivery failure",retry)).isTrue();
++            var retried=outbox.claimDue(retry,10);
++            assertThat(retried).hasSize(1); assertThat(retried.get(0).attempts()).isEqualTo(2);
++            assertThat(outbox.markDelivered(id,retry.plusSeconds(1))).isTrue();
++            assertThat(outbox.claimDue(retry.plusSeconds(2),10)).isEmpty();
++        }
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/claim/domain/persistence/PersistenceITSupport.java b/src/test/java/com/papaya/claims/claim/domain/persistence/PersistenceITSupport.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/claim/domain/persistence/PersistenceITSupport.java
+@@ -0,0 +1,94 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import com.fasterxml.jackson.databind.DeserializationFeature;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.papaya.claims.claim.domain.mapper.AuditMapper;
++import com.papaya.claims.claim.domain.mapper.ClaimMapper;
++import com.papaya.claims.claim.domain.mapper.EffectsMapper;
++import com.papaya.claims.claim.domain.mapper.ReceiptMapper;
++import java.sql.Connection;
++import java.sql.DriverManager;
++import java.sql.SQLException;
++import java.sql.Statement;
++import java.util.UUID;
++import javax.sql.DataSource;
++import liquibase.Contexts;
++import liquibase.LabelExpression;
++import liquibase.Liquibase;
++import liquibase.database.DatabaseFactory;
++import liquibase.database.jvm.JdbcConnection;
++import liquibase.resource.ClassLoaderResourceAccessor;
++import org.apache.ibatis.session.SqlSession;
++import org.apache.ibatis.session.SqlSessionFactory;
++import org.mybatis.spring.SqlSessionFactoryBean;
++import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
++import org.springframework.jdbc.datasource.DriverManagerDataSource;
++import org.testcontainers.containers.PostgreSQLContainer;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++
++@Testcontainers
++abstract class PersistenceITSupport {
++    @Container
++    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
++            .withDatabaseName("claims").withUsername("bootstrap").withPassword("bootstrap-test");
++    static SqlSessionFactory sessions;
++    static final ObjectMapper JSON = new ObjectMapper().enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
++
++    @org.junit.jupiter.api.BeforeAll
++    static void provisionRolesMigrateAndWireProductionMappers() throws Exception {
++        try (Connection bootstrap = DriverManager.getConnection(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
++             Statement sql = bootstrap.createStatement()) {
++            sql.execute("CREATE ROLE claims_runtime LOGIN PASSWORD 'runtime-test' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT");
++            sql.execute("CREATE ROLE claims_migration LOGIN PASSWORD 'migration-test' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT");
++            sql.execute("ALTER SCHEMA public OWNER TO claims_migration");
++            sql.execute("GRANT CONNECT ON DATABASE claims TO claims_migration, claims_runtime");
++            sql.execute("GRANT USAGE, CREATE ON SCHEMA public TO claims_migration");
++        }
++        try (Connection migration = DriverManager.getConnection(POSTGRES.getJdbcUrl(), "claims_migration", "migration-test")) {
++            var database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(migration));
++            try (Liquibase liquibase = new Liquibase("db/changelog/db.changelog-master.yml", new ClassLoaderResourceAccessor(), database)) {
++                liquibase.update(new Contexts(), new LabelExpression());
++            }
++            try (Connection verification = DriverManager.getConnection(POSTGRES.getJdbcUrl(), "claims_migration", "migration-test");
++                 Statement check = verification.createStatement();
++                 var result = check.executeQuery("SELECT current_user, nspname, pg_get_userbyid(nspowner) FROM pg_namespace WHERE nspname='public'")) {
++                assertThat(result.next()).isTrue();
++                assertThat(result.getString(1)).isEqualTo("claims_migration");
++                assertThat(result.getString(3)).isEqualTo("claims_migration");
++            }
++        }
++        SqlSessionFactoryBean factory = new SqlSessionFactoryBean();
++        factory.setDataSource(runtimeDataSource());
++        factory.setMapperLocations(new PathMatchingResourcePatternResolver().getResources("classpath:sql/service/claim/*.xml"));
++        sessions = factory.getObject();
++    }
++
++    static DataSource runtimeDataSource() {
++        var source = new DriverManagerDataSource(POSTGRES.getJdbcUrl(), "claims_runtime", "runtime-test");
++        source.setDriverClassName("org.postgresql.Driver");
++        return source;
++    }
++    static Connection runtime() throws SQLException {
++        return DriverManager.getConnection(POSTGRES.getJdbcUrl(), "claims_runtime", "runtime-test");
++    }
++    static SqlSession session() { return sessions.openSession(true); }
++    static ClaimMapper claims(SqlSession s) { return s.getMapper(ClaimMapper.class); }
++    static AuditMapper audits(SqlSession s) { return s.getMapper(AuditMapper.class); }
++    static ReceiptMapper receipts(SqlSession s) { return s.getMapper(ReceiptMapper.class); }
++    static EffectsMapper effects(SqlSession s) { return s.getMapper(EffectsMapper.class); }
++    static MyBatisClaimRepository claimRepository(SqlSession s) { return new MyBatisClaimRepository(claims(s), JSON); }
++    static MyBatisClaimAuditRepository auditRepository(SqlSession s) { return new MyBatisClaimAuditRepository(audits(s)); }
++    static MyBatisIdempotencyRepository idempotencyRepository(SqlSession s) { return new MyBatisIdempotencyRepository(receipts(s), JSON); }
++    static MyBatisPaymentRepository paymentRepository(SqlSession s) { return new MyBatisPaymentRepository(effects(s)); }
++    static MyBatisOutboxRepository outboxRepository(SqlSession s, long leaseMillis) { return new MyBatisOutboxRepository(effects(s), leaseMillis); }
++    static UUID rawClaim() throws SQLException {
++        UUID id = UUID.randomUUID();
++        try (var c = runtime(); var p = c.prepareStatement("INSERT INTO claims(id,member_id,state,policy_limit,currency) VALUES(?, 'member-1','submitted',125.00,'USD')")) {
++            p.setObject(1,id); p.executeUpdate();
++        }
++        return id;
++    }
++}

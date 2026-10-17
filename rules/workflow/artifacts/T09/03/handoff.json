@@ -1,0 +1,16 @@
+{
+  "task": "T09",
+  "attempt": "03",
+  "status": "submitted",
+  "author": "foundation_tests_worker",
+  "summary": "Replaced the remaining wildcard-key AssertJ assertion with a direct containsKey boolean assertion, preserving the defensive-copy expectation while avoiding generic capture compilation failure.",
+  "patch": "rules/workflow/artifacts/T09/03/candidate.patch",
+  "allowed_patch_paths": [
+    "src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java"
+  ],
+  "proposed_checks": [
+    {"status": "NOT_RUN", "command": "mvn -B -Dtest=ModelBoundaryTest,GuardBoundaryTest,WorkflowValidationTest,DefinitionImmutabilityTest,PersistenceBoundaryTest test", "reason": "Worker instructions prohibit running builds; coordinator owns verification."}
+  ],
+  "findings": [],
+  "known_limits": ["The latest coordinator log also shows independent compilation errors in TransitionAtomicityIT and TransitionServiceTest; this delta does not address those unrelated files."]
+}

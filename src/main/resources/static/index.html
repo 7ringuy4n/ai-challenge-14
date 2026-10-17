@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claims Workflow</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><p class="eyebrow">Challenge 14</p><h1>Claims Workflow</h1></div>
+    <form id="login-form" class="login-form">
+      <label>Username <input id="username" autocomplete="username" required value="member-demo"></label>
+      <label>Password <input id="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Sign in</button>
+      <button id="logout" class="quiet hidden" type="button">Sign out</button>
+    </form>
+  </header>
+  <main>
+    <p id="notice" role="status" aria-live="polite"></p>
+    <section id="workspace" class="layout hidden" aria-label="Claims workspace">
+      <aside class="panel claim-list">
+        <div class="section-heading"><div><p class="eyebrow">Workspace</p><h2>Claims</h2></div><button id="refresh" class="quiet" type="button">Refresh</button></div>
+        <ul id="claims" class="claims" aria-label="Claims"></ul>
+        <form id="create-form" class="form-stack">
+          <h3>Start a claim</h3>
+          <label>Policy limit <input name="policyLimit" type="number" min="0" step="0.01" required></label>
+          <label>Requested amount <input name="requestedAmount" type="number" min="0" step="0.01" required></label>
+          <label>Currency <input name="currency" value="USD" maxlength="3" required></label>
+          <button type="submit">Create claim</button>
+        </form>
+      </aside>
+      <section class="panel detail" aria-live="polite">
+        <div id="empty-state" class="empty-state"><p class="eyebrow">Claim workspace</p><h2>Select a claim</h2><p>Choose a claim to review its state, configured actions and audit history.</p></div>
+        <div id="claim-detail" class="hidden">
+          <div class="section-heading"><div><p class="eyebrow">Current claim</p><h2 id="claim-title"></h2></div><span id="state-badge" class="badge"></span></div>
+          <dl id="claim-meta" class="meta-grid"></dl>
+          <section><h3>Available workflow transitions</h3><p class="muted">Choices and guard results come from the current workflow configuration.</p><ul id="options" class="options"></ul></section>
+          <div id="fact-editor" class="fact-editor"></div>
+          <section><h3>Transition</h3><form id="transition-form" class="form-stack">
+            <label>Configured target <select name="targetState" required></select></label>
+            <label>Reason / notes <textarea name="reason" rows="3" maxlength="2000"></textarea></label>
+            <button type="submit">Advance claim</button>
+          </form></section>
+          <section><h3>Audit history</h3><ol id="audit" class="audit"></ol></section>
+        </div>
+      </section>
+    </section>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>

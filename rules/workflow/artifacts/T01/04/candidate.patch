@@ -1,0 +1,101 @@
+--- a/src/main/java/com/papaya/claims/engine/ConfiguredWorkflowEngine.java
++++ b/src/main/java/com/papaya/claims/engine/ConfiguredWorkflowEngine.java
+@@ -17,6 +17,7 @@
+     @Override public String configVersion() { return definition.version(); }
+ 
+     @Override public Decision evaluate(ClaimSnapshot claim, Actor actor, TransitionCommand command, Instant now) {
++        Instant canonicalNow = GuardEvaluator.normalize(now);
+         var candidates = definition.transitions().stream().filter(t -> t.from().equals(claim.state()) && t.to().equals(command.target())).toList();
+         if (candidates.isEmpty()) {
+             String available = definition.transitions().stream().filter(t -> t.from().equals(claim.state())).map(WorkflowDefinition.Transition::to).distinct().collect(Collectors.joining(", "));
+@@ -26,24 +27,25 @@
+         if (!transition.role().equals(actor.role())) throw new BusinessException("FORBIDDEN_ROLE", 403, "Transition to " + transition.to() + " requires role " + transition.role());
+         if (transition.informationRequest() && claim.informationRequests() >= definition.maxInformationRequests())
+             throw new BusinessException("INFORMATION_REQUEST_LIMIT", 422, MAX_REQUESTS_MESSAGE);
+-        var failed = guardEvaluator.failures(transition.guards(), claim, now);
++        var failed = guardEvaluator.failures(transition.guards(), claim, canonicalNow);
+         if (!failed.isEmpty()) throw new BusinessException("GUARD_FAILED", 422, failed.stream().map(GuardEvaluator.Failure::message).collect(Collectors.joining("; ")));
+         int count = claim.informationRequests() + (transition.informationRequest() ? 1 : 0);
+         Instant started = switch (transition.timerAction()) {
+-            case START -> now;
++            case START -> canonicalNow;
+             case RESET -> null;
+             case NONE -> claim.assessmentStartedAt();
+         };
+-        Instant requested = transition.informationRequest() ? now : claim.lastInformationRequestedAt();
++        Instant requested = transition.informationRequest() ? canonicalNow : claim.lastInformationRequestedAt();
+         return new Decision(claim.state(), transition.to(), count, started, requested, transition.effects(), transition.clearFacts());
+     }
+ 
+     @Override public List<TransitionOption> options(ClaimSnapshot claim, Actor actor, Instant now) {
++        Instant canonicalNow = GuardEvaluator.normalize(now);
+         return definition.transitions().stream().filter(t -> t.from().equals(claim.state())).map(t -> {
+             var blockers = new ArrayList<String>();
+             if (!t.role().equals(actor.role())) blockers.add("Requires role " + t.role());
+             if (t.informationRequest() && claim.informationRequests() >= definition.maxInformationRequests()) blockers.add(MAX_REQUESTS_MESSAGE);
+-            guardEvaluator.failures(t.guards(), claim, now).forEach(f -> blockers.add(f.message()));
++            guardEvaluator.failures(t.guards(), claim, canonicalNow).forEach(f -> blockers.add(f.message()));
+             return new TransitionOption(t.to(), t.role(), blockers.isEmpty(), blockers);
+         }).toList();
+     }
+--- a/src/main/java/com/papaya/claims/engine/GuardEvaluator.java
++++ b/src/main/java/com/papaya/claims/engine/GuardEvaluator.java
+@@ -3,7 +3,7 @@
+ import com.papaya.claims.contract.Model.ClaimSnapshot;
+ import java.math.BigDecimal;
+ import java.time.Instant;
+-import java.time.format.DateTimeParseException;
++import java.time.temporal.ChronoUnit;
+ import java.util.*;
+ 
+ /** Evaluates guard primitives without expressions or reflection. */
+@@ -48,11 +48,15 @@
+         if (n instanceof Number || n instanceof String) return new BigDecimal(n.toString());
+         throw new IllegalArgumentException("not numeric");
+     }
+-    private static Instant instant(Object v) { if (v instanceof Instant i) return i; return Instant.parse((String) v); }
++    private static Instant instant(Object v) {
++        Instant timestamp = v instanceof Instant i ? i : Instant.parse((String) v);
++        return normalize(timestamp);
++    }
++    static Instant normalize(Instant timestamp) { return timestamp.truncatedTo(ChronoUnit.MICROS); }
+     private static Map<String,Object> facts(ClaimSnapshot claim, Instant now) {
+         var result = new HashMap<String,Object>(claim.facts());
+         result.put("policyLimit", claim.policyLimit()); result.put("currency", claim.currency());
+-        result.put("lastInformationRequestedAt", claim.lastInformationRequestedAt()); result.put("now", now);
++        result.put("lastInformationRequestedAt", claim.lastInformationRequestedAt()); result.put("now", normalize(now));
+         return result;
+     }
+     private static String defaultMessage(WorkflowDefinition.Guard g) { return "Guard " + g.type() + " failed" + (g.field() == null ? "" : " for " + g.field()); }
+--- a/src/test/java/com/papaya/claims/engine/GuardEvaluatorTest.java
++++ b/src/test/java/com/papaya/claims/engine/GuardEvaluatorTest.java
+@@ -56,4 +56,11 @@
+         var c = claim(Map.of());
+         assertFalse(evaluator.failures(List.of(guard("equal", "missingLeft", null, null)), c, EngineFixtures.NOW).isEmpty());
+     }
++    @Test void afterRemainsStrictAtCanonicalMicrosecondBoundary() {
++        var lastRequest = Instant.parse("2026-10-16T00:00:00.000000Z");
++        var c = new ClaimSnapshot(UUID.randomUUID(), "member-001", "X", new BigDecimal("100.00"), "USD",
++                Map.of("informationReceivedAt", "2026-10-16T00:00:00.0000009Z"), 1, 0, null, lastRequest);
++        var strictAfter = guard("after", "informationReceivedAt", "lastInformationRequestedAt", null);
++        assertFalse(evaluator.failures(List.of(strictAfter), c, Instant.parse("2026-10-16T00:00:00.0000009Z")).isEmpty());
++    }
+ }
+--- a/src/test/java/com/papaya/claims/engine/WorkflowEngineTest.java
++++ b/src/test/java/com/papaya/claims/engine/WorkflowEngineTest.java
+@@ -14,6 +14,15 @@
+     @Test void assignmentStartsAssessmentTimer() {
+         var d = evaluate("DOCUMENTS_VERIFIED", "UNDER_ASSESSMENT", "team_lead", Map.of("assessorId", "assessor-7"), 0);
+         assertEquals(NOW, d.assessmentStartedAt());
++    }
++    @Test void decisionTimersAndRequestTimeUseCanonicalMicroseconds() {
++        var nanosNow = NOW.plusNanos(999);
++        var assignment = ENGINE.evaluate(claim("DOCUMENTS_VERIFIED", Map.of("assessorId", "assessor-7"), 0),
++                new Actor("lead", "team_lead"), new TransitionCommand("UNDER_ASSESSMENT", 1, "start", ""), nanosNow);
++        var request = ENGINE.evaluate(claim("UNDER_ASSESSMENT", Map.of("missingInfoDescription", "Need receipt"), 0),
++                new Actor("assessor", "assessor"), new TransitionCommand("PENDING_INFO", 1, "request", ""), nanosNow);
++        assertEquals(NOW, assignment.assessmentStartedAt());
++        assertEquals(NOW, request.lastInformationRequestedAt());
+     }
+     @Test void approvalChecksReportLimitCurrencyAndDocuments() {
+         var f = validDocs(); f.put("reportComplete", true); f.put("assessmentAmount", 100); f.put("assessmentCurrency", "USD");

@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: claims-workflow
+  datasource:
+    url: ${CLAIMS_DATABASE_URL:jdbc:postgresql://localhost:5432/claims}
+    username: claims_runtime
+    password: ${CLAIMS_RUNTIME_DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: ${CLAIMS_DB_POOL_SIZE:20}
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yml
+    user: claims_migration
+    password: ${CLAIMS_MIGRATION_DB_PASSWORD:}
+  jackson:
+    deserialization:
+      use-big-decimal-for-floats: true
+      fail-on-unknown-properties: true
+mybatis:
+  mapper-locations: classpath:sql/service/claim/*.xml
+  type-handlers-package: com.papaya.claims.claim.domain.persistence
+  configuration:
+    map-underscore-to-camel-case: true
+    jdbc-type-for-null: NULL
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never
+claims:
+  workflow:
+    definition: classpath:config/workflow.yml
+    maximum-information-cycles: 3
+    appeal-period: ${CLAIMS_APPEAL_PERIOD:P30D}
+  security:
+    member-ownership-enabled: true
+    allow-development-users: ${CLAIMS_ALLOW_DEVELOPMENT_USERS:false}
+    demo-password: ${CLAIMS_DEMO_PASSWORD:}
+    system-password: ${CLAIMS_SYSTEM_PASSWORD:}
+  outbox:
+    dispatch-delay-ms: 1000
+    retry-delay-ms: 5000
+    lease-duration-ms: ${CLAIMS_OUTBOX_LEASE_DURATION_MS:30000}
+    poll-interval-ms: 1000
+    batch-size: 32
+  observability:
+    correlation-header: X-Correlation-ID
+    correlation-id-max-length: 128
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework

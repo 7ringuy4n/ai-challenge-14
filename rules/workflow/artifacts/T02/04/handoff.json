@@ -1,0 +1,23 @@
+{
+  "task": "T02",
+  "attempt": "04",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    "src/main/java/com/papaya/claims/persistence/UuidTypeHandler.java",
+    "src/main/resources/mappers/AuditMapper.xml",
+    "src/main/resources/mappers/ClaimMapper.xml",
+    "src/main/resources/mappers/EffectMapper.xml",
+    "src/test/java/com/papaya/claims/persistence/PostgresPersistenceSupport.java"
+  ],
+  "changes": [
+    "Added UuidTypeHandler with UUID mapping for PostgreSQL OTHER and null JDBC types.",
+    "Registered the handler package in the minimal test SqlSessionFactory.",
+    "Changed primitive record constructor mappings from int/long wrapper aliases to _int/_long in every mapper result map."
+  ],
+  "coordinator_action": "Add mybatis.type-handlers-package: com.papaya.claims.persistence to src/main/resources/application.yml for production runtime registration, as already planned by coordinator.",
+  "evidence": "NOT_RUN by worker. Root reported mapper parsing failure from real PostgreSQL integration; coordinator should rerun focused Failsafe tests after applying.",
+  "assumptions": [
+    "PostgreSQL JDBC returns UUID values as java.util.UUID; the handler also accepts UUID textual representations.",
+    "MyBatis built-in _int and _long aliases map to primitive int and long for record constructor matching."
+  ]
+}

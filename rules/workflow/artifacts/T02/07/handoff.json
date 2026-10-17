@@ -1,0 +1,59 @@
+{
+  "status": "draft",
+  "requirement_ids": [
+    "REQ-20261017-006",
+    "REQ-20261017-007",
+    "REQ-20261017-008",
+    "REQ-20261017-009"
+  ],
+  "task_id": "T02",
+  "contract": "CH14-Contracts-v1",
+  "accepted_source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+  "contract_sha256": "77eb655cd9afd38454f467930be37cd177b9a17ed32c6d4814a431694de64e51",
+  "patch_paths": [
+    "src/main/java/com/papaya/claims/claim/domain/ClaimRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/ClaimAuditRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRecord.java",
+    "src/main/java/com/papaya/claims/claim/domain/IdempotencyRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/PaymentRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/OutboxRepository.java",
+    "src/main/resources/db/changelog/changes/002-persistence.sql"
+  ],
+  "schema_objects": [
+    "claim_audit",
+    "system_operation_audit",
+    "command_receipts",
+    "payment_requests",
+    "local_outbox",
+    "reject_audit_mutation()",
+    "claim_audit_immutable",
+    "system_operation_audit_immutable",
+    "claim_audit_claim_sequence_idx",
+    "system_operation_audit_occurred_idx",
+    "local_outbox_due_idx"
+  ],
+  "mapper_signatures": [],
+  "decisions": [
+    "Preserved base claims schema; audit tables intentionally have no FK to claims so claim deletion cannot cascade audit history.",
+    "Used numeric(18,2) payment amount and JSONB object receipt/outbox payloads.",
+    "Runtime grants are scoped by table; runtime schema CREATE revoked."
+  ],
+  "risks": [
+    "Attempt is partial: mapper interfaces/XML/adapters and PostgreSQL Testcontainers integration tests are not included.",
+    "Database role claims_runtime must already exist when changeset executes.",
+    "Exact application orchestration signatures were not specified in the frozen contract, so repository ports are minimal and require coordinator alignment."
+  ],
+  "coordinator_actions": [
+    "Add changes/002-persistence.sql include to db.changelog-master.yml serially.",
+    "Resolve port signature alignment with application-layer consumers before accepting."
+  ],
+  "checks": [
+    {
+      "name": "Persistence Testcontainers verification",
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dit.test=ClaimPersistenceIT,AuditImmutabilityIT verify",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol prohibits builds, tests, Docker, database, and Git mutations."
+    }
+  ]
+}

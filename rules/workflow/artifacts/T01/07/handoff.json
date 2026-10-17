@@ -1,0 +1,63 @@
+{
+  "task": "T01/07",
+  "status": "PARTIAL",
+  "requirements": [
+    "REQ-20261017-006",
+    "REQ-20261017-007",
+    "REQ-20261017-008",
+    "REQ-20261017-009",
+    "REQ-20261017-010"
+  ],
+  "contract_version": "CH14-Contracts-v1+AD-01",
+  "base_source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+  "source_hashes_observed": {
+    "src/main/resources/config/workflow.yml": "53a7ba8b87618cef629102ec8183345964196081a00e8ce4fb2085e6aafc1908",
+    "src/main/resources/application.yml": "330b8eb6efb6ef9839869265739dc6a1d93e87646d4569e6eecb1d4f87cfabb6"
+  },
+  "patch_path": "rules/workflow/artifacts/T01/07/candidate.patch",
+  "patch_files": [
+    "src/main/java/com/papaya/claims/workflow/WorkflowConfigLoader.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowDefinition.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowEngine.java",
+    "src/main/java/com/papaya/claims/workflow/GuardEvaluator.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowEvaluationContext.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowEvidence.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowDecision.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowOption.java"
+  ],
+  "implemented": [
+    "Core config parsing and structural validation",
+    "Immutable workflow records",
+    "Basic configured transition selection, role/edge checks, guards and returned effects",
+    "AD-01 evidence timestamps normalized to microseconds",
+    "Several guard predicates including exact BigDecimal amount and appeal condition"
+  ],
+  "missing_or_incomplete": [
+    "Duplicate YAML keys are not explicitly rejected",
+    "Extension/error handling and loader validation require unit tests",
+    "Cycle policy semantics are only partially enforced",
+    "Document matching does not yet enforce stable ID plus exact rule provenance",
+    "No positive and negative tests for all guards, cycle 3/4, role, edge, or timestamp boundary",
+    "Guard failures share a generic code rather than a distinct code per guard",
+    "No application wiring or runtime configuration binding"
+  ],
+  "tests": {
+    "added": [],
+    "coverage": "NOT_MEASURED",
+    "required_command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=WorkflowEngineTest,WorkflowConfigTest,GuardEvaluatorTest test",
+    "status": "NOT_RUN",
+    "reason": "Worker packet prohibits builds and tests; coordinator must run the required command."
+  },
+  "patch_check": {
+    "command": "git apply --check rules/workflow/artifacts/T01/07/candidate.patch",
+    "status": "PASS"
+  },
+  "host_payload_audit": {
+    "status": "PARTIAL",
+    "raw_model_request": "NOT_CAPTURED",
+    "raw_model_response": "NOT_CAPTURED",
+    "available_task_input": "TASK-PACKET.md and inspected repository source/configuration",
+    "note": "Host-managed model invocation payloads are inaccessible to this worker."
+  },
+  "independent_review": "NOT_RUN"
+}

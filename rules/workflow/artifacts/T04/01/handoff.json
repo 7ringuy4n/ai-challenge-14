@@ -1,0 +1,46 @@
+{
+  "task": "T04",
+  "attempt": "01",
+  "author_role": "implementation_worker",
+  "status": "submitted",
+  "base_contract_sha256": "803c9cd982a7ee393a64b7b6965091cd68dc1bd9573f3a86e9fc5db40c58815f",
+  "packet_sha256": "130498457ac46ab7dbe12cb152888fad128495e636044d119c1d51e6f90c8a3e",
+  "artifact": "rules/workflow/artifacts/T04/01/candidate.patch",
+  "draft_files": [
+    "src/main/java/com/papaya/claims/application/ClaimService.java",
+    "src/main/java/com/papaya/claims/application/EffectDispatcher.java",
+    "src/main/java/com/papaya/claims/application/MockEffectFactory.java",
+    "src/main/java/com/papaya/claims/configuration/WorkflowConfiguration.java",
+    "src/main/java/com/papaya/claims/observability/TraceContextFilter.java",
+    "src/main/java/com/papaya/claims/security/AuthenticatedActors.java",
+    "src/main/java/com/papaya/claims/security/SecurityConfiguration.java",
+    "src/test/java/com/papaya/claims/application/EffectDispatcherTest.java",
+    "src/test/java/com/papaya/claims/application/FactAuthorizationTest.java",
+    "src/test/java/com/papaya/claims/application/IdempotencyTest.java",
+    "src/test/java/com/papaya/claims/application/TransitionAtomicityIT.java",
+    "src/test/java/com/papaya/claims/application/TransitionConcurrencyIT.java",
+    "src/test/java/com/papaya/claims/application/TransitionServiceTest.java",
+    "src/test/java/com/papaya/claims/security/RoleAuthorizationTest.java"
+  ],
+  "verification": [
+    {
+      "command": "mvn -B -Dtest=TransitionServiceTest,RoleAuthorizationTest,IdempotencyTest,FactAuthorizationTest,EffectDispatcherTest test",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol prohibits builds; coordinator must run."
+    },
+    {
+      "command": "mvn -B -Dit.test=TransitionAtomicityIT,TransitionConcurrencyIT verify",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol prohibits Docker/database/build operations; coordinator must run against real PostgreSQL."
+    }
+  ],
+  "implementation_notes": [
+    "Fact edit lifecycle policy: clerk updates only in SUBMITTED/PENDING_INFO; team lead assigns only in DOCUMENTS_VERIFIED; assessor edits only in UNDER_ASSESSMENT; finance edits payment facts only in PAYMENT_INITIATED with an existing payment request/reference; member acknowledgment only in own REJECTED claim. Workflow edges remain engine-configured.",
+    "System actor may execute only configured REJECTED-to-CLOSED transition in the application service; T05 must keep this behind /api/system/** and reject system credentials on public transition routes.",
+    "MockEffectFactory exposes named EffectHandler strategies for all asynchronous registry IDs; payment request creation remains synchronous. PostgreSQL ITs use PostgresPersistenceSupport Harness."
+  ],
+  "shared_config_requests": [],
+  "known_limits": [
+    "Review and all checks remain pending; no execution evidence is claimed."
+  ]
+}

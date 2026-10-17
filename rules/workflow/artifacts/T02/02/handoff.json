@@ -1,0 +1,38 @@
+{
+  "task": "T02",
+  "attempt": "02",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    "src/main/java/com/papaya/claims/persistence/AuditMapper.java",
+    "src/main/java/com/papaya/claims/persistence/AuditRow.java",
+    "src/main/java/com/papaya/claims/persistence/ClaimMapper.java",
+    "src/main/java/com/papaya/claims/persistence/ClaimRow.java",
+    "src/main/java/com/papaya/claims/persistence/CommandMapper.java",
+    "src/main/java/com/papaya/claims/persistence/EffectMapper.java",
+    "src/main/java/com/papaya/claims/persistence/MyBatisAuditRepository.java",
+    "src/main/java/com/papaya/claims/persistence/MyBatisClaimRepository.java",
+    "src/main/java/com/papaya/claims/persistence/MyBatisCommandRepository.java",
+    "src/main/java/com/papaya/claims/persistence/MyBatisEffectRepository.java",
+    "src/main/java/com/papaya/claims/persistence/OutboxRow.java",
+    "src/main/java/com/papaya/claims/persistence/PersistenceJson.java",
+    "src/main/java/com/papaya/claims/persistence/ReceiptRow.java",
+    "src/test/java/com/papaya/claims/persistence/AuditImmutabilityIT.java",
+    "src/test/java/com/papaya/claims/persistence/ClaimPersistenceIT.java",
+    "src/test/java/com/papaya/claims/persistence/PostgresPersistenceSupport.java"
+  ],
+  "reason": "Fix compile failures reported in reports/verification/build/t01-test.log and reformat T02 Java source/tests for readability.",
+  "compile_fixes": [
+    "Import Model.ClaimSnapshot, Model.AuditEntry, Model.CommandReceipt explicitly in PersistenceJson.",
+    "Import com.fasterxml.jackson.core.type.TypeReference.",
+    "Use typed imports and lambda conversions in repository adapters so stream mapping resolves to List<ClaimSnapshot> and List<AuditEntry>."
+  ],
+  "tests_proposed": [
+    "ClaimPersistenceIT",
+    "AuditImmutabilityIT"
+  ],
+  "evidence": "NOT_RUN: worker packet prohibits builds and tests; coordinator should apply the delta, rerun Maven compile, then focused Failsafe integration tests with Docker.",
+  "assumptions": [
+    "This candidate is a delta against the current applied T02 source at the time of dispatch.",
+    "Mapper XML and SQL are unchanged in this attempt."
+  ]
+}

@@ -1,0 +1,5 @@
+# T02/14 fixture correction
+
+Task T02 / REQ-20261017-006 through -010. Worker gpt-6-luna / medium. Fresh retry after `reports/sub-agents/T02/re-review-13.md` returned REWORK. Base candidate is attempt 13 patch `deb5eb61b548715fe6519da580ce1565b8b2264deeab1701ccbc4e6c96ecbfc9`; retain all five adapter-facing test files and change only fixture lifecycle as needed.
+
+Write only `candidate.patch` and `handoff.json` here. Allowed patch paths only `src/test/java/com/papaya/claims/claim/domain/persistence/`. Fix the concrete finding: do not use the migration JDBC connection after Liquibase closes it. Query current_user/schema owner using a fresh migration-login connection or before Liquibase closes; verify assertions are inside a valid connection scope. Re-check all mapper adapter test claims and list exact verification as NOT_RUN under worker protocol. Do not run builds, tests, Docker/database operations or Git mutations; do not edit shared files or source directly and do not spawn agents. Preserve honest PARTIAL audit / NOT_CAPTURED host-payload status.

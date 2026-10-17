@@ -1,0 +1,11 @@
+{
+  "task": "T02",
+  "attempt": "03",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    "src/test/java/com/papaya/claims/persistence/PostgresPersistenceSupport.java"
+  ],
+  "change": "Corrected DatabaseFactory import to liquibase.database.DatabaseFactory and removed the unused java.util.List import.",
+  "evidence": "NOT_RUN: coordinator runs the compile and integration checks.",
+  "other_reported_compile_error": "reports/verification/build/t01-test.log also reports WorkflowEngineTest.java:46 unresolved MAX_REQUESTS_MESSAGE. This is outside T02 and was not modified."
+}
