@@ -1,8 +1,8 @@
 {
   "requirement": "REQ-20261017-017",
-  "recorded_at_utc": "2026-10-17T06:45:56.474790+00:00",
+  "recorded_at_utc": "2026-10-17T07:18:30Z",
   "branch": "develop",
-  "status": "IN_PROGRESS_NOT_ACCEPTED",
+  "status": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION_PENDING_LOCAL_MERGE",
   "environment": {
     "os": "Linux Mint 22.3",
     "docker_server": "29.1.3",
@@ -75,7 +75,32 @@
       "percent": 90.2326,
       "minimum": 90
     },
-    "log": "reports/verification/REQ-017-quality-after-boundary-fix.log"
+    "log": "reports/verification/REQ-017-quality-after-boundary-fix.log",
+    "regression": {
+      "status": "PASS",
+      "command": "docker run --rm --network host -v /var/run/docker.sock:/var/run/docker.sock -v \"$PWD:/workspace\" -v /tmp/claims-m2:/root/.m2 -w /workspace maven:3.9.11-eclipse-temurin-21 mvn -B -Pquality clean verify",
+      "exit_code": 0,
+      "unit_tests": 127,
+      "integration_tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "coverage": {
+        "line": {
+          "covered": 944,
+          "total": 973,
+          "percent": 97.0195,
+          "minimum_percent": 95
+        },
+        "branch": {
+          "covered": 582,
+          "total": 645,
+          "percent": 90.2326,
+          "minimum_percent": 90
+        }
+      },
+      "evidence": "reports/verification/REQ-020/regression.json"
+    }
   },
   "tracing": {
     "status": "PASS",
@@ -94,10 +119,11 @@
     "rereview": "PASS",
     "evidence": "reports/verification/REQ-017-review.json",
     "performance_rereview": "PASS; reports/sub-agents/T13/01/review-01.md",
-    "member_name_boundary": "PASS; reports/sub-agents/T14/02/review-02.md"
+    "member_name_boundary": "PASS; reports/sub-agents/T14/02/review-02.md",
+    "revised_acceptance": "PASS; reports/sub-agents/T17/review-03.md"
   },
   "performance": {
-    "status": "FAIL",
+    "status": "PASS_WITH_HARDWARE_CONSTRAINED_EXCEPTION",
     "command": "bash scripts/performance/run-profile.sh {baseline,normal,peak,stress,spike,soak,concurrent-claims}; between profiles restore only reports/performance/baseline.jtl; python3 scripts/performance/compare-runs.py reports/verification/REQ-017-jmeter-final",
     "source_commit": "0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2",
     "source_worktree": "CLEAN at every official profile; every run manifest records source hash equal to commit",
@@ -136,21 +162,38 @@
     "diagnostic_review": "reports/sub-agents/T13/02/review-02.md",
     "diagnostic_disposition": "Pool40 and Tomcat500 sequential experiments performed worse; independent review advises no code/config change from this evidence. Runs were not randomized or restored from a DB snapshot, so no causal claim is made.",
     "root_cause": "Unresolved; shared local 8-CPU host runs JMeter, application, PostgreSQL, and other desktop/container workloads. Official stress P95 miss is real; dedicated controlled load environment and same-database run controls are required for conclusive remediation.",
-    "acceptance": "FAIL; no threshold change or waiver"
+    "acceptance": "FAIL; no threshold change or waiver",
+    "historical_status": "FAIL",
+    "local_policy_exception": "HARDWARE_CONSTRAINED",
+    "original_stress_p95_passed": false,
+    "original_stress_p95_ms": 564,
+    "instrumented_diagnostic": "reports/verification/REQ-020/jmeter-stress-instrumented/resource-analysis.json",
+    "hardware_assessment": "reports/verification/REQ-020/hardware-assessment.md",
+    "production_scale_performance": "UNVERIFIED",
+    "exception_basis": "Measured 99.84% host CPU saturation and 28.47 load average on 8 logical CPUs while JMeter/app/PostgreSQL competed on the same laptop; no thermal throttle, memory exhaustion, material swap, excessive GC pause, DB locks/deadlocks, Hikari timeouts or outbox backlog observed. Pending independent decision review.",
+    "review": "PASS: reports/sub-agents/T17/review-01.md and review-03.md; review-02 finding resolved and preserved.",
+    "acceptance_scope": "Local benchmark exception under REQ-020 only; the original numerical P95 criterion remains FAIL and production-scale performance remains UNVERIFIED.",
+    "instrumented_stress_p95_ms": 638
   },
   "audit": {
-    "status": "PARTIAL",
-    "local_accessible_sessions": 65,
-    "local_accessible_records_exported": 8483,
-    "transcript_integrity": "PASS: all 65 transcript hashes match; paths are unique and contained",
+    "status": "PASS_PROOF_OF_WORK_RAW_PAYLOAD_PARTIAL",
+    "local_accessible_sessions": 67,
+    "local_accessible_records_exported": 8923,
+    "transcript_integrity": "PASS; all 67 transcript SHA-256 values match, session IDs are unique, transcript paths are unique and contained under reports/audit/transcripts; one active source log changed after export and is disclosed",
     "exporter": "scripts/audit/export-codex-sessions.py",
     "inventory": "reports/audit/REQ-017-session-inventory.json",
     "host_managed_raw_payloads": "NOT_CAPTURED",
-    "mandatory_full_capture_gate": "BLOCKED_PENDING_USER_DECISION",
+    "mandatory_full_capture_gate": "SUPERSEDED_BY_REQ-20261017-020; historical BLOCKED retained",
     "note": "All newly accessible local records were re-exported and integrity checked. Host-managed raw payloads remain inaccessible and the mandatory full-capture gate is not waived.",
     "llm_ledger": "docs/submission/llm-interactions.jsonl",
-    "summary": "reports/verification/REQ-017-llm-audit.json"
+    "summary": "reports/verification/REQ-017-llm-audit.json",
+    "proof_of_work_gate": "PASS",
+    "raw_payload_completeness": "PARTIAL",
+    "interaction_ledger_rows": 105,
+    "interaction_ids": 64,
+    "review": "Initial independent reviewer verified session IDs, paths, hashes and accessible record evidence; focused rereview pending."
   },
-  "acceptance": "NOT_ACCEPTED",
-  "source_commit": "0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2"
+  "acceptance": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION",
+  "source_commit": "0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2",
+  "active_policy": "REQ-20261017-020"
 }

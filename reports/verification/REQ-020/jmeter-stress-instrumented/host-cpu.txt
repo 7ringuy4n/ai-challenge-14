@@ -1,0 +1,9 @@
+CPU(s):                                  8
+On-line CPU(s) list:                     0-7
+Model name:                              11th Gen Intel(R) Core(TM) i5-11320H @ 3.20GHz
+Thread(s) per core:                      2
+Core(s) per socket:                      4
+CPU(s) scaling MHz:                      56%
+CPU max MHz:                             4500.0000
+CPU min MHz:                             400.0000
+NUMA node0 CPU(s):                       0-7

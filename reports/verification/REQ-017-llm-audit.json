@@ -1,19 +1,20 @@
 {
   "requirement": "REQ-20261017-017",
-  "generated_at_utc": "2026-10-17T06:45:56.474790+00:00",
+  "generated_at_utc": "2026-10-17T07:18:30Z",
   "local_inventory": {
-    "status": "PASS_FOR_ACCESSIBLE_LOCAL_RECORDS",
+    "status": "PASS_FOR_ACCESSIBLE_PROOF_OF_WORK",
     "candidate_jsonl_files": 145,
-    "project_related_sessions": 65,
-    "accessible_message_and_tool_records_exported": 8483,
-    "transcript_integrity": "PASS; all 65 transcript hashes match, paths are unique and contained under reports/audit/transcripts",
+    "project_related_sessions": 67,
+    "accessible_message_and_tool_records_exported": 8923,
+    "transcript_integrity": "PASS; all 67 transcript SHA-256 values match, session IDs are unique, transcript paths are unique and contained under reports/audit/transcripts",
     "inventory": "reports/audit/REQ-017-session-inventory.json",
-    "transcript_root": "reports/audit/transcripts/"
+    "transcript_root": "reports/audit/transcripts/",
+    "source_file_hash_recheck": "PARTIAL_ACTIVE_SESSION_GROWING; 66 of 67 source files matched on post-export recheck; the current coordinator host log continued growing after the inventory snapshot"
   },
   "interaction_ledger": {
     "path": "docs/submission/llm-interactions.jsonl",
-    "rows": 101,
-    "distinct_interaction_ids": 60,
+    "rows": 105,
+    "distinct_interaction_ids": 64,
     "interaction_ids_with_no_terminal_status": 0,
     "rows_by_role_or_event": {
       "coordinator": 3,
@@ -23,7 +24,9 @@
       "progress": 1,
       "independent reviewer": 2
     },
-    "capture_scope": "Available prompts, task inputs, visible outputs, review evidence, outcomes and retries are recorded; any inaccessible host-managed envelope remains NOT_CAPTURED."
+    "capture_scope": "Accessible user/assistant messages, visible tool calls/outputs, task packets, review evidence, retries and outcomes are retained. Requirement/task/commit traceability is present where available; older rows lacking these fields remain unlinked and are not fabricated.",
+    "rows_with_requirement_links": 63,
+    "rows_with_task_links": 63
   },
   "application_controlled_model_calls": {
     "status": "NOT_APPLICABLE",
@@ -38,9 +41,9 @@
     "available_task_inputs_outputs": "Preserved when exposed in collaboration messages/task packets; linked in interaction ledger and reports/sub-agents."
   },
   "mandatory_full_capture_gate": {
-    "status": "BLOCKED",
-    "reason": "Historical host-managed raw model request/response payloads and IDs are not exposed by available local host records; this requirement is explicit and not waived.",
-    "merge_allowed": false
+    "status": "SUPERSEDED_BY_REQ-20261017-020",
+    "historical_status": "BLOCKED",
+    "reason": "Owner revised acceptance to proof-of-work. Missing host-managed payloads remain NOT_CAPTURED and raw completeness PARTIAL."
   },
   "redactions": {
     "applied": true,
@@ -52,5 +55,16 @@
     ],
     "declaration": "All redactions use [REDACTED_SECRET], [REDACTED_AUTH], or [REDACTED_TOKEN]."
   },
-  "no_fabrication": true
+  "no_fabrication": true,
+  "proof_of_work_gate": {
+    "status": "PASS",
+    "policy": "REQ-20261017-020",
+    "basis": "67 unique project session IDs and stored transcripts, 8923 accessible message/tool records, transcript SHA-256/path validation, and 105 interaction ledger rows across 64 IDs; independent review-03 PASS. Explicit links exist on 63 rows; prior records lacking links remain honestly unlinked."
+  },
+  "raw_payload_completeness": {
+    "status": "PARTIAL",
+    "host_managed_envelopes": "NOT_CAPTURED",
+    "request_response_ids": "NOT_CAPTURED",
+    "full_payload_capture_claimed": false
+  }
 }

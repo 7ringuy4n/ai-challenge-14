@@ -1,7 +1,7 @@
 {
   "requirement": "REQ-20261017-017",
-  "updated_at_utc": "2026-10-17T06:44:45Z",
-  "overall_status": "IN_PROGRESS_NOT_ACCEPTED",
+  "updated_at_utc": "2026-10-17T07:18:30Z",
+  "overall_status": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION",
   "functional_requirements": [
     {
       "id": "C14-01",
@@ -249,13 +249,14 @@
     },
     {
       "id": "REQ-20261017-016",
-      "status": "FAIL",
-      "coverage": "User-approved thresholds P95<=500ms, P99<=1000ms, HTTP errors<=1%. All seven exact JMeter plans ran on final source commit 0435e1b; six passed and stress failed at P95 564ms. A default repeat also failed (P95 917ms, P99 1077ms); diagnostic runs are not causal because sequential DB state changed. See reports/verification/REQ-017-jmeter-final and REQ-017-jmeter-ab."
+      "status": "PASS_WITH_HARDWARE_CONSTRAINED_EXCEPTION",
+      "coverage": "Original threshold remains FAIL (P95 564ms; instrumented 638ms). REQ-020 local exception accepted after review-03 PASS; production-scale performance UNVERIFIED.",
+      "historical_status": "FAIL"
     },
     {
       "id": "REQ-20261017-017",
-      "status": "IN_PROGRESS_NOT_ACCEPTED",
-      "coverage": "Functional, browser, cross-member, Postman, regression, diagram and trace evidence pass as documented. Final-source JMeter stress profile fails approved P95; host-managed raw LLM envelopes remain NOT_CAPTURED. No merge."
+      "status": "PASS_WITH_REVISED_AUDIT_SCOPE",
+      "coverage": "Original functional and verification gates pass; accessible proof-of-work is PASS for 67 sessions/8923 records. Raw host payloads remain PARTIAL/NOT_CAPTURED."
     },
     {
       "id": "REQ-20261017-018",
@@ -266,6 +267,11 @@
       "id": "REQ-20261017-019",
       "status": "PASS_RECORD_ONLY",
       "coverage": "Approval confirmation is preserved verbatim in docs/submission/user-prompts.jsonl and dated requirement ledger; it authorizes existing REQ-018 implementation."
+    },
+    {
+      "id": "REQ-20261017-020",
+      "status": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION",
+      "coverage": "Hardware-constrained local exception and LLM proof-of-work accepted after independent review-03 PASS. Regression and workflow validation pass; source production performance remains unverified; raw payload capture remains partial."
     }
   ],
   "evidence": {
@@ -282,16 +288,12 @@
     "jmeter_diagnostics": "reports/verification/REQ-017-jmeter-ab",
     "jmeter_peer_review": "reports/sub-agents/T13/02/review-02.md"
   },
-  "remaining_gates": [
+  "remaining_gates": [],
+  "post_acceptance_actions": [
     {
-      "gate": "Seven JMeter final-source profiles meet approved thresholds",
-      "status": "FAIL",
-      "reason": "All seven ran on clean source commit 0435e1b with unchanged JMX/property hashes; stress P95 564ms exceeds 500ms. A diagnostic default repeat also failed P95 917ms/P99 1077ms. Tuning experiments worsened results and cannot establish causality without same-DB randomized runs. Dedicated controlled benchmark environment required."
-    },
-    {
-      "gate": "Complete raw host-managed model request/response capture",
-      "status": "BLOCKED",
-      "reason": "Historical host-managed request/response envelopes, request IDs, system/developer envelopes, and encrypted reasoning are not exposed in accessible session records. Marked NOT_CAPTURED; no waiver."
+      "action": "Commit reviewed evidence to develop and merge into the verified existing main baseline",
+      "status": "AUTHORIZED_PENDING_EXECUTION",
+      "qualification": "Do not push; verify resulting main commit and record merge evidence."
     }
   ]
 }

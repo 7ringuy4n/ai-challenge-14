@@ -1,0 +1,18 @@
+started_at=2026-10-17T06:55:41Z
+running test case 1/1: instrumented stress profile (500 VUs, 60s ramp + 60s load)
+WARN StatusConsoleListener The use of package scanning to locate plugins is deprecated and will be removed in a future release
+WARN StatusConsoleListener The use of package scanning to locate plugins is deprecated and will be removed in a future release
+WARN StatusConsoleListener The use of package scanning to locate plugins is deprecated and will be removed in a future release
+WARN StatusConsoleListener The use of package scanning to locate plugins is deprecated and will be removed in a future release
+Creating summariser <summary>
+Created the tree successfully using performance/jmeter/profiles/stress.jmx
+Starting standalone test @ 2026 Oct 17 13:55:46 ICT (1792220146071)
+summary +   8568 in 00:00:14 =  634.1/s Avg:    85 Min:     1 Max:   994 Err:     0 (0.00%) Active: 113 Started: 113 Finished: 0
+summary +  41823 in 00:00:30 = 1394.0/s Avg:   168 Min:     0 Max:  1827 Err:     0 (0.00%) Active: 363 Started: 363 Finished: 0
+summary =  50391 in 00:00:44 = 1158.1/s Avg:   154 Min:     0 Max:  1827 Err:     0 (0.00%)
+summary +  25860 in 00:00:18 = 1445.2/s Avg:   295 Min:     0 Max:  1820 Err:     0 (0.00%) Active: 0 Started: 500 Finished: 500
+summary =  76251 in 00:01:01 = 1241.7/s Avg:   202 Min:     0 Max:  1827 Err:     0 (0.00%)
+Tidying up ...    @ 2026 Oct 17 13:56:47 ICT (1792220207907)
+... end of run
+Results: reports/performance/stress-20261017T065544Z
+finished_at=2026-10-17T06:58:11Z

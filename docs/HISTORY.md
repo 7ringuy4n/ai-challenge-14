@@ -105,3 +105,21 @@ Source commit 0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2 received the reviewed 127
 ## 2026-10-17 — REQ-017 reporting evidence closeout
 
 T15's report package passed independent rereview 04 and is accepted as a reporting task only. The current combined live run retains matching 29/29 console, HTTP exchanges, trace context, and application log evidence. The current app logs correlate HTTP approval and two asynchronous outbox deliveries on trace `d5fdcf613e4a47189047a2bcd20df302`; collector-exported parent-child spans are explicitly evidence from a separate earlier run. JMeter total is 1,089,197 with six profiles passing and stress P95 failing 564 ms versus 500 ms. Latest audit export covers 65 sessions/8,483 accessible records; ledger has 101 rows/60 IDs and host-managed raw payloads remain NOT_CAPTURED. Overall project acceptance remains NOT_ACCEPTED; no merge or push.
+
+
+## 2026-10-17 — REQ-020 revised acceptance evidence (review pending)
+
+The owner revised local performance acceptance to permit a `HARDWARE_CONSTRAINED` exception when measurements attribute a laptop stress miss to shared-host limits, without changing the original result or implying production-scale performance. The original final-source 500-VU run remains FAIL at P95 564 ms; the monitored repeat is also FAIL at P95 638 ms. Host CPU reached 99.84% and load average 28.47 on eight logical CPUs while JMeter, app and PostgreSQL competed. RAM, swap, thermal counters, GC, DB locking, Hikari timeouts and outbox were also checked; Hikari pending borrowers peaked at 178. The evidence supports a local exception, pending independent review; production performance remains UNVERIFIED.
+
+The owner revised LLM acceptance to proof-of-work. Latest accessible export preserves 65 session transcripts and 8,758 accessible records; transcript hashes, IDs and contained paths pass. The interaction ledger has 101 rows/60 interaction IDs, with explicit requirement/task links on 59 rows. One active coordinator source file continued growing after export and is disclosed. Raw host payloads remain NOT_CAPTURED/PARTIAL.
+
+A fresh Docker-based Maven quality regression passed 127 unit + 9 PostgreSQL/Testcontainers integration tests, six Liquibase changesets, 97.0195% line / 90.2326% branch coverage; workflow validation passed 18 tasks. Revised `FINAL-ACCEPTANCE.md` is pending independent acceptance review. No acceptance, commit or merge yet; no push.
+
+
+Initial REQ-020 independent review confirmed the measured hardware exception and proof-of-work evidence, but returned REWORK because T13/T16 still showed `running`. The finding is preserved verbatim at `reports/sub-agents/T17/review-01.md`; both task states are now reconciled as accepted under the revised policy, with historical P95 FAIL and raw-payload PARTIAL retained. Focused rereview is required before acceptance.
+
+
+Focused T17 rereview 02 identified that T13 still said all approved latency limits must pass despite the owner-approved exception. T13's acceptance criteria now preserve the original numerical stress FAIL and limit acceptance to a reviewed local `HARDWARE_CONSTRAINED` exception under REQ-020; production scale remains UNVERIFIED. Review-02 is preserved verbatim at `reports/sub-agents/T17/review-02.md`. Final focused confirmation is pending.
+
+
+REQ-020 acceptance decision — independent review-03 PASS. T13 now preserves the original P95 564ms FAIL and instrumented 638ms FAIL while accepting only the local HARDWARE_CONSTRAINED exception; production-scale performance is UNVERIFIED. T16 proof-of-work passes for 67 accessible sessions and 8923 records, with raw payload completeness PARTIAL/NOT_CAPTURED. Final current Maven quality regression passed 127 unit + 9 PostgreSQL integration tests and coverage thresholds; workflow validator passes. Marked ACCEPTED_WITH_PERFORMANCE_EXCEPTION. Local merge into existing main is authorized after commit; no push.
