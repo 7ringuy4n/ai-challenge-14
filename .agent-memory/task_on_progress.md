@@ -10,7 +10,7 @@ in_progress
 
 ## Current step
 
-Local develop/main archive merge verified
+Final branch-tip evidence corrected
 
 ## Completed
 
@@ -26,10 +26,11 @@ Local develop/main archive merge verified
 - [x] Recorded the develop commit in the verification report and synchronized project history/changelog.
 - [x] Fast-forwarded main to develop and verified both at 5371cd79da337a472937a73be5be9eb6c3c7f5e4; original ZIP remains untracked with unchanged hash.
 - [x] Fast-forwarded main to develop and verified both refs at 5371cd79da337a472937a73be5be9eb6c3c7f5e4; raw archive remains untracked with original hash.
+- [x] Added final verification commit aa9c31e724b5abc18a9cf0297fbd0cc249fcad14 and fast-forwarded main to it; final refs matched and workflow validation passed.
 
 ## Next exact step
 
-Commit the final verification report/history updates, fast-forward main to that evidence commit, then confirm equal refs and raw ZIP remains untracked.
+Commit the corrected final branch-tip references, fast-forward main to that evidence commit, then verify both refs and status (except the intentionally untracked raw ZIP).
 
 ## Blockers
 

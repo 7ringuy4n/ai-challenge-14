@@ -1397,7 +1397,7 @@
           "source_hash": "3be558ea42bd0b3a2234679b861103b552209e4b3e820daed1e797be5cb05a7b"
         }
       ],
-      "notes": "Owner selected a sanitized ZIP; raw codex-logs.zip remains byte-for-byte unchanged and untracked. Sanitized output preserves all archive paths/session records, passes the configured zero-active-match scan and structural verifier, and regenerates deterministically. Workflow and diff checks pass. Archive commit 6703222 and evidence commit 5371cd79da337a472937a73be5be9eb6c3c7f5e4 are on develop; main was fast-forwarded to the same tip. Both refs were verified equal and retain baseline 2cafe2507708c6b773865a04b342ea623248bf02 as ancestor. Task remains in_review pending independent review; no acceptance is claimed and no push occurred."
+      "notes": "Owner selected a sanitized ZIP; raw codex-logs.zip remains byte-for-byte unchanged and untracked. Sanitized output preserves all archive paths/session records, passes the configured zero-active-match scan and structural verifier, and regenerates deterministically. Workflow and diff checks pass. Archive commit 6703222 and evidence commits 5371cd7 and aa9c31e are on develop; main was fast-forwarded to final tip aa9c31e724b5abc18a9cf0297fbd0cc249fcad14. Both refs were verified equal and retain baseline 2cafe2507708c6b773865a04b342ea623248bf02 as ancestor. Task remains in_review pending independent review; no acceptance is claimed and no push occurred."
     }
   ]
 }

@@ -155,4 +155,4 @@ REQ-024 authorizes committing the supplied Codex archive and directly related au
 
 The owner selected a sanitized ZIP under REQ-025. The original archive remains byte-for-byte unchanged and untracked. Sanitized output has stable generation, zero active configured sensitive-pattern matches, and preserves all 64 sessions/28,716 records and their type histograms.
 
-The sanitized archive and directly related import/audit evidence were committed on `develop` as `6703222` after reviewing the staged file set. Evidence commit `5371cd79da337a472937a73be5be9eb6c3c7f5e4` was fast-forwarded to local `main`; both branches now match. The raw ZIP remained untracked. No push occurred; T20 remains in review pending independent review.
+The sanitized archive and directly related import/audit evidence were committed on `develop` as `6703222` after reviewing the staged file set. Final verification commit `aa9c31e724b5abc18a9cf0297fbd0cc249fcad14` is the matching tip of local `develop` and `main`. The raw ZIP remained untracked. No push occurred; T20 remains in review pending independent review.
