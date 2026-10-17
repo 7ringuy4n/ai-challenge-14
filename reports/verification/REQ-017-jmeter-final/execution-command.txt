@@ -1,0 +1,12 @@
+# Created from a clean detached worktree at 0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2; .env copied from the documented local setup and ignored by Git.
+set -euo pipefail
+cd /tmp/claims-perf-0435e1b
+profiles=(baseline normal peak stress spike soak concurrent-claims)
+for i in "${!profiles[@]}"; do
+  n=$((i+1))
+  p=${profiles[$i]}
+  printf 'running test case %s/7: %s\n' "$n" "$p"
+  bash scripts/performance/run-profile.sh "$p"
+  git restore -- reports/performance/baseline.jtl
+done
+python3 scripts/performance/compare-runs.py reports/verification/REQ-017-jmeter-final

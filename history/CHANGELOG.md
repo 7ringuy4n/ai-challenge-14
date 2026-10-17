@@ -46,3 +46,10 @@ All seven byte-identical JMeter profiles ran against clean source commit `c6dccf
 ## 2026-10-17 — REQ-017 review remediation
 
 Resolved the independent P2 for oversized configured member usernames by capping total length at 127, matching the 120-character persisted identity column after the `member-` prefix. Boundary review passed; focused test passed 5/5; full Maven quality suite passed 127 unit + 9 PostgreSQL/Testcontainers tests with 97.0195% line / 90.2326% branch coverage. The seven prior JMeter profiles are valid for c6dccfe only; rerun against the new committed source before final acceptance.
+
+## 2026-10-17 — REQ-017 final-source performance outcome
+
+The reviewed source correction is committed on develop at 0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2. The current quality gate passed (127 unit + 9 PostgreSQL/Testcontainers; 97.0195% line, 90.2326% branch). Final-source seven-profile JMeter execution used unchanged JMX/property files and clean source manifests: six profiles pass; stress P95 564 ms misses the approved 500 ms threshold (P99 767 ms, errors 0%). A default repeat also misses, and sequential pool/thread diagnostic variants are worse; peer review recommends keeping defaults and notes the database changed between runs. No causal conclusion or threshold waiver is claimed. A dedicated controlled load environment is required. Local audit now includes 64 sessions/8,172 records with verified hashes/paths. Host-managed raw LLM envelopes remain NOT_CAPTURED. Acceptance remains NOT_ACCEPTED and no merge/push is allowed.
+## 2026-10-17 — REQ-017 reporting evidence closeout
+
+T15 reporting was independently accepted after correction of current live-run links/counts and trace evidence scope. The 29/29 run has matching console, exchanges, trace context, and app log correlation evidence. Latest local audit includes 65 sessions and 8,483 records with verified transcript hashes; ledger has 101 rows/60 IDs; host-managed raw payloads remain NOT_CAPTURED. Seven final-source JMeter profiles total 1,089,197 samples, with six passing and the stress profile failing P95 at 564 ms versus 500 ms. Project remains NOT_ACCEPTED; do not merge or push.

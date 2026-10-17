@@ -49,3 +49,10 @@ Still in progress: final-source full seven-profile JMeter rerun and local Codex 
 ## REQ-017 follow-up — boundary review and benchmark provenance
 
 All seven clean-source JMeter profiles were independently reviewed and passed on c6dccfe. A subsequent source review identified a P2 member-identity storage-length boundary; the 127-character limit was implemented and independently rereviewed PASS, with 5/5 focused tests and 127+9 full quality tests passing. The prior performance reports remain tied to c6dccfe and are not final-source acceptance evidence; rerun all profiles after committing the correction.
+
+## 2026-10-17 — REQ-017 final-source acceptance blockers
+
+Commit `0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2` includes the reviewed 127-character member identity boundary correction. The current quality gate passed 127 unit + 9 PostgreSQL/Testcontainers tests with 97.0195% line and 90.2326% branch coverage. Seven unchanged JMeter profiles ran on clean source; six pass, stress P95 564ms exceeds the approved 500ms target (P99 767ms, 0 errors). A default repeat also missed at P95 917ms/P99 1077ms. Temporary Hikari-40 and Tomcat-500 variants performed worse; independent review says no code change is justified from sequential runs on an evolving database and calls for controlled same-data test records. Keep documented defaults. Latest accessible local session export: 64 sessions / 8,172 records, all transcript hashes/paths verified. Host-managed raw model payloads remain NOT_CAPTURED and full audit remains mandatory/BLOCKED. No acceptance, main merge, or push.
+## 2026-10-17 — REQ-017 reporting evidence closeout
+
+T15 report task accepted by independent rereview 04, but the application project remains NOT_ACCEPTED. Current live evidence links were reconciled; same-run app logs show HTTP/outbox trace correlation and earlier collector span evidence is labeled separately. Latest audit: 65 sessions, 8,483 accessible records, all 65 hashes valid; ledger 101 rows / 60 interaction IDs. Host-managed raw payloads remain NOT_CAPTURED. Performance acceptance remains FAIL at stress P95 564 ms vs 500 ms. No merge/push.

@@ -1,0 +1,56 @@
+{
+  "requirement": "REQ-20261017-017",
+  "generated_at_utc": "2026-10-17T06:45:56.474790+00:00",
+  "local_inventory": {
+    "status": "PASS_FOR_ACCESSIBLE_LOCAL_RECORDS",
+    "candidate_jsonl_files": 145,
+    "project_related_sessions": 65,
+    "accessible_message_and_tool_records_exported": 8483,
+    "transcript_integrity": "PASS; all 65 transcript hashes match, paths are unique and contained under reports/audit/transcripts",
+    "inventory": "reports/audit/REQ-017-session-inventory.json",
+    "transcript_root": "reports/audit/transcripts/"
+  },
+  "interaction_ledger": {
+    "path": "docs/submission/llm-interactions.jsonl",
+    "rows": 101,
+    "distinct_interaction_ids": 60,
+    "interaction_ids_with_no_terminal_status": 0,
+    "rows_by_role_or_event": {
+      "coordinator": 3,
+      "independent_reviewer": 43,
+      "outcome": 41,
+      "implementation_worker": 11,
+      "progress": 1,
+      "independent reviewer": 2
+    },
+    "capture_scope": "Available prompts, task inputs, visible outputs, review evidence, outcomes and retries are recorded; any inaccessible host-managed envelope remains NOT_CAPTURED."
+  },
+  "application_controlled_model_calls": {
+    "status": "NOT_APPLICABLE",
+    "basis": "Source review found no application-managed model API dispatch; this service has no application-controlled LLM calls."
+  },
+  "host_managed_model_invocations": {
+    "status": "PARTIAL_NOT_CAPTURED",
+    "raw_request_response_envelopes": "NOT_CAPTURED",
+    "request_response_ids": "NOT_CAPTURED",
+    "system_developer_envelopes": "NOT_CAPTURED",
+    "encrypted_reasoning": "NOT_CAPTURED",
+    "available_task_inputs_outputs": "Preserved when exposed in collaboration messages/task packets; linked in interaction ledger and reports/sub-agents."
+  },
+  "mandatory_full_capture_gate": {
+    "status": "BLOCKED",
+    "reason": "Historical host-managed raw model request/response payloads and IDs are not exposed by available local host records; this requirement is explicit and not waived.",
+    "merge_allowed": false
+  },
+  "redactions": {
+    "applied": true,
+    "fields": [
+      "values found in local .env secret keys",
+      "Authorization values",
+      "Bearer tokens",
+      "password/token/secret/key assignments"
+    ],
+    "declaration": "All redactions use [REDACTED_SECRET], [REDACTED_AUTH], or [REDACTED_TOKEN]."
+  },
+  "no_fabrication": true
+}

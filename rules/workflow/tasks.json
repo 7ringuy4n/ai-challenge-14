@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "Implement Challenge 14 on develop. Local Java 21/Maven 3.9.11 and Docker are available through the authorized invocation context; default sandbox socket/loopback access is restricted. Current PostgreSQL verification and JaCoCo pass on the final reviewed changes (126 unit + 9 Testcontainers; 97.0134% line/90.2022% branch). Host-managed raw LLM payloads remain NOT_CAPTURED/PARTIAL. REQ-20261017-017 now requires seven final-source byte-identical JMeter reruns, browser E2E, live cross-member authorization, per-requirement verification, and a local session/LLM audit. Merge develop into main only if every gate including full host-managed capture is satisfied; never push. REQ-20261017-018 approves a configurable local member-principal list so the two-member live security test can run; preserve the single-member default.",
+  "scope": "Implement Challenge 14 on develop. Current source commit 0435e1b passed Java 21/Maven 3.9.11 and PostgreSQL 16/Testcontainers quality verification: 127 unit + 9 integration, 97.0195% line / 90.2326% branch. Current live API 29/29, browser 17/17, cross-member 7/7 and Newman 34 requests pass. Seven unchanged final-source JMeter profiles yielded six passes and stress P95 564ms >500ms; approved performance gate FAIL. Local session audit: 65 sessions/8,483 accessible records; host-managed raw payloads NOT_CAPTURED/PARTIAL. T15 reporting task is accepted after independent review 04, but T08 remains running; do not merge develop into main until every gate including full host capture and performance passes. Never push.",
   "coordinator_model": "gpt-6.1-sol",
   "worker_model": "gpt-6-luna",
   "reasoning_effort": "medium",
@@ -745,7 +745,7 @@
           "commit": "PENDING_COORDINATOR_COMMIT"
         }
       ],
-      "notes": "Current coordinator evidence is reports/verification/REQ-015-final.json. Combined PostgreSQL-backed matrix passed 29/29; clean quality passed 123 unit + 9 integration, six changesets and JaCoCo gates; seven JMeter profiles met user-approved limits; Newman passed; exported HTTP/security/outbox traces were correlated; diagrams and two independent rereviews are recorded. The full JMeter suite predates the final log-only adjustment; a short post-adjustment run validates runner metadata only. Browser UI, live two-member ownership and fully per-bullet live requirement execution remain open. Host-managed model payloads remain NOT_CAPTURED/PARTIAL. Keep status running. Under REQ-017 a local merge is authorized only after every mandatory gate passes; never push. REQ-017 is active. T08 remains running; completion and main merge are prohibited until all gates, including full session/LLM audit, pass."
+      "notes": "Current coordinator evidence is reports/verification/REQ-015-final.json. Combined PostgreSQL-backed matrix passed 29/29; clean quality passed 123 unit + 9 integration, six changesets and JaCoCo gates; seven JMeter profiles met user-approved limits; Newman passed; exported HTTP/security/outbox traces were correlated; diagrams and two independent rereviews are recorded. The full JMeter suite predates the final log-only adjustment; a short post-adjustment run validates runner metadata only. Browser UI, live two-member ownership and fully per-bullet live requirement execution remain open. Host-managed model payloads remain NOT_CAPTURED/PARTIAL. Keep status running. Under REQ-017 a local merge is authorized only after every mandatory gate passes; never push. REQ-017 is active. T08 remains running; completion and main merge are prohibited until all gates, including full session/LLM audit, pass. Final-source JMeter execution is complete but stress acceptance failed (P95 564ms vs 500ms); T13 is blocked. T16 is blocked by mandatory inaccessible host-managed raw model payloads. Do not accept or merge."
     },
     {
       "id": "T09",
@@ -877,22 +877,19 @@
       "role": "coordinator",
       "model": "gpt-6.1-sol",
       "reasoning_effort": "medium",
-      "status": "running",
+      "status": "blocked",
       "depends_on": [
         "T08"
       ],
       "allowed_paths": [
         "reports/performance/final-rerun/",
-        "reports/verification/REQ-017-jmeter.json"
+        "reports/verification/REQ-017-jmeter.json",
+        "reports/verification/REQ-017-jmeter-final/",
+        "reports/verification/REQ-017-jmeter-ab/",
+        "reports/sub-agents/T13/02/"
       ],
       "verification": [
-        "scripts/performance/run-profile.sh baseline",
-        "scripts/performance/run-profile.sh normal",
-        "scripts/performance/run-profile.sh peak",
-        "scripts/performance/run-profile.sh stress",
-        "scripts/performance/run-profile.sh spike",
-        "scripts/performance/run-profile.sh soak",
-        "scripts/performance/run-profile.sh concurrent-claims"
+        "JMeter 5.6.3, OpenJDK 21.0.12.1; execute the seven scripts/performance/run-profile.sh profiles on clean source commit 0435e1b; compare-runs.py against user-approved thresholds; verify JMX and .properties hashes before/after"
       ],
       "case_ids": [],
       "acceptance": [
@@ -902,9 +899,16 @@
         "reports/verification/REQ-017-jmeter-rerun/comparison.json",
         "reports/sub-agents/T13/01/review-01.md",
         "reports/verification/REQ-017-jmeter-profile-hashes-before.txt",
-        "reports/verification/REQ-017-jmeter-profile-hashes-after.txt"
+        "reports/verification/REQ-017-jmeter-profile-hashes-after.txt",
+        "reports/verification/REQ-017-jmeter-final/comparison.json",
+        "reports/verification/REQ-017-jmeter-final/final-profile-summary.json",
+        "reports/verification/REQ-017-jmeter-final/profile-plan-sha256-before.txt",
+        "reports/verification/REQ-017-jmeter-final/profile-plan-sha256-after.txt",
+        "reports/verification/REQ-017-jmeter-ab/",
+        "reports/sub-agents/T13/02/pool-40-assessment.md",
+        "reports/sub-agents/T13/02/review-02.md"
       ],
-      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review. Prior seven-profile run on c6dccfe passed and was independently reviewed; current source then changed for T14 P2 member identity length. T13 remains running until all seven profiles are rerun on the corrected committed source."
+      "notes": "All seven exact profiles ran on clean source 0435e1b; six passed and the 500-VU stress profile failed P95 564ms (target 500ms), P99 767ms, errors 0%. A default repeat also failed at P95 917ms/P99 1077ms. Temporary pool-40 and Tomcat-500 runs were worse; independent review advises no tuning based on sequential runs with evolving DB state. No target/source adjustment; controlled dedicated performance environment required. Task blocked, not accepted."
     },
     {
       "id": "T14",
@@ -954,10 +958,12 @@
         "reports/verification/REQ-017-member-name-boundary.log",
         "reports/verification/REQ-017-quality-after-boundary-fix.log",
         "reports/verification/REQ-017-boundary-compose-default.log",
-        "reports/verification/REQ-017-boundary-live/console.log",
-        "reports/verification/REQ-017-boundary-postman.log"
+        "reports/verification/REQ-017-boundary-postman.log",
+        "reports/verification/REQ-017-final-live/console.log",
+        "reports/verification/REQ-017-final-live/http-exchanges.jsonl",
+        "reports/verification/REQ-017-final-live/trace-context.json"
       ],
-      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review. T14 implementation and live checks passed; independent review P2 harness issue fixed and rereview passed. Latest member cross-check run uses python3 -O and passes 7/7. Independent review P2 on max member identity length fixed (total username capped at 127 to fit member_id VARCHAR(120)); boundary rereview passed. Full quality 127+9 passed; smoke, 29 live cases, 17 Chrome cases, 7 cross-member checks and Postman passed on corrected source. Final source commit/JMeter rerun pending."
+      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and serialized. T14 implementation, boundary review, full quality (127 unit + 9 integration), smoke, 29/29 combined live, 17 Chrome cases, 7 cross-member checks and 34-request Postman collection passed on source 0435e1b. Performance profiles were rerun on the same source; stress acceptance failed P95 564ms against 500ms and remains tracked under blocked T13."
     },
     {
       "id": "T15",
@@ -965,7 +971,7 @@
       "role": "coordinator",
       "model": "gpt-6.1-sol",
       "reasoning_effort": "medium",
-      "status": "running",
+      "status": "accepted",
       "depends_on": [
         "T08"
       ],
@@ -983,13 +989,34 @@
       ],
       "evidence": [
         "docs/testing/traceability-matrix.md",
-        "reports/verification/acceptance-matrix/console.log",
-        "reports/verification/acceptance-matrix/http-exchanges.jsonl",
         "reports/telemetry/REQ-017-trace-verification.json",
+        "reports/verification/REQ-017-requirement-matrix.json",
         "reports/acceptance/FINAL-ACCEPTANCE.md",
-        "reports/verification/REQ-017-requirement-matrix.json"
+        "reports/verification/REQ-017-current.json",
+        "reports/verification/REQ-017-jmeter-final/comparison.json",
+        "reports/verification/REQ-017-llm-audit.json",
+        "reports/verification/REQ-017-final-live/console.log",
+        "reports/verification/REQ-017-final-live/http-exchanges.jsonl",
+        "reports/verification/REQ-017-final-live/trace-context.json",
+        "reports/verification/REQ-017-final-live/application-trace.log",
+        "reports/sub-agents/T15/02/review-02.md",
+        "reports/sub-agents/T15/02/review-04.md",
+        {
+          "artifact": "reports/sub-agents/T15/02/review-04.md",
+          "reviewer_agent": "/root/final_integrated_review",
+          "result": "PASS",
+          "source_hash": "1099179c36eff36189afc3716cdb688a69db3209096cba2bc585f58f1d8a4640"
+        },
+        {
+          "command": "python3 -m json.tool reports/verification/REQ-017-requirement-matrix.json",
+          "exit_code": 0,
+          "source_hash": "1099179c36eff36189afc3716cdb688a69db3209096cba2bc585f58f1d8a4640",
+          "artifact": "reports/verification/REQ-017-requirement-matrix.json",
+          "result": "PASS"
+        },
+        "reports/verification/REQ-017-final-live/sandbox-attempt-blocked.log"
       ],
-      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
+      "notes": "REQ-20261017-017. T15 reporting task accepted after independent read-only review 04: evidence links, same-run 29/29 request/response/trace-context/application log paths, count totals, performance statuses, and NOT_CAPTURED audit limitations verified. Project remains NOT_ACCEPTED: approved stress P95 gate FAIL and mandatory host-managed raw LLM payload capture BLOCKED. No merge or push."
     },
     {
       "id": "T16",
@@ -997,7 +1024,7 @@
       "role": "coordinator",
       "model": "gpt-6.1-sol",
       "reasoning_effort": "medium",
-      "status": "running",
+      "status": "blocked",
       "depends_on": [
         "T08"
       ],
@@ -1016,11 +1043,13 @@
       ],
       "evidence": [
         "docs/submission/llm-interactions.jsonl",
-        "reports/audit/REQ-017-session-inventory.json",
         "reports/audit/transcripts/",
-        "reports/sub-agents/T13/01/review-01.md"
+        "reports/sub-agents/T13/01/review-01.md",
+        "reports/audit/REQ-017-session-inventory.json",
+        "reports/verification/REQ-017-llm-audit.json",
+        "reports/sub-agents/T13/02/review-02.md"
       ],
-      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
+      "notes": "Latest local export covers 64 accessible sessions and 8,172 message/tool records; all transcript hashes/path containment verify. Host-managed raw request/response envelopes, IDs, system/developer payloads and encrypted reasoning are NOT_CAPTURED and mandatory full audit remains BLOCKED; no waiver."
     }
   ]
 }

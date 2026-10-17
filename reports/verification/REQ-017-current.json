@@ -1,6 +1,6 @@
 {
   "requirement": "REQ-20261017-017",
-  "recorded_at_utc": "2026-10-17T06:05:46Z",
+  "recorded_at_utc": "2026-10-17T06:45:56.474790+00:00",
   "branch": "develop",
   "status": "IN_PROGRESS_NOT_ACCEPTED",
   "environment": {
@@ -13,9 +13,9 @@
   "functional": {
     "status": "PASS",
     "combined_live_cases": 29,
-    "command": "CLAIMS_API_BASE=http://127.0.0.1:8080 CLAIMS_EVIDENCE_DIR=reports/verification/REQ-017-boundary-live python3 scripts/run-scenarios.py",
-    "console": "reports/verification/REQ-017-boundary-live/console.log",
-    "http_exchanges": "reports/verification/REQ-017-boundary-live/http-exchanges.jsonl",
+    "command": "CLAIMS_API_BASE=http://127.0.0.1:8080 CLAIMS_EVIDENCE_DIR=reports/verification/REQ-017-final-live python3 scripts/run-scenarios.py",
+    "console": "reports/verification/REQ-017-final-live/console.log",
+    "http_exchanges": "reports/verification/REQ-017-final-live/http-exchanges.jsonl",
     "cross_member": {
       "status": "PASS",
       "cases": 7,
@@ -41,6 +41,17 @@
     "smoke": {
       "status": "PASS",
       "report": "reports/verification/REQ-017-boundary-smoke-default.log"
+    },
+    "trace_context": "reports/verification/REQ-017-final-live/trace-context.json",
+    "live_run_started_at_utc": "2026-10-17T06:39:17Z",
+    "live_run_finished_at_utc": "2026-10-17T06:39:34Z",
+    "application_trace_log": "reports/verification/REQ-017-final-live/application-trace.log",
+    "sandbox_network_attempt": {
+      "status": "BLOCKED",
+      "command": "CLAIMS_API_BASE=http://127.0.0.1:8080 CLAIMS_EVIDENCE_DIR=reports/verification/REQ-017-final-live python3 scripts/run-scenarios.py",
+      "reason": "Default sandbox denied loopback after 0/29: <urlopen error [Errno 1] Operation not permitted>",
+      "evidence": "reports/verification/REQ-017-final-live/sandbox-attempt-blocked.log",
+      "resolution": "Same combined run re-executed using an authorized local-network invocation; 29/29 passed."
     }
   },
   "quality": {
@@ -69,7 +80,11 @@
   "tracing": {
     "status": "PASS",
     "report": "reports/telemetry/REQ-017-trace-verification.json",
-    "trace_id": "45166d4eef3241f3b8f4227f3b270db3"
+    "trace_id": "45166d4eef3241f3b8f4227f3b270db3",
+    "current_run_application_log": "reports/verification/REQ-017-final-live/application-trace.log",
+    "current_run_status": "PASS_FOR_HTTP_TO_OUTBOX_LOG_CORRELATION",
+    "current_run_trace_id": "d5fdcf613e4a47189047a2bcd20df302",
+    "qualification": "The current 06:39 run application logs correlate its HTTP request and both asynchronous outbox deliveries under the same trace ID and expose span IDs. Collector-exported parent/child span verification is preserved from a separate earlier run (trace 45166d4eef3241f3b8f4227f3b270db3) in reports/telemetry/REQ-017-trace-verification.json; do not imply this is the current run."
   },
   "peer_review": {
     "status": "PASS",
@@ -82,38 +97,60 @@
     "member_name_boundary": "PASS; reports/sub-agents/T14/02/review-02.md"
   },
   "performance": {
-    "status": "NOT_RUN_FINAL_SOURCE_CHANGED",
-    "command": "In detached clean checkout c6dccfef1ba24292f078b826e430c19d8ec74e92: scripts/performance/run-profile.sh {baseline,normal,peak,stress,spike,soak,concurrent-claims}; restore only generated reports/performance/baseline.jtl between profiles; python3 scripts/performance/compare-runs.py reports/verification/REQ-017-jmeter-rerun",
+    "status": "FAIL",
+    "command": "bash scripts/performance/run-profile.sh {baseline,normal,peak,stress,spike,soak,concurrent-claims}; between profiles restore only reports/performance/baseline.jtl; python3 scripts/performance/compare-runs.py reports/verification/REQ-017-jmeter-final",
+    "source_commit": "0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2",
+    "source_worktree": "CLEAN at every official profile; every run manifest records source hash equal to commit",
     "jmeter": "Apache JMeter 5.6.3",
     "java": "OpenJDK 21.0.12.1",
-    "source_commit": "c6dccfef1ba24292f078b826e430c19d8ec74e92",
-    "source_worktree": "CLEAN for all seven runs; exact_working_tree_source_hash matches commit",
     "profiles": 7,
-    "total_samples": 1564951,
-    "max_p95_ms": 341,
-    "max_p99_ms": 470,
-    "max_error_rate": 0,
-    "approved_targets": "P95<=500ms, P99<=1000ms, HTTP errors<=1%",
-    "comparison": "reports/verification/REQ-017-jmeter-rerun/comparison.json",
-    "evidence_dir": "reports/verification/REQ-017-jmeter-rerun",
-    "profile_hashes_before": "reports/verification/REQ-017-jmeter-profile-hashes-before.txt",
-    "profile_hashes_after": "reports/verification/REQ-017-jmeter-profile-hashes-after.txt",
-    "profile_hashes_unchanged": true,
-    "independent_review": "PASS",
-    "review_evidence": "reports/sub-agents/T13/01/review-01.md",
-    "reason": "The seven clean-source JMeter profiles passed on c6dccfe, then a P2 configuration-length fix changed source. All seven profiles must rerun against the next committed source revision.",
-    "previous_source_commit": "c6dccfef1ba24292f078b826e430c19d8ec74e92"
+    "passed_profiles": 6,
+    "failed_profiles": 1,
+    "total_samples": 1089197,
+    "failed_profile": "stress",
+    "stress_samples": 88762,
+    "stress_rps": 1460.5259,
+    "stress_p95_ms": 564,
+    "stress_p99_ms": 767,
+    "stress_error_rate": 0,
+    "repeat_default_stress": {
+      "samples": 48575,
+      "rps": 798.6945,
+      "p95_ms": 917,
+      "p99_ms": 1077,
+      "error_rate": 0,
+      "status": "FAIL_DIAGNOSTIC_REPEAT"
+    },
+    "approved_targets": {
+      "p95_ms_max": 500,
+      "p99_ms_max": 1000,
+      "http_error_rate_max": 0.01
+    },
+    "comparison": "reports/verification/REQ-017-jmeter-final/comparison.json",
+    "summary": "reports/verification/REQ-017-jmeter-final/final-profile-summary.json",
+    "evidence_dir": "reports/verification/REQ-017-jmeter-final",
+    "plan_hashes_before": "reports/verification/REQ-017-jmeter-final/profile-plan-sha256-before.txt",
+    "plan_hashes_after": "reports/verification/REQ-017-jmeter-final/profile-plan-sha256-after.txt",
+    "profile_jmx_and_properties_hashes_unchanged": true,
+    "diagnostic_experiments": "reports/verification/REQ-017-jmeter-ab",
+    "diagnostic_review": "reports/sub-agents/T13/02/review-02.md",
+    "diagnostic_disposition": "Pool40 and Tomcat500 sequential experiments performed worse; independent review advises no code/config change from this evidence. Runs were not randomized or restored from a DB snapshot, so no causal claim is made.",
+    "root_cause": "Unresolved; shared local 8-CPU host runs JMeter, application, PostgreSQL, and other desktop/container workloads. Official stress P95 miss is real; dedicated controlled load environment and same-database run controls are required for conclusive remediation.",
+    "acceptance": "FAIL; no threshold change or waiver"
   },
   "audit": {
     "status": "PARTIAL",
-    "local_accessible_sessions": 62,
-    "local_accessible_records_exported": 7287,
-    "transcript_integrity": "PASS: all 62 hashes match; paths are unique and contained",
+    "local_accessible_sessions": 65,
+    "local_accessible_records_exported": 8483,
+    "transcript_integrity": "PASS: all 65 transcript hashes match; paths are unique and contained",
     "exporter": "scripts/audit/export-codex-sessions.py",
     "inventory": "reports/audit/REQ-017-session-inventory.json",
     "host_managed_raw_payloads": "NOT_CAPTURED",
     "mandatory_full_capture_gate": "BLOCKED_PENDING_USER_DECISION",
-    "note": "Local accessible session/archive inventory and transcript export are complete with integrity checks; raw host-managed model payloads remain inaccessible. No merge or push will occur while this binding gate remains unsatisfied."
+    "note": "All newly accessible local records were re-exported and integrity checked. Host-managed raw payloads remain inaccessible and the mandatory full-capture gate is not waived.",
+    "llm_ledger": "docs/submission/llm-interactions.jsonl",
+    "summary": "reports/verification/REQ-017-llm-audit.json"
   },
-  "acceptance": "NOT_ACCEPTED"
+  "acceptance": "NOT_ACCEPTED",
+  "source_commit": "0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2"
 }

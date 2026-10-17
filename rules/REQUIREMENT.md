@@ -428,3 +428,20 @@ A broader non-root search found Java 21.0.12.1 at `/home/tringuyen/.local/java/j
 - Decision: user confirmed approval of the REQ-018 design; the validated local member identity list keeps the `member-demo` default and uses the configured human password with MEMBER role.
 - Disposition: continue the already authorized REQ-018 implementation and live tests; this confirmation does not change the scope or production identity-provider behavior.
 - Status: implemented; verification in progress under T14.
+
+## REQ-20261017-017 — Verification disposition (2026-10-17)
+
+- Source: the attached verbatim PROMPT-20261017-017 record; this entry records execution outcome and does not replace or waive the submitted requirements.
+- Final-source performance: all seven approved JMeter profiles actually executed against clean source commit `0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2`, with unchanged JMX and profile properties hashes. Six passed. Stress failed the approved P95 limit (564 ms vs 500 ms; P99 767 ms; errors 0%). A later default run failed P95 917 ms/P99 1,077 ms. Diagnostic connection-pool and Tomcat variants were worse; independent review recommends no tuning based on sequential, changing database state. The gate is FAIL; targets were not weakened.
+- Functional and quality evidence: 127 unit + 9 PostgreSQL/Testcontainers tests, six migrations, 97.0195% line and 90.2326% branch coverage, 29 combined live cases, 17 real Chrome cases, 7 live cross-member checks, Postman/Newman and trace propagation passed; evidence is linked in `reports/acceptance/FINAL-ACCEPTANCE.md`.
+- Local model session audit: refreshed export covers 64 project-related sessions and 8,172 accessible records; transcript hashes and contained unique paths pass. Host-managed raw request/response payloads, IDs, system/developer envelopes and encrypted reasoning remain `NOT_CAPTURED`; the full-capture requirement remains BLOCKED and is not waived.
+- Status: IN_PROGRESS_NOT_ACCEPTED. No merge or push. Final-source JMeter run evidence is in `reports/verification/REQ-017-jmeter-final/`; the reviewed diagnostic experiments are in `reports/verification/REQ-017-jmeter-ab/`; full gate matrix is `reports/verification/REQ-017-requirement-matrix.json`.
+- Required next intervention: a dedicated performance environment for controlled same-database stress profiling, plus a supported historical export for host-managed model payloads or an explicit user acceptance-policy decision. Until these mandatory conditions are resolved, `develop` must not merge to `main`.
+
+
+### 2026-10-17 REQ-017 audit inventory refresh
+
+After the T15 rereview request, the local session exporter was rerun. It found 65 project-related sessions among 145 candidates and exported 8,310 accessible message/tool records; all 65 transcript hashes match and paths are unique/contained. Host-managed raw model envelopes, IDs, system/developer payloads and encrypted reasoning remain NOT_CAPTURED; audit remains PARTIAL/BLOCKED.
+### 2026-10-17 REQ-017 reporting and audit closeout
+
+T15's reporting task was independently accepted on rereview 04 after correcting the same-run live evidence references, clarifying current application-log trace correlation versus earlier collector-exported span proof, refreshing the requirement-matrix timestamp, and reconciling counts. Latest local export contains 65 project-related sessions and 8,483 accessible message/tool records; 65 transcript hashes and unique contained paths verify. The interaction ledger has 101 entries and 60 interaction IDs. Host-managed raw model payloads remain NOT_CAPTURED and mandatory full-capture status remains BLOCKED. Project acceptance remains NOT_ACCEPTED because the approved stress P95 limit fails (564 ms >500 ms) and the host payload gate is blocked. No merge or push.

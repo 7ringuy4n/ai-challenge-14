@@ -1,6 +1,6 @@
 {
   "requirement": "REQ-20261017-017",
-  "updated_at_utc": "2026-10-17T05:14:25Z",
+  "updated_at_utc": "2026-10-17T06:44:45Z",
   "overall_status": "IN_PROGRESS_NOT_ACCEPTED",
   "functional_requirements": [
     {
@@ -249,18 +249,18 @@
     },
     {
       "id": "REQ-20261017-016",
-      "status": "PASS",
-      "coverage": "User-approved thresholds P95<=500ms, P99<=1000ms, HTTP errors<=1%; all seven clean-source JMeter profiles passed. See reports/verification/REQ-017-jmeter-rerun/comparison.json."
+      "status": "FAIL",
+      "coverage": "User-approved thresholds P95<=500ms, P99<=1000ms, HTTP errors<=1%. All seven exact JMeter plans ran on final source commit 0435e1b; six passed and stress failed at P95 564ms. A default repeat also failed (P95 917ms, P99 1077ms); diagnostic runs are not causal because sequential DB state changed. See reports/verification/REQ-017-jmeter-final and REQ-017-jmeter-ab."
     },
     {
       "id": "REQ-20261017-017",
       "status": "IN_PROGRESS_NOT_ACCEPTED",
-      "coverage": "29 live API checks, 17 real-browser checks, 7 two-member ownership checks, 127+9 regression tests, trace propagation, Postman and local session audit have evidence. Seven JMeter profiles passed on c6dccfe, but a reviewed P2 username length fix changed source; final-source performance rerun pending. Historical host-managed raw payloads remain NOT_CAPTURED/PARTIAL and merge-blocking."
+      "coverage": "Functional, browser, cross-member, Postman, regression, diagram and trace evidence pass as documented. Final-source JMeter stress profile fails approved P95; host-managed raw LLM envelopes remain NOT_CAPTURED. No merge."
     },
     {
       "id": "REQ-20261017-018",
       "status": "PASS",
-      "coverage": "Validated configurable CLAIMS_MEMBER_USERNAMES defaults to member-demo; unit config tests and two-principal live PostgreSQL checks pass; SecurityConfiguration independent review and rereview pass."
+      "coverage": "Validated configurable CLAIMS_MEMBER_USERNAMES defaults to member-demo; unit config tests and two-principal live PostgreSQL checks pass; SecurityConfiguration independent review and rereview pass. Current final source is commit 0435e1b; source and current functional evidence remain verified."
     },
     {
       "id": "REQ-20261017-019",
@@ -269,27 +269,29 @@
     }
   ],
   "evidence": {
-    "live_cases": "reports/verification/acceptance-matrix/console.log",
-    "http_exchanges": "reports/verification/acceptance-matrix/http-exchanges.jsonl",
+    "live_cases": "reports/verification/REQ-017-final-live/console.log",
+    "http_exchanges": "reports/verification/REQ-017-final-live/http-exchanges.jsonl",
     "quality": "reports/verification/REQ-019-quality-final.log",
     "browser": "reports/verification/REQ-017-browser/run-2026-10-17T050718217Z/browser-e2e.json",
     "cross_member": "reports/verification/REQ-017-cross-member/run-20261017T050909578984Z/cross-member.json",
     "trace": "reports/telemetry/REQ-017-trace-verification.json",
     "peer_review": "reports/verification/REQ-017-review.json",
-    "jmeter": "reports/verification/REQ-017-jmeter-rerun/comparison.json",
-    "llm_audit": "reports/audit/REQ-017-session-inventory.json",
-    "performance_peer_review": "reports/sub-agents/T13/01/review-01.md"
+    "jmeter": "reports/verification/REQ-017-jmeter-final/comparison.json",
+    "llm_audit": "reports/verification/REQ-017-llm-audit.json",
+    "performance_peer_review": "reports/sub-agents/T13/01/review-01.md",
+    "jmeter_diagnostics": "reports/verification/REQ-017-jmeter-ab",
+    "jmeter_peer_review": "reports/sub-agents/T13/02/review-02.md"
   },
   "remaining_gates": [
     {
-      "gate": "Seven JMeter profiles against the newly corrected, committed final source",
-      "status": "NOT_RUN",
-      "reason": "Source changed after c6dccfe; prior performance run remains evidence for that prior source only."
+      "gate": "Seven JMeter final-source profiles meet approved thresholds",
+      "status": "FAIL",
+      "reason": "All seven ran on clean source commit 0435e1b with unchanged JMX/property hashes; stress P95 564ms exceeds 500ms. A diagnostic default repeat also failed P95 917ms/P99 1077ms. Tuning experiments worsened results and cannot establish causality without same-DB randomized runs. Dedicated controlled benchmark environment required."
     },
     {
       "gate": "Complete raw host-managed model request/response capture",
       "status": "BLOCKED",
-      "reason": "Host-managed model payload envelopes and encrypted reasoning are unavailable in local session records. Mandatory per user requirement; no merge until resolved."
+      "reason": "Historical host-managed request/response envelopes, request IDs, system/developer envelopes, and encrypted reasoning are not exposed in accessible session records. Marked NOT_CAPTURED; no waiver."
     }
   ]
 }

@@ -1,0 +1,492 @@
+{
+  "comparison": "P95<=500ms, P99<=1000ms, HTTP errors<=1%",
+  "runs": [
+    {
+      "profile": "baseline",
+      "status": "PASS",
+      "configured_concurrency": 1,
+      "ramp_seconds": 1,
+      "duration_seconds": 30,
+      "samples": 8084,
+      "requests_per_second": 270.30461096064465,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 3,
+        "p95": 7,
+        "p99": 11
+      },
+      "by_sampler": {
+        "Get session and CSRF token": {
+          "samples": 4042,
+          "errors": 0
+        },
+        "Create claim": {
+          "samples": 1,
+          "errors": 0
+        },
+        "Authenticated list claims": {
+          "samples": 4041,
+          "errors": 0
+        }
+      },
+      "containers": {
+        "docker-app-1": {
+          "max_cpu_percent": 232.12,
+          "max_memory_mib": 384.2
+        },
+        "docker-otel-collector-1": {
+          "max_cpu_percent": 12.6,
+          "max_memory_mib": 99.42
+        },
+        "docker-database-1": {
+          "max_cpu_percent": 35.33,
+          "max_memory_mib": 85.0
+        },
+        "claims-challenge14-app-1": {
+          "max_cpu_percent": 3.77,
+          "max_memory_mib": 373.6
+        },
+        "claims-challenge14-db-1": {
+          "max_cpu_percent": 3.58,
+          "max_memory_mib": 54.39
+        }
+      },
+      "max_db_connections": 21,
+      "max_db_transactions_committed": 13127094,
+      "max_db_transactions_rolled_back": 121,
+      "max_outbox_pending": 0,
+      "outbox_delivered_delta": 0,
+      "outbox_failed_count": 0,
+      "outbox_deliveries_per_second": 0.0,
+      "max_outbox_oldest_pending_seconds": 0,
+      "targets": {
+        "p95_ms": 500,
+        "p99_ms": 1000,
+        "error_rate_max": 0.01
+      },
+      "evidence_dir": "reports/verification/REQ-017-jmeter-final/baseline-20261017T061016Z"
+    },
+    {
+      "profile": "concurrent-claims",
+      "status": "PASS",
+      "configured_concurrency": 50,
+      "ramp_seconds": 10,
+      "duration_seconds": 60,
+      "samples": 105060,
+      "requests_per_second": 1750.0083286137856,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 17,
+        "p95": 70,
+        "p99": 130
+      },
+      "by_sampler": {
+        "Get session and CSRF token": {
+          "samples": 52310,
+          "errors": 0
+        },
+        "Create claim": {
+          "samples": 50,
+          "errors": 0
+        },
+        "Record required invoice": {
+          "samples": 50,
+          "errors": 0
+        },
+        "Clerk verifies documents": {
+          "samples": 50,
+          "errors": 0
+        },
+        "Lead assigns assessor": {
+          "samples": 50,
+          "errors": 0
+        },
+        "Lead starts assessment": {
+          "samples": 50,
+          "errors": 0
+        },
+        "Assessor records report": {
+          "samples": 50,
+          "errors": 0
+        },
+        "Assessor approves": {
+          "samples": 50,
+          "errors": 0
+        },
+        "Finance initiates payment": {
+          "samples": 50,
+          "errors": 0
+        },
+        "Concurrent complete claims workflow": {
+          "samples": 50,
+          "errors": 0
+        },
+        "Authenticated list claims": {
+          "samples": 52300,
+          "errors": 0
+        }
+      },
+      "containers": {
+        "docker-app-1": {
+          "max_cpu_percent": 496.61,
+          "max_memory_mib": 1414.144
+        },
+        "docker-otel-collector-1": {
+          "max_cpu_percent": 34.22,
+          "max_memory_mib": 190.6
+        },
+        "docker-database-1": {
+          "max_cpu_percent": 211.24,
+          "max_memory_mib": 110.1
+        },
+        "claims-challenge14-app-1": {
+          "max_cpu_percent": 2.58,
+          "max_memory_mib": 381.6
+        },
+        "claims-challenge14-db-1": {
+          "max_cpu_percent": 4.31,
+          "max_memory_mib": 45.48
+        }
+      },
+      "max_db_connections": 21,
+      "max_db_transactions_committed": 15287925,
+      "max_db_transactions_rolled_back": 121,
+      "max_outbox_pending": 30,
+      "outbox_delivered_delta": 250,
+      "outbox_failed_count": 0,
+      "outbox_deliveries_per_second": 4.166666666666667,
+      "max_outbox_oldest_pending_seconds": 1.225287,
+      "targets": {
+        "p95_ms": 500,
+        "p99_ms": 1000,
+        "error_rate_max": 0.01
+      },
+      "evidence_dir": "reports/verification/REQ-017-jmeter-final/concurrent-claims-20261017T062033Z"
+    },
+    {
+      "profile": "normal",
+      "status": "PASS",
+      "configured_concurrency": 10,
+      "ramp_seconds": 10,
+      "duration_seconds": 60,
+      "samples": 90820,
+      "requests_per_second": 1515.0807420258907,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 5,
+        "p95": 13,
+        "p99": 20
+      },
+      "by_sampler": {
+        "Get session and CSRF token": {
+          "samples": 45407,
+          "errors": 0
+        },
+        "Create claim": {
+          "samples": 10,
+          "errors": 0
+        },
+        "Authenticated list claims": {
+          "samples": 45403,
+          "errors": 0
+        }
+      },
+      "containers": {
+        "docker-app-1": {
+          "max_cpu_percent": 265.04,
+          "max_memory_mib": 669.9
+        },
+        "docker-otel-collector-1": {
+          "max_cpu_percent": 43.91,
+          "max_memory_mib": 192.2
+        },
+        "docker-database-1": {
+          "max_cpu_percent": 179.3,
+          "max_memory_mib": 90.77
+        },
+        "claims-challenge14-app-1": {
+          "max_cpu_percent": 0.1,
+          "max_memory_mib": 373.7
+        },
+        "claims-challenge14-db-1": {
+          "max_cpu_percent": 4.24,
+          "max_memory_mib": 54.58
+        }
+      },
+      "max_db_connections": 21,
+      "max_db_transactions_committed": 13308353,
+      "max_db_transactions_rolled_back": 121,
+      "max_outbox_pending": 0,
+      "outbox_delivered_delta": 0,
+      "outbox_failed_count": 0,
+      "outbox_deliveries_per_second": 0.0,
+      "max_outbox_oldest_pending_seconds": 0,
+      "targets": {
+        "p95_ms": 500,
+        "p99_ms": 1000,
+        "error_rate_max": 0.01
+      },
+      "evidence_dir": "reports/verification/REQ-017-jmeter-final/normal-20261017T061051Z"
+    },
+    {
+      "profile": "peak",
+      "status": "PASS",
+      "configured_concurrency": 100,
+      "ramp_seconds": 30,
+      "duration_seconds": 60,
+      "samples": 107481,
+      "requests_per_second": 1789.649832658974,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 17,
+        "p95": 149,
+        "p99": 206
+      },
+      "by_sampler": {
+        "Get session and CSRF token": {
+          "samples": 53697,
+          "errors": 0
+        },
+        "Create claim": {
+          "samples": 100,
+          "errors": 0
+        },
+        "Authenticated list claims": {
+          "samples": 53684,
+          "errors": 0
+        }
+      },
+      "containers": {
+        "docker-app-1": {
+          "max_cpu_percent": 238.94,
+          "max_memory_mib": 1034.24
+        },
+        "docker-otel-collector-1": {
+          "max_cpu_percent": 32.06,
+          "max_memory_mib": 197.2
+        },
+        "docker-database-1": {
+          "max_cpu_percent": 265.8,
+          "max_memory_mib": 104.1
+        },
+        "claims-challenge14-app-1": {
+          "max_cpu_percent": 4.49,
+          "max_memory_mib": 373.5
+        },
+        "claims-challenge14-db-1": {
+          "max_cpu_percent": 4.46,
+          "max_memory_mib": 54.77
+        }
+      },
+      "max_db_connections": 21,
+      "max_db_transactions_committed": 13522146,
+      "max_db_transactions_rolled_back": 121,
+      "max_outbox_pending": 0,
+      "outbox_delivered_delta": 0,
+      "outbox_failed_count": 0,
+      "outbox_deliveries_per_second": 0.0,
+      "max_outbox_oldest_pending_seconds": 0,
+      "targets": {
+        "p95_ms": 500,
+        "p99_ms": 1000,
+        "error_rate_max": 0.01
+      },
+      "evidence_dir": "reports/verification/REQ-017-jmeter-final/peak-20261017T061200Z"
+    },
+    {
+      "profile": "soak",
+      "status": "PASS",
+      "configured_concurrency": 25,
+      "ramp_seconds": 15,
+      "duration_seconds": 300,
+      "samples": 635807,
+      "requests_per_second": 2119.6675512408488,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 9,
+        "p95": 29,
+        "p99": 44
+      },
+      "by_sampler": {
+        "Get session and CSRF token": {
+          "samples": 317896,
+          "errors": 0
+        },
+        "Create claim": {
+          "samples": 25,
+          "errors": 0
+        },
+        "Authenticated list claims": {
+          "samples": 317886,
+          "errors": 0
+        }
+      },
+      "containers": {
+        "docker-app-1": {
+          "max_cpu_percent": 240.05,
+          "max_memory_mib": 1412.096
+        },
+        "docker-otel-collector-1": {
+          "max_cpu_percent": 46.6,
+          "max_memory_mib": 206.4
+        },
+        "docker-database-1": {
+          "max_cpu_percent": 208.76,
+          "max_memory_mib": 107.0
+        },
+        "claims-challenge14-app-1": {
+          "max_cpu_percent": 5.0,
+          "max_memory_mib": 381.0
+        },
+        "claims-challenge14-db-1": {
+          "max_cpu_percent": 4.51,
+          "max_memory_mib": 54.74
+        }
+      },
+      "max_db_connections": 21,
+      "max_db_transactions_committed": 15080138,
+      "max_db_transactions_rolled_back": 121,
+      "max_outbox_pending": 0,
+      "outbox_delivered_delta": 0,
+      "outbox_failed_count": 0,
+      "outbox_deliveries_per_second": 0.0,
+      "max_outbox_oldest_pending_seconds": 0,
+      "targets": {
+        "p95_ms": 500,
+        "p99_ms": 1000,
+        "error_rate_max": 0.01
+      },
+      "evidence_dir": "reports/verification/REQ-017-jmeter-final/soak-20261017T061457Z"
+    },
+    {
+      "profile": "spike",
+      "status": "PASS",
+      "configured_concurrency": 150,
+      "ramp_seconds": 5,
+      "duration_seconds": 30,
+      "samples": 53183,
+      "requests_per_second": 1765.7038512616202,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 31,
+        "p95": 227,
+        "p99": 345
+      },
+      "by_sampler": {
+        "Get session and CSRF token": {
+          "samples": 26520,
+          "errors": 0
+        },
+        "Create claim": {
+          "samples": 150,
+          "errors": 0
+        },
+        "Authenticated list claims": {
+          "samples": 26513,
+          "errors": 0
+        }
+      },
+      "containers": {
+        "docker-app-1": {
+          "max_cpu_percent": 246.94,
+          "max_memory_mib": 1409.024
+        },
+        "docker-otel-collector-1": {
+          "max_cpu_percent": 31.87,
+          "max_memory_mib": 190.7
+        },
+        "docker-database-1": {
+          "max_cpu_percent": 260.97,
+          "max_memory_mib": 103.9
+        },
+        "claims-challenge14-app-1": {
+          "max_cpu_percent": 0.74,
+          "max_memory_mib": 374.2
+        },
+        "claims-challenge14-db-1": {
+          "max_cpu_percent": 0.02,
+          "max_memory_mib": 54.15
+        }
+      },
+      "max_db_connections": 22,
+      "max_db_transactions_committed": 13794835,
+      "max_db_transactions_rolled_back": 121,
+      "max_outbox_pending": 0,
+      "outbox_delivered_delta": 0,
+      "outbox_failed_count": 0,
+      "outbox_deliveries_per_second": 0.0,
+      "max_outbox_oldest_pending_seconds": 0,
+      "targets": {
+        "p95_ms": 500,
+        "p99_ms": 1000,
+        "error_rate_max": 0.01
+      },
+      "evidence_dir": "reports/verification/REQ-017-jmeter-final/spike-20261017T061420Z"
+    },
+    {
+      "profile": "stress",
+      "status": "FAIL",
+      "configured_concurrency": 500,
+      "ramp_seconds": 60,
+      "duration_seconds": 60,
+      "samples": 88762,
+      "requests_per_second": 1460.5258827788198,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 111,
+        "p95": 564,
+        "p99": 767
+      },
+      "by_sampler": {
+        "Get session and CSRF token": {
+          "samples": 44190,
+          "errors": 0
+        },
+        "Create claim": {
+          "samples": 500,
+          "errors": 0
+        },
+        "Authenticated list claims": {
+          "samples": 44072,
+          "errors": 0
+        }
+      },
+      "containers": {
+        "docker-app-1": {
+          "max_cpu_percent": 279.8,
+          "max_memory_mib": 1217.536
+        },
+        "docker-otel-collector-1": {
+          "max_cpu_percent": 2.59,
+          "max_memory_mib": 196.9
+        },
+        "docker-database-1": {
+          "max_cpu_percent": 243.61,
+          "max_memory_mib": 103.5
+        },
+        "claims-challenge14-app-1": {
+          "max_cpu_percent": 4.49,
+          "max_memory_mib": 374.0
+        },
+        "claims-challenge14-db-1": {
+          "max_cpu_percent": 4.4,
+          "max_memory_mib": 54.86
+        }
+      },
+      "max_db_connections": 21,
+      "max_db_transactions_committed": 13699589,
+      "max_db_transactions_rolled_back": 121,
+      "max_outbox_pending": 0,
+      "outbox_delivered_delta": 0,
+      "outbox_failed_count": 0,
+      "outbox_deliveries_per_second": 0.0,
+      "max_outbox_oldest_pending_seconds": 0,
+      "targets": {
+        "p95_ms": 500,
+        "p99_ms": 1000,
+        "error_rate_max": 0.01
+      },
+      "evidence_dir": "reports/verification/REQ-017-jmeter-final/stress-20261017T061310Z"
+    }
+  ]
+}

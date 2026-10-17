@@ -56,3 +56,17 @@ Still in progress: final-source full seven-profile JMeter rerun and local Codex 
 - Fixed independent-review P2: configured member usernames now have a 127-character maximum, ensuring the prefix-stripped identity fits the PostgreSQL `VARCHAR(120)` member ID.
 - Added a 127/128-character boundary regression; focused test and the full 127-unit + 9-integration Maven quality suite passed (97.0195% line, 90.2326% branch).
 - This source change supersedes the prior benchmark revision; all seven JMeter profiles must rerun against the new commit before performance can be marked final-source PASS.
+
+## 2026-10-17 — Final-source performance and audit reconciliation (REQ-017)
+
+- Committed the independently reviewed member identity boundary correction and functional evidence on develop at 0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2.
+- Executed all seven exact JMeter profiles on that source commit. Six met thresholds; stress P95 was 564 ms against the approved 500 ms limit (P99 767 ms, errors 0%). Plan hashes match before/after.
+- Repeated default stress and tested temporary pool/thread variants. Results varied on the shared local host; candidates were worse and reviewers advise against tuning. No source tuning or threshold change was adopted. Stress gate is FAIL pending controlled dedicated performance environment.
+- Re-exported 64 accessible Codex sessions and 8,172 message/tool records; transcript SHA/path integrity passes. Host-managed raw payloads remain NOT_CAPTURED and block acceptance.
+- Overall status remains NOT_ACCEPTED; no merge or push.
+## 2026-10-17 — REQ-017 verification reporting
+
+- Corrected current combined live-run console/exchange/trace evidence links; retained same-run application logs showing HTTP/outbox trace-ID correlation and clearly separated earlier collector-span evidence.
+- Corrected JMeter aggregate (1,089,197) and Newman request count (34); documented T15 report acceptance after independent rereview 04.
+- Refreshed accessible session audit to 65 sessions and 8,483 records with all transcript hashes verified; ledger now has 101 rows and 60 IDs. Host-managed raw payloads remain NOT_CAPTURED.
+- Project remains NOT_ACCEPTED: stress P95 misses the approved limit, and full host-managed LLM capture remains blocked. No merge or push.
