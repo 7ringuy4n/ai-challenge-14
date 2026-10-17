@@ -30,3 +30,5 @@ Direct Docker socket and localhost access are denied in the default sandbox; app
 The application and tasks remain in progress, not accepted or complete. A single live 29-case matrix, JMeter 100/500-client runs, and trace/span propagation remain `NOT_RUN`. Host-managed raw model payloads remain `NOT_CAPTURED`; trace audit remains `PARTIAL`. See `reports/verification/T08-final.json` and `reports/sub-agents/T07/final-integrated-review.md`.
 
 The complete reviewed application and verification package was committed to `develop` as `207c70d7e559af9be86fb5cf9e9b538a42b8bf22`, directly on planning baseline `521cb1427f910ebbd01129cc1a950c55b899ee87`; no push or merge was performed. `reports/verification/git-history.md` records the failed missing-identity attempt and the one-commit local author override.
+
+The verification/Git ledger follow-up was committed as `cd4032b2e25940df261b0dfca301429a54fe87ec` after implementation commit `207c70d7e559af9be86fb5cf9e9b538a42b8bf22`. The task remains in progress with the unified 29-case live suite, JMeter profiles and trace/span propagation still open.
