@@ -13,4 +13,4 @@ All 64 session file paths, record counts/types, and session IDs are preserved. Z
 - **PASS** `python3 scripts/workflow/verify_workflow.py` (exit 0; 2026-10-17T08:11:50.314736+00:00–2026-10-17T08:11:50.342041+00:00); log `reports/verification/REQ-025/workflow_validation.log`.
 - **PASS** `git diff --check` (exit 0; 2026-10-17T08:11:50.342212+00:00–2026-10-17T08:11:50.348893+00:00); log `reports/verification/REQ-025/diff_check.log`.
 
-No raw ZIP was staged. The local branch refs at the start of REQ-025 were `2cafe2507708c6b773865a04b342ea623248bf02`; commit/merge evidence will be recorded after local integration. No push.
+No raw ZIP was staged. The local branch refs at the start of REQ-025 were `2cafe2507708c6b773865a04b342ea623248bf02`. Sanitized archive and related records were committed on `develop` as `6703222`; local `main` fast-forward and final ref verification are the remaining operational steps. No push.

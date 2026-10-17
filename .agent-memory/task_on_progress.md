@@ -10,11 +10,10 @@ in_progress
 
 ## Current step
 
-Sanitized archive validated; develop checked out
+Develop archive commit documented
 
 ## Completed
 
-- [x] Created codex-logs.sanitized.zip; ZIP integrity and record structure passed (64 files, 28,716 records, same record-type histograms), and original archive SHA stayed unchanged. Scanner surfaced two possible escaped redaction-marker matches requiring resolution.
 - [x] Confirmed both remaining credential-pattern matches consist of escaped newline text followed by the literal [REDACTED_SECRET] marker; updated the scanner to classify explicit markers as redacted rather than active matches.
 - [x] All active sensitive-pattern counts in the sanitized copy are zero; 65 member names, 64 session files, 28,716 JSONL records, record-type histograms, and original archive SHA are verified.
 - [x] Added a verifier that checks source hash preservation, sanitized hash, all ZIP CRCs, identical member paths/order, JSONL record counts/types, session metadata IDs, and zero active sensitive-pattern matches.
@@ -26,10 +25,13 @@ Sanitized archive validated; develop checked out
 - [x] Recorded REQ-025 verification, redaction results, sanitized archive hash, workflow task evidence, LLM interaction metadata and preserved the raw-archive decision. T20 remains in_review pending independent review.
 - [x] Owner approved tracking a sanitized ZIP; generated and verified the deterministic sanitized archive and synchronized REQ-023–025 traceability while preserving the raw ZIP untracked.
 - [x] Revalidated archive import, ZIP CRC, sanitized zero-match scan, structural preservation, workflow manifest, and diff check; raw source hash unchanged. Switched safely from main to develop after confirming both refs at 2cafe250.
+- [x] Selective staged diff contains only sanitized ZIP, archive tooling, and associated audit/requirement/history/verification updates; raw codex-logs.zip remains untracked. Staged whitespace check passed; T20 remains in_review.
+- [x] Committed the reviewed sanitized archive and related records on develop as 6703222; raw ZIP remained untracked.
+- [x] Recorded the develop commit in the verification report and synchronized project history/changelog.
 
 ## Next exact step
 
-Review and selectively stage the sanitized archive and directly related audit/traceability files, excluding the raw ZIP; commit on develop, fast-forward main, then record exact commit evidence.
+Commit the synchronized develop-commit evidence, fast-forward main to it, verify refs and raw archive status, then record final merge evidence.
 
 ## Blockers
 
@@ -51,6 +53,6 @@ unzip -t codex-logs.zip; python3 scripts/audit/import_codex_archive.py --check c
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-17T08:13:58Z
+- Updated (UTC): 2026-10-17T08:14:20Z
 - Branch: `develop`
 - Commit: `2cafe25`

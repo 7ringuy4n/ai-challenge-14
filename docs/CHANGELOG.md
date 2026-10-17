@@ -110,3 +110,5 @@ Final Git closeout: accepted develop commit 730ca6fd6569a451a286b189f9dd69893d26
 - Owner explicitly requested tracking `codex-logs.zip` and locally merging the associated archive evidence. A value-free sensitivity scan found credential-like and email-like patterns; the unchanged raw ZIP remains unstaged pending owner disposition under the project redaction rule. The new commit must remain local unless separately authorized for push.
 
 - REQ-025: owner selected a sanitized archive. The deterministic redacted ZIP preserves 28,716 records and 64 sessions, passes the configured zero-match scan and structural verifier, and leaves the original raw ZIP unchanged/untracked. Local Git integration and independent review remain pending.
+
+- Sanitized archive and related REQ-023–025 audit evidence committed on `develop` as `6703222` after selective staged-diff review. Local `main` fast-forward is pending; no push.

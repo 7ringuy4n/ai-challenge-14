@@ -1397,7 +1397,7 @@
           "source_hash": "3be558ea42bd0b3a2234679b861103b552209e4b3e820daed1e797be5cb05a7b"
         }
       ],
-      "notes": "Owner selected a sanitized ZIP; raw codex-logs.zip remains byte-for-byte unchanged and untracked. Sanitized output preserves all archive paths/session records, passes the configured zero-active-match scan and structural verifier, and regenerates deterministically. Workflow and diff checks pass. Local commit/merge remains pending; independent review is required before task acceptance."
+      "notes": "Owner selected a sanitized ZIP; raw codex-logs.zip remains byte-for-byte unchanged and untracked. Sanitized output preserves all archive paths/session records, passes the configured zero-active-match scan and structural verifier, and regenerates deterministically. Workflow and diff checks pass. Commit 6703222 was created on develop; local main fast-forward and final ref verification are pending. Task remains in_review pending independent review; no acceptance is claimed and no push occurred."
     }
   ]
 }

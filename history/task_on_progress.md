@@ -59,3 +59,5 @@ REQ-024 sensitivity scan: raw `codex-logs.zip` remains unchanged and unstaged wh
 
 
 REQ-025 verification: deterministic sanitized copy `codex-logs.sanitized.zip` SHA-256 `009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738`; 65 members, 64 sessions, 28,716 records, all paths/type histograms/session IDs preserved; zero active sensitive-pattern matches. Original `codex-logs.zip` remains unchanged/untracked. Local commit/merge and independent review remain pending; no push.
+
+REQ-025 archive evidence was committed on `develop` as `6703222` after staged-diff review. The raw ZIP remains untracked. Local `main` fast-forward is pending; T20 remains in_review pending independent review; no push.

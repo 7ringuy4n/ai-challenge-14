@@ -93,3 +93,5 @@ The supplied `codex-logs.zip` was validated and additively reconciled into audit
 The owner authorized tracking the original `codex-logs.zip` and locally merging its associated REQ-023 evidence. This does not authorize pushing the new commit. Preserve uncommitted work and stage only the archive-related changes. Raw archive staging is paused after value-free heuristic screening found credential-assignment-like and email-like matches; see `reports/verification/REQ-024/archive-sensitivity-scan.json`.
 
 REQ-025 selected and verified a sanitized copy; the original archive remains unchanged and untracked. Deterministic generation, ZIP CRC, zero active sensitive-pattern scan, and 28,716-record structural checks pass. Raw host model payload completeness remains PARTIAL/NOT_CAPTURED.
+
+The sanitized archive and related REQ-023–025 evidence were committed on `develop` as `6703222`; the raw archive remains untracked. Local `main` fast-forward remains pending, and no push occurred.
