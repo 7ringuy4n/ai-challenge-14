@@ -6,21 +6,14 @@ Complete REQ-017 acceptance under owner-approved REQ-020; preserve the original 
 
 ## Current status
 
-accepted_with_performance_exception; local merge pending
+in_progress
 
 ## Current step
 
-Commit reviewed acceptance evidence on develop, merge into existing main, and record the verified merge without pushing
+Verify accepted develop commit and perform authorized local merge into existing main
 
 ## Completed
 
-- [x] Captured current 29/29 live scenario console plus HTTP/trace artifacts in REQ-017-final-live; the initial default-sandbox network denial after 0/29 is preserved separately in sandbox-attempt-blocked.log
-- [x] Captured one combined 29/29 live run with current console, HTTP exchanges, and trace context; fixed stale performance sample and Newman request counts and task evidence links
-- [x] T15 independent rereview found that 29/29 run trace context had no correlated exported collector spans; earlier trace evidence was from a different run
-- [x] Independent T15 review 04 accepted the reporting task; no documentation findings remain. Latest inventory export has 65 sessions/8,483 records and all transcript hashes validate.
-- [x] Synchronized final audit to 65 sessions/8,483 records and 101 ledger rows/60 IDs; marked T15 accepted after independent review 04 while retaining project NOT_ACCEPTED blockers; updated changelogs, dated requirement history, and progress mirrors
-- [x] Committed reporting, performance evidence, latest local audit export, and T15 rereview to develop at 70aa7d8. Workflow validator and artifact parsing passed after commit; working tree was clean.
-- [x] Appended the exact new acceptance-policy prompt as PROMPT-20261017-020 in docs/submission/user-prompts.jsonl
 - [x] Read workflow/engineering/requirement/build/history and resumed the saved task; confirmed branch develop HEAD 8f6f5ad and planning main 521cb14 with origin configured
 - [x] Registered REQ-020 as the revised policy requirement and added T17; reassigned T13/T16 to evidence-based hardware and proof-of-work assessment while preserving historical results
 - [x] Added a sanitized aggregate monitor script collecting host CPU/memory/swap/PSI/thermal counters, JMeter process CPU/RSS, target container CPU/memory, actuator Hikari/GC/JVM metrics, and PostgreSQL waits/deadlocks/outbox without request or credential logging
@@ -32,15 +25,15 @@ Commit reviewed acceptance evidence on develop, merge into existing main, and re
 - [x] Independent reviews 01 and 02 found task-state and criterion inconsistencies; preserved both findings and corrected T13/T16 status and T13 exception criterion
 - [x] Independent review 03 passed the reconciled decision; coordinator marked REQ-020 ACCEPTED_WITH_PERFORMANCE_EXCEPTION while retaining P95 FAIL, raw payload PARTIAL/NOT_CAPTURED, and production-scale UNVERIFIED
 - [x] Final local session inventory contains 67 sessions / 8,923 accessible records; all transcript hashes, IDs, and contained unique paths pass; active source log growth is disclosed. Ledger is 105 rows / 64 IDs, 63 with explicit requirement/task links
+- [x] Committed REQ-020 accepted evidence and independent review to develop at 45f447022dfbeee6d3d0d4a6609dd31f1b0a31d5
 
 ## Next exact step
 
-Commit staged reviewed evidence to develop, verify clean tree, then perform a normal local merge into existing main; record actual hashes and do not push
+Update Git merge evidence after a normal local merge, verify main head and clean tree, and do not push
 
 ## Blockers
 
-- Commit to `develop` and local merge into existing `main` are authorized and pending execution; no push.
-- Production-scale performance remains UNVERIFIED; this is explicitly not represented as passing.
+- None.
 
 ## Known constraints
 
@@ -48,21 +41,17 @@ Commit staged reviewed evidence to develop, verify clean tree, then perform a no
 
 ## Relevant files
 
+- `reports/verification/REQ-020/git-evidence.md`
 - `reports/acceptance/FINAL-ACCEPTANCE.md`
-- `reports/verification/REQ-017-current.json`
-- `reports/verification/REQ-017-jmeter-final`
 
 ## Verification commands
 
 ```bash
-python3 scripts/audit/export-codex-sessions.py
-python3 scripts/workflow/verify_workflow.py
-python3 -m json.tool reports/verification/REQ-017-current.json
-python3 -m json.tool reports/verification/REQ-017-requirement-matrix.json
+git status --short --branch; git rev-parse develop; git rev-parse main; git merge-base develop main
 ```
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-17T07:22:00Z
+- Updated (UTC): 2026-10-17T07:14:25Z
 - Branch: `develop`
-- Commit: `8f6f5ad`
+- Commit: `45f4470`
