@@ -8,7 +8,10 @@
     "main_baseline": "521cb1427f910ebbd01129cc1a950c55b899ee87",
     "origin_advertised_branch_refs": [],
     "remote_push_or_merge": "NOT_PERFORMED",
-    "implementation_commit": "PENDING_REVIEWED_COMMIT"
+    "implementation_commit": "207c70d7e559af9be86fb5cf9e9b538a42b8bf22",
+    "implementation_parent": "521cb1427f910ebbd01129cc1a950c55b899ee87",
+    "worktree_after_implementation_commit": "CLEAN",
+    "push_or_merge": "NOT_PERFORMED"
   },
   "scope_hash": {
     "algorithm": "sha256 of sorted per-file sha256 lines",
@@ -140,12 +143,14 @@
     {
       "check": "Full live API execution of all C14-01 through C14-29 cases as one acceptance matrix",
       "status": "NOT_RUN",
-      "reason": "20-case live HTTP lifecycle runner passed; detailed remaining edge cases have focused unit/integration tests but no single combined live API matrix."
+      "reason": "No command is available: scripts/run-scenarios.py executes 20 HTTP checks and no all-29-case live API runner exists; remaining business boundaries are covered by focused unit/integration tests.",
+      "exact_command": null
     },
     {
       "check": "JMeter 100-client and 500-client profiles",
       "status": "NOT_RUN",
-      "reason": "No load execution was performed; no capacity or SLA claim is made."
+      "reason": "command -v jmeter returned no path and find . -type f -name \"*.jmx\" returned no files; neither an executable nor profiles exist for a valid run.",
+      "exact_command": null
     },
     {
       "check": "Distributed trace/span propagation",

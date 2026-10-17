@@ -21,3 +21,4 @@
 - Independent integrated review found no critical/high issues. It identified a test-only CAS race; both workers now use one pre-captured expected version, and focused rereview confirmed the fix. Advisory lock test retains a 250ms timing-sensitive negative wait.
 - Validator restored from authoritative workflow rules; validator unit tests pass 12/12 and the 13-task manifest validates.
 - Updated current verification records. The full live 29-case acceptance matrix, JMeter 100/500-client profiles, and trace/span propagation remain `NOT_RUN`; project and task remain in progress and are not accepted.
+- Committed the reviewed application, tests, docs and evidence on `develop` as `207c70d7e559af9be86fb5cf9e9b538a42b8bf22` (parent `521cb1427f910ebbd01129cc1a950c55b899ee87`); no push or merge.

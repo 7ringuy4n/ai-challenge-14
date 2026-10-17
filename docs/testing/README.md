@@ -33,8 +33,8 @@ The integrated read-only reviewer found no critical or high severity implementat
 |---|---|---|
 | `mvn -B -Pquality clean verify` (without explicit local Java/Maven/cache paths) | NOT_RUN | This host's default PATH/cache differ; final verified invocation is listed above. |
 | `bash scripts/run-scenarios.sh` | NOT_RUN | The authoritative runner is Python `scripts/run-scenarios.py`; no shell wrapper is defined. |
-| Full 29-case `C14-01`–`C14-29` live end-to-end matrix as one suite | NOT_RUN | The 20-case API scenario runner covers the main HTTP lifecycle; remaining detailed business boundaries are covered in focused unit/integration tests, not one live API scenario matrix. |
-| JMeter `claims-100.jmx` and `claims-500.jmx` load profiles | NOT_RUN | No load profile execution was requested or performed in this verification run; no capacity/SLA claim is made. |
+| Full 29-case `C14-01`–`C14-29` live end-to-end matrix as one suite | NOT_RUN | No command is available: `scripts/run-scenarios.py` implements 20 checks, not the full matrix. Detailed remaining boundaries have focused unit/integration tests. |
+| JMeter 100-client and 500-client plans | NOT_RUN | `command -v jmeter` returned no path and `find . -type f -name '*.jmx'` returned no files. No executable/profile exists for a valid JMeter command. No capacity/SLA claim is made. |
 | Trace/span propagation verification | NOT_RUN | The app records correlation IDs and metrics; no tracing bridge is configured, and observed trace/span values are null. |
 
 The final integrated implementation is **not marked accepted or complete**. The precise run evidence, source scope hash, test counts, environment details, and known limits are recorded in [`T08-final.json`](../../reports/verification/T08-final.json). The historical failures in earlier verification attempts are retained in their original reports; they are superseded by the successful final run above, not deleted.

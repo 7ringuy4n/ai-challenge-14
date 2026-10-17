@@ -691,10 +691,11 @@
           "line_coverage_percent": 97.3799,
           "branch_coverage_percent": 90.1478,
           "scenario_cases": 20,
-          "review": "NO_CRITICAL_OR_HIGH; P2_TEST_RACE_FIXED_AND_REREVIEWED"
+          "review": "NO_CRITICAL_OR_HIGH; P2_TEST_RACE_FIXED_AND_REREVIEWED",
+          "commit": "207c70d7e559af9be86fb5cf9e9b538a42b8bf22"
         }
       ],
-      "notes": "Coordinator-owned verification and submission evidence is in reports/verification/T08-final.json. Final clean quality, Compose repeat startup, smoke, 20 API scenarios, validator and reviewer checks pass at scope hash 354c3d032a26c9ab807e0742aea4063ad87594fc6b838e99535855bb2e5e671c. JMeter runs and one combined 29-case live acceptance run are NOT_RUN. Status remains running and the project is not accepted."
+      "notes": "Coordinator-owned verification and submission evidence is in reports/verification/T08-final.json. Final clean quality, Compose repeat startup, smoke, 20 API scenarios, validator and reviewer checks pass at scope hash 354c3d032a26c9ab807e0742aea4063ad87594fc6b838e99535855bb2e5e671c. JMeter runs and one combined 29-case live acceptance run are NOT_RUN. Status remains running and the project is not accepted. Implementation commit: 207c70d7e559af9be86fb5cf9e9b538a42b8bf22 (parent is planning baseline 521cb1427f910ebbd01129cc1a950c55b899ee87)."
     },
     {
       "id": "T09",

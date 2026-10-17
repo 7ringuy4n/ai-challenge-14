@@ -67,3 +67,9 @@ Coverage work added domain, application, security, mapper, error-path and DTO as
 Docker socket and localhost requests are denied by the default sandbox; no permissions were changed. Through approved escalated invocations, Compose setup ran twice, the existing database retained rows across image rebuild/restart, both services became healthy, smoke checks passed, and a credential-safe 20-case HTTP lifecycle completed through payment confirmation and closure. The workflow manifest validator passes 12 unit tests and validates 13 manifest tasks. The independent integrated review found no remaining critical/high issue after the coordinator fixed and rereviewed a CAS test synchronization defect. The 250ms negative wait in the advisory-lock test remains timing-sensitive.
 
 The project is still in progress and not accepted. One combined live execution of all 29 acceptance cases, JMeter 100/500-client profiles, and distributed trace/span propagation remain `NOT_RUN`. The final report is `reports/verification/T08-final.json`; review evidence is `reports/sub-agents/T07/final-integrated-review.md`. Earlier failed attempts remain preserved as historical evidence.
+
+The reviewed application and evidence were committed on `develop` as
+`207c70d7e559af9be86fb5cf9e9b538a42b8bf22`, directly after the planning baseline
+`521cb1427f910ebbd01129cc1a950c55b899ee87`. The working tree was clean after
+that commit; a follow-up documentation-only commit records its Git ledger and
+final requirement/task synchronization. No push or merge was performed.
