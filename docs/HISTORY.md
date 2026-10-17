@@ -77,3 +77,7 @@ The reviewed application and evidence were committed on `develop` as
 `521cb1427f910ebbd01129cc1a950c55b899ee87`. The working tree was clean after
 that commit; a follow-up documentation-only commit records its Git ledger and
 final requirement/task synchronization. No push or merge was performed.
+
+## 2026-10-17 — Conditional final merge and evidence gates
+
+REQ-017 requires seven JMeter profiles to rerun against a clean, exact source commit and unchanged plan hashes; real-browser positive/negative UI evidence; live PostgreSQL-backed cross-member isolation; a row for every active requirement; and an inventory/transcript/checksum audit of all accessible project-related Codex sessions and archives. It explicitly makes full historical host-managed payload evidence a mandatory condition. The latest user authorizes a local `develop` to `main` merge only after every gate passes; no push is authorized. If the required historical capture is irrecoverable, do not merge and ask for an acceptance-policy decision. T08 remains running; T13–T16 carry disjoint evidence locations and coordinator-only ownership.

@@ -400,3 +400,15 @@ A broader non-root search found Java 21.0.12.1 at `/home/tringuyen/.local/java/j
 - Provenance qualification: seven full JMeter runs were against the business/outbox/tracing implementation before a final HTTP trace-context log field adjustment. The post-adjustment five-second baseline verifies only runner metadata/compression, not full load performance. A malformed-metadata diagnostic run is retained and excluded from comparison.
 - Remaining: browser UI scenario, live cross-member scenario with two runtime principals, requirement-level HTTP execution of all individual criteria (the 29 cases are grouped), byte-identical full JMeter rerun, and full raw host-managed LLM payload capture. LLM audit remains PARTIAL with inaccessible records NOT_CAPTURED.
 - Authoritative current evidence: `reports/verification/REQ-015-final.json`; trace matrix: `docs/testing/traceability-matrix.md`; JMeter aggregation: `reports/performance/comparison.json`.
+
+
+## REQ-20261017-017 — Mandatory completion and final merge (2026-10-17)
+
+- Source: PROMPT-20261017-017 in `docs/submission/user-prompts.jsonl`; the full prompt is preserved verbatim from the attached file and its SHA-256 is recorded in that entry.
+- Scope: complete the final JMeter byte-identical reruns, real browser UI verification, live cross-member isolation, requirement-by-requirement verification, and expanded local Codex/LLM audit; update reports; merge `develop` into `main` only if every mandatory gate passes. Never push.
+- Acceptance: all prescribed quality, live, performance, security, browser, traceability, documentation and audit criteria have real evidence; the final acceptance matrix has no unresolved FAIL/BLOCKED/NOT_RUN gates. Full host-managed capture is expressly mandatory; if inaccessible historical payloads cannot be recovered, disclose the irrecoverable gap, do not merge, and request an acceptance-policy decision.
+- Status: in progress; no merge authorized until acceptance conditions are genuinely met.
+- Execution order: inspect repository and evidence; fingerprint exact JMX/config and source; execute seven profiles; execute browser and live ownership workflows; map each requirement to executable or documentary verification; inventory accessible session and archive evidence; then regression tests, independent review, and final report.
+- Ownership: coordinator owns all source/config/shared requirements/manifests/reports. Verification workstreams T13–T16 have disjoint report artifacts and read-only boundaries; production source changes, if required, remain serialized under coordinator ownership.
+- Supersedes: no prior requirement; tightens completion/merge policy beyond REQ-015/016.
+- Disposition: preserve current `main` baseline and `develop` commits. An explicit historical host-managed payload condition remains binding; no downgrade or inferred capture.

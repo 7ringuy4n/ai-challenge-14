@@ -35,3 +35,9 @@ Append each reviewed develop commit hash, parent, message, scoped files, review 
 - `ab1462d0163583b153d005ef6c1c2be8bb33d0cd` (`feat: complete claims acceptance evidence and telemetry`) was created on `develop` as a local commit after the final independent rereview and static/evidence checks. It follows `4cf063b1280f75a4004129095c7cef7024cb44dd`.
 - Initial commit attempt failed because no author identity was configured; no global configuration was changed. The successful command used `git -c user.name='7ringuy4n' -c user.email='132858234+7ringuy4n@users.noreply.github.com'`, matching the existing repository author.
 - No push or merge was performed. Acceptance remains withheld with the open checks in `reports/verification/REQ-015-final.json`.
+
+## 2026-10-17 REQ-017 plan and exact profile hash record
+
+- The attached mandatory completion request is recorded verbatim as PROMPT-20261017-017 (SHA-256 `6fb86ed95779972d569760a3d7fc43152f5742563f0fa8e2e54b99f7c0e61023`). REQ-20261017-017 and coordinator-owned T13–T16 workstreams are active.
+- Exact pre-rerun SHA-256 values for all seven JMX files and seven properties files are captured in `reports/verification/REQ-017-jmeter-profile-hashes-before.txt`. No JMeter rerun had started at the time of this snapshot.
+- Branch remains `develop` at `e9e42e0ee89c2e3205858d3accbf24d5abfb6762` during plan preparation. Main remains `521cb1427f910ebbd01129cc1a950c55b899ee87`. The user conditionally authorized local merging only after all gates pass, including full host-managed historical capture; no push is authorized.

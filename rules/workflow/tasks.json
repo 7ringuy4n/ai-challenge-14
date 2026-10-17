@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "Implement Challenge 14 on develop. Local Java 21/Maven 3.9.11 and Docker are available through the authorized invocation context; default sandbox socket/loopback access is restricted. Current PostgreSQL verification and JaCoCo pass. Host-managed raw LLM payloads remain NOT_CAPTURED/PARTIAL.",
+  "scope": "Implement Challenge 14 on develop. Local Java 21/Maven 3.9.11 and Docker are available through the authorized invocation context; default sandbox socket/loopback access is restricted. Current PostgreSQL verification and JaCoCo pass. Host-managed raw LLM payloads remain NOT_CAPTURED/PARTIAL. REQ-20261017-017 now requires seven final-source byte-identical JMeter reruns, browser E2E, live cross-member authorization, per-requirement verification, and a local session/LLM audit. Merge develop into main only if every gate including full host-managed capture is satisfied; never push.",
   "coordinator_model": "gpt-6.1-sol",
   "worker_model": "gpt-6-luna",
   "reasoning_effort": "medium",
@@ -676,7 +676,12 @@
         "JMETER_DURATION=5 scripts/performance/run-profile.sh baseline",
         "python3 scripts/performance/compare-runs.py reports/performance",
         "python3 scripts/workflow/verify_workflow.py",
-        "agent-memory rebuild"
+        "agent-memory rebuild",
+        "sha256sum performance/jmeter/profiles/*.jmx performance/jmeter/profiles/*.properties before and after; seven full scripts/performance/run-profile.sh executions on clean reviewed source",
+        "Real-browser Playwright/E2E positive and negative claim workflows with screenshots, console and network evidence",
+        "PostgreSQL-backed two-principal cross-member authorization matrix with database before/after evidence",
+        "python3 scripts/workflow/verify_workflow.py; requirement-by-requirement live/document verification",
+        "Local Codex sessions/archives inventory, actual available transcripts/tool records, per-file SHA256 reconciliation and NOT_CAPTURED audit"
       ],
       "case_ids": [
         "C14-01",
@@ -716,7 +721,12 @@
         "Run a single all-29 acceptance suite against the running PostgreSQL-backed API and preserve redacted request/response evidence",
         "Provide runnable JMeter baseline/normal/peak/stress/spike/soak/concurrent-claims profiles and measured resource/database/outbox metrics",
         "Configure OpenTelemetry propagation through HTTP and asynchronous outbox; verify exported trace/span evidence and log correlation",
-        "Verify requirement-to-implementation/test/review traceability, Postman collection execution, and editable/rendered architecture/workflow/database/security/deployment diagrams"
+        "Verify requirement-to-implementation/test/review traceability, Postman collection execution, and editable/rendered architecture/workflow/database/security/deployment diagrams",
+        "Seven JMeter profiles rerun against the exact final source and byte-identical JMX/property artifacts; all user-approved limits pass",
+        "Real browser completes available positive/negative UI workflows and preserves screenshots, console and HTTP evidence",
+        "Two distinct members cannot access or mutate each other claims; live authorization responses and DB state prove isolation",
+        "Every active requirement ID maps to implementation, test, actual execution or justified direct-document evidence and peer review",
+        "All accessible project-relevant Codex session/archive interactions are inventoried, transcripted/redacted and checksummed; host-managed missing payloads stay NOT_CAPTURED; full audit is mandatory and no merge occurs if unresolved"
       ],
       "evidence": [
         {
@@ -735,7 +745,7 @@
           "commit": "PENDING_COORDINATOR_COMMIT"
         }
       ],
-      "notes": "Current coordinator evidence is reports/verification/REQ-015-final.json. Combined PostgreSQL-backed matrix passed 29/29; clean quality passed 123 unit + 9 integration, six changesets and JaCoCo gates; seven JMeter profiles met user-approved limits; Newman passed; exported HTTP/security/outbox traces were correlated; diagrams and two independent rereviews are recorded. The full JMeter suite predates the final log-only adjustment; a short post-adjustment run validates runner metadata only. Browser UI, live two-member ownership and fully per-bullet live requirement execution remain open. Host-managed model payloads remain NOT_CAPTURED/PARTIAL. Keep status running; do not accept, merge, or push."
+      "notes": "Current coordinator evidence is reports/verification/REQ-015-final.json. Combined PostgreSQL-backed matrix passed 29/29; clean quality passed 123 unit + 9 integration, six changesets and JaCoCo gates; seven JMeter profiles met user-approved limits; Newman passed; exported HTTP/security/outbox traces were correlated; diagrams and two independent rereviews are recorded. The full JMeter suite predates the final log-only adjustment; a short post-adjustment run validates runner metadata only. Browser UI, live two-member ownership and fully per-bullet live requirement execution remain open. Host-managed model payloads remain NOT_CAPTURED/PARTIAL. Keep status running. Under REQ-017 a local merge is authorized only after every mandatory gate passes; never push. REQ-017 is active. T08 remains running; completion and main merge are prohibited until all gates, including full session/LLM audit, pass."
     },
     {
       "id": "T09",
@@ -860,6 +870,113 @@
       ],
       "evidence": [],
       "notes": "Test-only PostgreSQL decimal round-trip, JSON serialization and near-limit approval regression coverage; implementation remains with T02/T05 owners."
+    },
+    {
+      "id": "T13",
+      "title": "Final-source seven-profile JMeter rerun",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "running",
+      "depends_on": [
+        "T08"
+      ],
+      "allowed_paths": [
+        "reports/performance/final-rerun/",
+        "reports/verification/REQ-017-jmeter.json"
+      ],
+      "verification": [
+        "scripts/performance/run-profile.sh baseline",
+        "scripts/performance/run-profile.sh normal",
+        "scripts/performance/run-profile.sh peak",
+        "scripts/performance/run-profile.sh stress",
+        "scripts/performance/run-profile.sh spike",
+        "scripts/performance/run-profile.sh soak",
+        "scripts/performance/run-profile.sh concurrent-claims"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "Seven full executable JMeter profiles against source commit exactly matching recorded source hash and byte-identical profiles; all approved limits pass"
+      ],
+      "evidence": [],
+      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
+    },
+    {
+      "id": "T14",
+      "title": "Real browser and live cross-member verification",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "running",
+      "depends_on": [
+        "T08"
+      ],
+      "allowed_paths": [
+        "reports/verification/REQ-017-browser/",
+        "reports/verification/REQ-017-cross-member.json"
+      ],
+      "verification": [
+        "Playwright E2E command",
+        "PostgreSQL-backed live two-principal API/security command"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "Browser UI positive/negative journeys have actual screenshot/console/network evidence",
+        "Two isolated member principals prove cross-owner access and mutation denied with no database change"
+      ],
+      "evidence": [],
+      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
+    },
+    {
+      "id": "T15",
+      "title": "Per-requirement verification and acceptance matrix",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "running",
+      "depends_on": [
+        "T08"
+      ],
+      "allowed_paths": [
+        "reports/verification/REQ-017-requirement-matrix.json",
+        "reports/acceptance/FINAL-ACCEPTANCE.md"
+      ],
+      "verification": [
+        "python3 scripts/workflow/verify_workflow.py",
+        "requirement matrix audit"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "Every active requirement ID has actual implementation/test/review and live or direct-document evidence; accurately status PASS/FAIL/BLOCKED/NOT_RUN"
+      ],
+      "evidence": [],
+      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
+    },
+    {
+      "id": "T16",
+      "title": "Codex session and LLM audit reconciliation",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "running",
+      "depends_on": [
+        "T08"
+      ],
+      "allowed_paths": [
+        "reports/audit/REQ-017-session-inventory.json",
+        "reports/audit/transcripts/",
+        "reports/verification/REQ-017-llm-audit.json"
+      ],
+      "verification": [
+        "Codex session inventory and transcript extraction command",
+        "session/repo checksum reconciliation"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "All locally accessible project-related session and archived-session events are inventoried and hashed; available message/tool events are captured honestly; inaccessible payloads marked NOT_CAPTURED; mandatory full-capture criterion evaluated without waiver"
+      ],
+      "evidence": [],
+      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
     }
   ]
 }

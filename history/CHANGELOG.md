@@ -23,3 +23,9 @@ A clean quality run passed 123 unit plus 9 PostgreSQL 16/Testcontainers tests, a
 - Independent integrated review identified a CAS test race; fixed both contenders to use one captured version, and focused rereview confirms closure. No critical/high findings remain; the 250ms advisory-lock negative wait is documented as timing-sensitive.
 - Final verification and limitation reports updated. The full live 29-case matrix, JMeter 100/500-client runs, and trace/span propagation remain NOT_RUN. Project remains in progress and is not accepted.
 - Reviewed implementation/evidence commit on develop: `207c70d7e559af9be86fb5cf9e9b538a42b8bf22`, parent planning baseline `521cb1427f910ebbd01129cc1a950c55b899ee87`. No remote write or main merge occurred. Follow-up documentation records this commit and the remaining verification limits.
+
+## 2026-10-17 — REQ-017
+
+- Preserved the user's full mandatory completion and conditional merge request verbatim in `docs/submission/user-prompts.jsonl` and registered REQ-20261017-017.
+- Current verification work is split into T13 (byte-identical JMeter), T14 (browser and live cross-member), T15 (requirement traceability/final matrix), and T16 (local session/LLM audit), all under T08 and coordinator-only evidence ownership.
+- Main merge is conditionally authorized only after all gates pass; full historical host-managed payload capture cannot be waived. No push is authorized.

@@ -30,3 +30,9 @@
 - Validator restored from authoritative workflow rules; validator unit tests pass 12/12 and the 13-task manifest validates.
 - Updated current verification records. The full live 29-case acceptance matrix, JMeter 100/500-client profiles, and trace/span propagation remain `NOT_RUN`; project and task remain in progress and are not accepted.
 - Committed the reviewed application, tests, docs and evidence on `develop` as `207c70d7e559af9be86fb5cf9e9b538a42b8bf22` (parent `521cb1427f910ebbd01129cc1a950c55b899ee87`); no push or merge.
+
+## 2026-10-17 — REQ-017 mandatory completion gates
+
+- Added mandatory final-source seven-profile JMeter reruns, real browser E2E, live two-member isolation, per-requirement verification, and a complete locally accessible session audit.
+- Conditional local merge to `main` is authorized only after every gate passes. Full host-managed payload capture is an explicit gate; an irrecoverable gap blocks merge and requires the user to decide acceptance policy. Push remains unauthorized.
+- Recorded new T13–T16 execution workstreams with coordinator-owned exclusive evidence paths.

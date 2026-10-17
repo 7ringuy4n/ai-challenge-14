@@ -69,3 +69,12 @@ API schema, and original plan. A full pre-branch recovery tree was preserved at
 
 
 After baseline initialization, `main` is at `521cb1427f910ebbd01129cc1a950c55b899ee87`; `develop` descends directly from it. The source-free main tree contains only project requirements, governance, task plan, and API/design contracts. Current app work stays on develop. Full Git operation detail is in `reports/verification/git-history.md`.
+
+## 2026-10-17 conditional merge resolution (REQ-017)
+
+The latest user instruction authorizes a local `develop` → `main` merge only after
+all mandatory acceptance criteria pass, including the full historical
+host-managed LLM audit. This supersedes the earlier blanket instruction not to
+merge/push in REQ-015, but does not authorize pushing. If full historical capture
+is irrecoverable, no merge is allowed; retain the evidence gap and request an
+explicit acceptance-policy decision.

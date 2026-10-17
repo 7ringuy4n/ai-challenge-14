@@ -32,3 +32,7 @@ The application and tasks remain in progress, not accepted or complete. A single
 The complete reviewed application and verification package was committed to `develop` as `207c70d7e559af9be86fb5cf9e9b538a42b8bf22`, directly on planning baseline `521cb1427f910ebbd01129cc1a950c55b899ee87`; no push or merge was performed. `reports/verification/git-history.md` records the failed missing-identity attempt and the one-commit local author override.
 
 The verification/Git ledger follow-up was committed as `cd4032b2e25940df261b0dfca301429a54fe87ec` after implementation commit `207c70d7e559af9be86fb5cf9e9b538a42b8bf22`. The task remains in progress with the unified 29-case live suite, JMeter profiles and trace/span propagation still open.
+
+## 2026-10-17 — REQ-017 conditional merge policy
+
+The latest request supersedes REQ-015's no-merge clause by authorizing a local merge only after every acceptance gate passes. It does not authorize a push. Unlike the earlier partial audit posture, full historical host-managed payload capture is now mandatory. If local or supported exports cannot recover those payloads, accurately document irrecoverability and stop before merge pending the user's explicit acceptance-policy decision. Work is tracked under T08 with coordinator-owned T13–T16 evidence paths.
