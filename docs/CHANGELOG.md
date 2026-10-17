@@ -111,4 +111,4 @@ Final Git closeout: accepted develop commit 730ca6fd6569a451a286b189f9dd69893d26
 
 - REQ-025: owner selected a sanitized archive. The deterministic redacted ZIP preserves 28,716 records and 64 sessions, passes the configured zero-match scan and structural verifier, and leaves the original raw ZIP unchanged/untracked. Local Git integration and independent review remain pending.
 
-- Sanitized archive and related REQ-023–025 audit evidence committed on `develop` as `6703222` after selective staged-diff review. Local `main` fast-forward is pending; no push.
+- Sanitized archive and related REQ-023–025 audit evidence committed on `develop` as `6703222`; evidence commit `5371cd79da337a472937a73be5be9eb6c3c7f5e4` was fast-forwarded to local `main`. Both local refs match. Original ZIP remains untracked; no push. T20 remains in review pending independent review.

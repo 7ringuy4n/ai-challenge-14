@@ -94,4 +94,4 @@ The owner authorized tracking the original `codex-logs.zip` and locally merging 
 
 REQ-025 selected and verified a sanitized copy; the original archive remains unchanged and untracked. Deterministic generation, ZIP CRC, zero active sensitive-pattern scan, and 28,716-record structural checks pass. Raw host model payload completeness remains PARTIAL/NOT_CAPTURED.
 
-The sanitized archive and related REQ-023–025 evidence were committed on `develop` as `6703222`; the raw archive remains untracked. Local `main` fast-forward remains pending, and no push occurred.
+The sanitized archive and related REQ-023–025 evidence were committed on `develop` as `6703222`. Evidence commit `5371cd79da337a472937a73be5be9eb6c3c7f5e4` was fast-forwarded to local `main`; both local refs match. The raw archive remains untracked; no push occurred. T20 remains in review pending independent review.
