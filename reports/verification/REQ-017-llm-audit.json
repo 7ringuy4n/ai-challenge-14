@@ -1,20 +1,20 @@
 {
   "requirement": "REQ-20261017-017",
-  "generated_at_utc": "2026-10-17T07:18:30Z",
+  "generated_at_utc": "2026-10-17T07:17:16Z",
   "local_inventory": {
     "status": "PASS_FOR_ACCESSIBLE_PROOF_OF_WORK",
     "candidate_jsonl_files": 145,
     "project_related_sessions": 67,
-    "accessible_message_and_tool_records_exported": 8923,
-    "transcript_integrity": "PASS; all 67 transcript SHA-256 values match, session IDs are unique, transcript paths are unique and contained under reports/audit/transcripts",
+    "accessible_message_and_tool_records_exported": 9020,
+    "transcript_integrity": "PASS; all 67 transcript SHA-256 values match, IDs are unique and match source names, transcript paths are unique and contained under reports/audit/transcripts",
     "inventory": "reports/audit/REQ-017-session-inventory.json",
     "transcript_root": "reports/audit/transcripts/",
-    "source_file_hash_recheck": "PARTIAL_ACTIVE_SESSION_GROWING; 66 of 67 source files matched on post-export recheck; the current coordinator host log continued growing after the inventory snapshot"
+    "source_file_hash_recheck": "PARTIAL_ACTIVE_SESSION_GROWING; 66 of 67 current source hashes matched the immediate post-export recheck; the active coordinator session continued growing."
   },
   "interaction_ledger": {
     "path": "docs/submission/llm-interactions.jsonl",
-    "rows": 105,
-    "distinct_interaction_ids": 64,
+    "rows": 106,
+    "distinct_interaction_ids": 65,
     "interaction_ids_with_no_terminal_status": 0,
     "rows_by_role_or_event": {
       "coordinator": 3,
@@ -25,8 +25,8 @@
       "independent reviewer": 2
     },
     "capture_scope": "Accessible user/assistant messages, visible tool calls/outputs, task packets, review evidence, retries and outcomes are retained. Requirement/task/commit traceability is present where available; older rows lacking these fields remain unlinked and are not fabricated.",
-    "rows_with_requirement_links": 63,
-    "rows_with_task_links": 63
+    "rows_with_requirement_links": 64,
+    "rows_with_task_links": 64
   },
   "application_controlled_model_calls": {
     "status": "NOT_APPLICABLE",
@@ -59,7 +59,7 @@
   "proof_of_work_gate": {
     "status": "PASS",
     "policy": "REQ-20261017-020",
-    "basis": "67 unique project session IDs and stored transcripts, 8923 accessible message/tool records, transcript SHA-256/path validation, and 105 interaction ledger rows across 64 IDs; independent review-03 PASS. Explicit links exist on 63 rows; prior records lacking links remain honestly unlinked."
+    "basis": "67 session IDs and transcripts, 9020 accessible records, transcript path/hash integrity, 106 ledger rows across 65 IDs (64 with explicit requirement/task links); independent review-03 PASS."
   },
   "raw_payload_completeness": {
     "status": "PARTIAL",

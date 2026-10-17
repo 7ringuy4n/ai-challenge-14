@@ -71,3 +71,9 @@ Focused T17 rereview 02 identified that T13 still said all approved latency limi
 
 
 REQ-020 acceptance decision — independent review-03 PASS. T13 now preserves the original P95 564ms FAIL and instrumented 638ms FAIL while accepting only the local HARDWARE_CONSTRAINED exception; production-scale performance is UNVERIFIED. T16 proof-of-work passes for 67 accessible sessions and 8923 records, with raw payload completeness PARTIAL/NOT_CAPTURED. Final current Maven quality regression passed 127 unit + 9 PostgreSQL integration tests and coverage thresholds; workflow validator passes. Marked ACCEPTED_WITH_PERFORMANCE_EXCEPTION. Local merge into existing main is authorized after commit; no push.
+
+
+REQ-020 final merge: after independent review-03 PASS, T13 accepted the local HARDWARE_CONSTRAINED exception without claiming either stress P95 passed; T16 accepted proof-of-work while raw host payload completeness remains PARTIAL/NOT_CAPTURED. The project is `ACCEPTED_WITH_PERFORMANCE_EXCEPTION`. Accepted develop head `730ca6fd6569a451a286b189f9dd69893d26c197` merged into existing main baseline `521cb1427f910ebbd01129cc1a950c55b899ee87` as `18f97aa9c8296fdc107a02192aa4e8e62dd45d78`. No push. Latest audit export: 67 sessions / 9002 accessible records; ledger 106 rows / 65 interaction IDs.
+
+
+Post-merge audit refresh: 67 project-related sessions and 9020 accessible records exported; all stored transcript hashes/IDs/paths validate. The actively growing coordinator source log remains a documented point-in-time hash exception. Interaction ledger has 106 rows / 65 IDs, 64 with explicit requirement/task links; raw host envelopes remain NOT_CAPTURED/PARTIAL.

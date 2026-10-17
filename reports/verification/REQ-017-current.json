@@ -1,8 +1,8 @@
 {
   "requirement": "REQ-20261017-017",
-  "recorded_at_utc": "2026-10-17T07:18:30Z",
-  "branch": "develop",
-  "status": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION_PENDING_LOCAL_MERGE",
+  "recorded_at_utc": "2026-10-17T07:17:16Z",
+  "branch": "main",
+  "status": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION",
   "environment": {
     "os": "Linux Mint 22.3",
     "docker_server": "29.1.3",
@@ -178,7 +178,7 @@
   "audit": {
     "status": "PASS_PROOF_OF_WORK_RAW_PAYLOAD_PARTIAL",
     "local_accessible_sessions": 67,
-    "local_accessible_records_exported": 8923,
+    "local_accessible_records_exported": 9020,
     "transcript_integrity": "PASS; all 67 transcript SHA-256 values match, session IDs are unique, transcript paths are unique and contained under reports/audit/transcripts; one active source log changed after export and is disclosed",
     "exporter": "scripts/audit/export-codex-sessions.py",
     "inventory": "reports/audit/REQ-017-session-inventory.json",
@@ -189,11 +189,21 @@
     "summary": "reports/verification/REQ-017-llm-audit.json",
     "proof_of_work_gate": "PASS",
     "raw_payload_completeness": "PARTIAL",
-    "interaction_ledger_rows": 105,
-    "interaction_ids": 64,
-    "review": "Initial independent reviewer verified session IDs, paths, hashes and accessible record evidence; focused rereview pending."
+    "interaction_ledger_rows": 106,
+    "interaction_ids": 65,
+    "review": "PASS: independent review-03 verified proof-of-work scope; raw host payloads remain PARTIAL/NOT_CAPTURED."
   },
   "acceptance": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION",
   "source_commit": "0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2",
-  "active_policy": "REQ-20261017-020"
+  "active_policy": "REQ-20261017-020",
+  "git": {
+    "status": "PASS",
+    "merge_commit": "18f97aa9c8296fdc107a02192aa4e8e62dd45d78",
+    "parent_main": "521cb1427f910ebbd01129cc1a950c55b899ee87",
+    "parent_develop": "730ca6fd6569a451a286b189f9dd69893d26c197",
+    "develop_head": "730ca6fd6569a451a286b189f9dd69893d26c197",
+    "main_merge_base_with_develop": "730ca6fd6569a451a286b189f9dd69893d26c197",
+    "push": "NOT_PERFORMED",
+    "post_merge_evidence_commit": "PENDING"
+  }
 }

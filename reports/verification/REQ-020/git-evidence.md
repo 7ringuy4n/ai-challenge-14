@@ -14,4 +14,10 @@ The owner-authorized next steps are to commit the reviewed evidence on `develop`
 
 ## Commit and merge result
 
-Evidence commit on `develop`: `45f447022dfbeee6d3d0d4a6609dd31f1b0a31d5` (parent `8f6f5ade43a25d22b586b02dfb00f86f71f6c35d`). Before merge, `main` was `521cb1427f910ebbd01129cc1a950c55b899ee87`, and `git merge-base develop main` returned that same main baseline. Working tree was clean. Local merge result will be appended below only after actual Git output.
+- Evidence commit on `develop`: `45f447022dfbeee6d3d0d4a6609dd31f1b0a31d5`; checkpoint commit `730ca6fd6569a451a286b189f9dd69893d26c197` (parent `45f447022dfbeee6d3d0d4a6609dd31f1b0a31d5`). Before merge, `main` was `521cb1427f910ebbd01129cc1a950c55b899ee87`; `git merge-base develop main` returned that baseline. Working tree was clean.
+- First attempted command: `git switch main && git merge --no-ff develop -m "merge: accept claims workflow with local performance exception"`; exit 128 after branch switch because committer identity was unset. No merge commit or configuration change resulted.
+- Successful command: `git -c user.name='7ringuy4n' -c user.email='132858234+7ringuy4n@users.noreply.github.com' merge --no-ff develop -m "merge: accept claims workflow with local performance exception"`; exit 0, normal `ort` merge. Identity override applied only to this command.
+- Merge commit: `18f97aa9c8296fdc107a02192aa4e8e62dd45d78` (commit time `2026-10-17T14:14:57+07:00`). Parent 1 is prior `main` baseline `521cb1427f910ebbd01129cc1a950c55b899ee87`; parent 2 is accepted `develop` head `730ca6fd6569a451a286b189f9dd69893d26c197`.
+- `git merge-base main develop` after merge returned the complete develop head `730ca6fd6569a451a286b189f9dd69893d26c197`.
+- `git branch -avv` showed local `main` at the merge and local `develop` at parent 2; no remote-tracking branches were present. `git remote -v` showed origin configured, but no remote operation was performed.
+- A clean-tree check passed immediately after merge. The post-merge audit/evidence commit is being recorded on `main` and its resulting hash will be listed after commit. No push.

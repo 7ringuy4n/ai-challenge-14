@@ -1153,7 +1153,7 @@
         },
         "reports/verification/REQ-020/git-evidence.md"
       ],
-      "notes": "Accepted by coordinator after independent review-03 PASS. REQ-020 local performance exception and accessible LLM proof-of-work pass; original stress result remains FAIL at P95 564ms, instrumented repeat P95 638ms FAIL, raw host payload completeness PARTIAL/NOT_CAPTURED, production-scale performance UNVERIFIED. Evidence is committed to develop before the authorized local merge; never push."
+      "notes": "Accepted with performance exception after independent review-03 PASS. Local merge succeeded: main merge commit 18f97aa9c8296fdc107a02192aa4e8e62dd45d78 has baseline parent 521cb1427f910ebbd01129cc1a950c55b899ee87 and accepted develop parent 730ca6fd6569a451a286b189f9dd69893d26c197. No push. A post-merge evidence-only commit records final inventory and clean-tree verification."
     }
   ]
 }

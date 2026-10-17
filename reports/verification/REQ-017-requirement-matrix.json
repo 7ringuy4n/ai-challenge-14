@@ -1,6 +1,6 @@
 {
   "requirement": "REQ-20261017-017",
-  "updated_at_utc": "2026-10-17T07:18:30Z",
+  "updated_at_utc": "2026-10-17T07:17:16Z",
   "overall_status": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION",
   "functional_requirements": [
     {
@@ -256,7 +256,7 @@
     {
       "id": "REQ-20261017-017",
       "status": "PASS_WITH_REVISED_AUDIT_SCOPE",
-      "coverage": "Original functional and verification gates pass; accessible proof-of-work is PASS for 67 sessions/8923 records. Raw host payloads remain PARTIAL/NOT_CAPTURED."
+      "coverage": "Original functional and verification gates pass; proof-of-work PASS for 67 sessions/9020 records; raw host payloads PARTIAL/NOT_CAPTURED."
     },
     {
       "id": "REQ-20261017-018",
@@ -271,7 +271,7 @@
     {
       "id": "REQ-20261017-020",
       "status": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION",
-      "coverage": "Hardware-constrained local exception and LLM proof-of-work accepted after independent review-03 PASS. Regression and workflow validation pass; source production performance remains unverified; raw payload capture remains partial."
+      "coverage": "Independent review-03 PASS; hardware-constrained local exception accepted without rewriting either P95 FAIL; LLM proof-of-work PASS/raw payload PARTIAL; regression and workflow PASS. develop merged locally into existing main at 18f97aa9c8296fdc107a02192aa4e8e62dd45d78."
     }
   ],
   "evidence": {
@@ -291,9 +291,8 @@
   "remaining_gates": [],
   "post_acceptance_actions": [
     {
-      "action": "Commit reviewed evidence to develop and merge into the verified existing main baseline",
-      "status": "AUTHORIZED_PENDING_EXECUTION",
-      "qualification": "Do not push; verify resulting main commit and record merge evidence."
+      "action": "Commit final post-merge audit/evidence on main and verify clean tree; no push",
+      "status": "IN_PROGRESS"
     }
   ]
 }
