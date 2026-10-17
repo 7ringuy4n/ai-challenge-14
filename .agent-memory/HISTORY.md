@@ -45,3 +45,7 @@ Implemented the approved local `CLAIMS_MEMBER_USERNAMES` configuration (default 
 Final-source Java 21/Maven quality verification passed 126 unit and 9 PostgreSQL/Testcontainers tests, 0 failures/errors/skips, six Liquibase changesets, 97.0134% line coverage (942/971) and 90.2022% branch coverage (580/643). OpenTelemetry evidence from the same combined live run verifies inbound parent → HTTP server → secured request → two asynchronous outbox spans and matching application log trace/span IDs. Independent T14 review found a P2 in Python `assert` checks under `-O`; it was fixed and independently rereviewed PASS.
 
 Still in progress: final-source full seven-profile JMeter rerun and local Codex session audit. Host-managed model raw payloads remain `NOT_CAPTURED`/`PARTIAL` and the user's mandatory full-capture merge condition remains unresolved. No merge or push is performed. Full status and evidence: `reports/verification/REQ-017-current.json`.
+
+## REQ-017 follow-up — boundary review and benchmark provenance
+
+All seven clean-source JMeter profiles were independently reviewed and passed on c6dccfe. A subsequent source review identified a P2 member-identity storage-length boundary; the 127-character limit was implemented and independently rereviewed PASS, with 5/5 focused tests and 127+9 full quality tests passing. The prior performance reports remain tied to c6dccfe and are not final-source acceptance evidence; rerun all profiles after committing the correction.

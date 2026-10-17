@@ -57,4 +57,17 @@ class SecurityConfigurationTest {
         assertThatThrownBy(() -> configuration.users(encoder, "human-secret", "system-secret", "system"))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("member-");
     }
+
+    @Test
+    void acceptsMaximumMemberNameThatFitsDatabaseIdentityAndRejectsLongerName() {
+        var encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        String maximum = "member-" + "a".repeat(120);
+        String tooLong = "member-" + "a".repeat(121);
+
+        var users = configuration.users(encoder, "human-secret", "system-secret", maximum);
+
+        assertThat(users.userExists(maximum)).isTrue();
+        assertThatThrownBy(() -> configuration.users(encoder, "human-secret", "system-secret", tooLong))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("127 characters");
+    }
 }

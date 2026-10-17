@@ -90,3 +90,11 @@ Implemented the approved local `CLAIMS_MEMBER_USERNAMES` configuration (default 
 Final-source Java 21/Maven quality verification passed 126 unit and 9 PostgreSQL/Testcontainers tests, 0 failures/errors/skips, six Liquibase changesets, 97.0134% line coverage (942/971) and 90.2022% branch coverage (580/643). OpenTelemetry evidence from the same combined live run verifies inbound parent → HTTP server → secured request → two asynchronous outbox spans and matching application log trace/span IDs. Independent T14 review found a P2 in Python `assert` checks under `-O`; it was fixed and independently rereviewed PASS.
 
 Still in progress: final-source full seven-profile JMeter rerun and local Codex session audit. Host-managed model raw payloads remain `NOT_CAPTURED`/`PARTIAL` and the user's mandatory full-capture merge condition remains unresolved. No merge or push is performed. Full status and evidence: `reports/verification/REQ-017-current.json`.
+
+## 2026-10-17 — REQ-017 performance and audit evidence
+
+The clean-source seven-profile JMeter rerun passed the user-approved P95/P99/error thresholds, was independently reviewed, and is tied to commit `c6dccfef1ba24292f078b826e430c19d8ec74e92`. Local Codex session export covers 62 project-related session files and 7,287 accessible message/tool records with integrity checks. Full host-managed model request/response capture remains `NOT_CAPTURED`, so the explicit acceptance gate is blocked and no main merge is permitted.
+
+## 2026-10-17 — Member username database-length guard
+
+Independent review found configured member usernames could exceed the persisted member ID column after prefix removal. The coordinator added a 127-character username cap and boundary coverage. The focused test passes 5/5; the full suite passes 127 unit + 9 PostgreSQL/Testcontainers tests with 97.0195% line and 90.2326% branch coverage. Prior JMeter evidence remains tied to c6dccfe; final-source rerun is pending for the corrected revision.

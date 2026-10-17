@@ -250,12 +250,12 @@
     {
       "id": "REQ-20261017-016",
       "status": "PASS",
-      "coverage": "User-approved thresholds P95<=500ms, P99<=1000ms, HTTP errors<=1% are recorded and in each performance runner; final seven runs remain pending."
+      "coverage": "User-approved thresholds P95<=500ms, P99<=1000ms, HTTP errors<=1%; all seven clean-source JMeter profiles passed. See reports/verification/REQ-017-jmeter-rerun/comparison.json."
     },
     {
       "id": "REQ-20261017-017",
       "status": "IN_PROGRESS_NOT_ACCEPTED",
-      "coverage": "29 live API checks, browser, cross-member, regression, trace and independent review pass. Final-source JMeter reruns and local session audit are outstanding. Mandatory full host-managed raw payload capture is NOT_CAPTURED/PARTIAL and merge-blocking."
+      "coverage": "29 live API checks, 17 real-browser checks, 7 two-member ownership checks, 127+9 regression tests, trace propagation, Postman and local session audit have evidence. Seven JMeter profiles passed on c6dccfe, but a reviewed P2 username length fix changed source; final-source performance rerun pending. Historical host-managed raw payloads remain NOT_CAPTURED/PARTIAL and merge-blocking."
     },
     {
       "id": "REQ-20261017-018",
@@ -275,23 +275,21 @@
     "browser": "reports/verification/REQ-017-browser/run-2026-10-17T050718217Z/browser-e2e.json",
     "cross_member": "reports/verification/REQ-017-cross-member/run-20261017T050909578984Z/cross-member.json",
     "trace": "reports/telemetry/REQ-017-trace-verification.json",
-    "peer_review": "reports/verification/REQ-017-review.json"
+    "peer_review": "reports/verification/REQ-017-review.json",
+    "jmeter": "reports/verification/REQ-017-jmeter-rerun/comparison.json",
+    "llm_audit": "reports/audit/REQ-017-session-inventory.json",
+    "performance_peer_review": "reports/sub-agents/T13/01/review-01.md"
   },
   "remaining_gates": [
     {
-      "gate": "Seven full final-source JMeter profiles and threshold comparison",
+      "gate": "Seven JMeter profiles against the newly corrected, committed final source",
       "status": "NOT_RUN",
-      "reason": "Pending clean source commit and run."
+      "reason": "Source changed after c6dccfe; prior performance run remains evidence for that prior source only."
     },
     {
-      "gate": "Exhaustive accessible local Codex and archived-session event inventory/export",
-      "status": "NOT_RUN",
-      "reason": "Session inventory and redacted transcript reconciliation not yet complete."
-    },
-    {
-      "gate": "Complete raw host-managed model request and response capture",
+      "gate": "Complete raw host-managed model request/response capture",
       "status": "BLOCKED",
-      "reason": "Runtime does not expose raw model payloads. User required full capture for merge; disclose NOT_CAPTURED and request policy decision if local export cannot satisfy."
+      "reason": "Host-managed model payload envelopes and encrypted reasoning are unavailable in local session records. Mandatory per user requirement; no merge until resolved."
     }
   ]
 }

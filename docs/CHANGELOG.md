@@ -45,3 +45,14 @@ Implemented the approved local `CLAIMS_MEMBER_USERNAMES` configuration (default 
 Final-source Java 21/Maven quality verification passed 126 unit and 9 PostgreSQL/Testcontainers tests, 0 failures/errors/skips, six Liquibase changesets, 97.0134% line coverage (942/971) and 90.2022% branch coverage (580/643). OpenTelemetry evidence from the same combined live run verifies inbound parent → HTTP server → secured request → two asynchronous outbox spans and matching application log trace/span IDs. Independent T14 review found a P2 in Python `assert` checks under `-O`; it was fixed and independently rereviewed PASS.
 
 Still in progress: final-source full seven-profile JMeter rerun and local Codex session audit. Host-managed model raw payloads remain `NOT_CAPTURED`/`PARTIAL` and the user's mandatory full-capture merge condition remains unresolved. No merge or push is performed. Full status and evidence: `reports/verification/REQ-017-current.json`.
+
+## 2026-10-17 — REQ-017 acceptance evidence update
+
+- Completed the seven clean-source JMeter profiles against commit `c6dccfef1ba24292f078b826e430c19d8ec74e92`; all passed approved latency/error thresholds and independent review.
+- Exported and integrity-checked 62 locally accessible project sessions (7,287 accessible records). Raw host-managed payloads remain unavailable; project acceptance and main merge remain blocked.
+
+## 2026-10-17 — Member identity storage boundary
+
+- Fixed independent-review P2: configured member usernames now have a 127-character maximum, ensuring the prefix-stripped identity fits the PostgreSQL `VARCHAR(120)` member ID.
+- Added a 127/128-character boundary regression; focused test and the full 127-unit + 9-integration Maven quality suite passed (97.0195% line, 90.2326% branch).
+- This source change supersedes the prior benchmark revision; all seven JMeter profiles must rerun against the new commit before performance can be marked final-source PASS.

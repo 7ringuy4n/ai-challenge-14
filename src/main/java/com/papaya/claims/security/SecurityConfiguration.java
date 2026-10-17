@@ -22,6 +22,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
+    private static final int MAX_MEMBER_USERNAME_LENGTH = 127;
+
     @Bean
     PasswordEncoder passwordEncoder() { return PasswordEncoderFactories.createDelegatingPasswordEncoder(); }
 
@@ -54,6 +56,9 @@ public class SecurityConfiguration {
             String username = item.trim();
             if (!username.matches("member-[a-z0-9]+(?:-[a-z0-9]+)*")) {
                 throw new IllegalArgumentException("CLAIMS_MEMBER_USERNAMES entries must use the member- prefix and lowercase letters, digits, or hyphens");
+            }
+            if (username.length() > MAX_MEMBER_USERNAME_LENGTH) {
+                throw new IllegalArgumentException("CLAIMS_MEMBER_USERNAMES entries must be at most 127 characters so the member identity fits the database column");
             }
             if (!unique.add(username)) {
                 throw new IllegalArgumentException("CLAIMS_MEMBER_USERNAMES entries must be unique");

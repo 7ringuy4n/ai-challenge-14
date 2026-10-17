@@ -1,0 +1,770 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.papaya:claims-workflow >---------------------
+[INFO] Building claims-workflow 1.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.4.1:clean (default-clean) @ claims-workflow ---
+[INFO] Deleting /workspace/target
+[INFO] 
+[INFO] --- jacoco:0.8.13:prepare-agent (default) @ claims-workflow ---
+[INFO] argLine set to -javaagent:/root/.m2/repository/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13-runtime.jar=destfile=/workspace/target/jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ claims-workflow ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 13 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ claims-workflow ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 78 source files with javac [debug parameters release 21] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ claims-workflow ---
+[INFO] Copying 1 resource from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ claims-workflow ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 36 source files with javac [debug parameters release 21] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ claims-workflow ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.papaya.claims.security.JsonSecurityHandlersTest
+running test case 1/127: accessDeniedReturnsSafeJsonAndPropagatesCorrelationId()
+running test case 2/127: authenticationFailureReturnsJson401AndBasicChallenge()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.697 s -- in com.papaya.claims.security.JsonSecurityHandlersTest
+[INFO] Running com.papaya.claims.security.SecurityConfigurationTest
+running test case 3/127: acceptsMaximumMemberNameThatFitsDatabaseIdentityAndRejectsLongerName()
+running test case 4/127: configuresDistinctMemberPrincipalsWithMemberRoleAndHumanCredential()
+running test case 5/127: rejectsMalformedDuplicateOrNonMemberIdentities()
+running test case 6/127: configuresDistinctHumanAndProtectedSystemPrincipals()
+running test case 7/127: refusesMissingBlankAndPlaceholderCredentials()
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.419 s -- in com.papaya.claims.security.SecurityConfigurationTest
+[INFO] Running com.papaya.claims.security.ActorFactoryTest
+running test case 8/127: marksSystemOnlyForProtectedSystemPrincipalWithSystemAuthority()
+running test case 9/127: derivesMemberIdentityFromAuthenticatedPrincipalAndRoleAuthority()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 s -- in com.papaya.claims.security.ActorFactoryTest
+[INFO] Running com.papaya.claims.config.ResourceContractTest
+running test case 10/127: liquibaseMasterResolvesItsIncludedSqlAndOpenApiDefinesMutationBodies()
+running test case 11/127: workflowConfigurationContainsTheEightStatesNineEdgesAndExactCycleLimit()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.093 s -- in com.papaya.claims.config.ResourceContractTest
+[INFO] Running com.papaya.claims.claim.service.ClaimServiceTest
+running test case 12/127: createRejectsReusedKeyWithDifferentPayloadBeforeWriting()
+running test case 13/127: optionsAreDerivedFromConfiguredEdgesAndCurrentRole()
+running test case 14/127: createRejectsMissingOutOfRangeAndExtraFactsWithoutPersisting()
+running test case 15/127: documentClerkCanCreateAndUpdateCompleteRosterEntries()
+running test case 16/127: businessExceptionRequiresSafeCodeMessageAndClientErrorStatus()
+running test case 17/127: createRejectsNegativeAndNonDecimalAmounts()
+running test case 18/127: rejectionEffectStartsNewAppealWindowAndClearsPreviousAcknowledgement()
+running test case 19/127: transitionRejectsStaleAndForbiddenWithoutWritingAndReplaysOnlyMatchingFingerprint()
+running test case 20/127: documentRosterRulesEnforceStateAndImmutableRequiredFlag()
+running test case 21/127: systemTransitionsRequireRoleAndConfiguredSystemEdgeAndDoNotExposeOtherMemberClaims()
+running test case 22/127: compareAndSetRacesDoNotWriteAuditsOrReceipts()
+running test case 23/127: createPersistsClaimAuditAndReceiptAndReplaysSameRequest()
+running test case 24/127: memberCanOnlyUpdatePresenceOnExistingRosterWhilePendingInformation()
+running test case 25/127: updatesReplayByFingerprintAndRejectStaleVersion()
+running test case 26/127: updateRejectsUnauthenticatedUnrecognizedActorAndStaleExpectedVersion()
+running test case 27/127: systemTransitionRequiresProtectedSystemActorAndAuditReadsRequireVisibility()
+running test case 28/127: approvalTransitionPersistsPaymentAndBothOutboxEffectsAtomicallyAtTheServiceBoundary()
+running test case 29/127: createNormalizesWholeNumberJsonAmountToExactDecimal()
+running test case 30/127: ownerAcknowledgementPersistsMicrosecondServerTimeAndIdempotencyReceipt()
+running test case 31/127: workflowEffectsUpdateTrustedTimestampsCountersAndClearStaleAssessmentFacts()
+running test case 32/127: acknowledgementRequiresMemberRoleAndReplaysMatchingRequestWithoutAnotherWrite()
+running test case 33/127: idempotencyFingerprintCanonicalizesObjectKeyOrderAndRejectsCorruptStoredResult()
+running test case 34/127: transitionReplaysWithReplayedMarkerAndRequiresSafeIdempotencyKey()
+running test case 35/127: requiredDocumentFlagCanChangeOnlyBeforeSubmissionAndCorrelationIdsAreSanitized()
+running test case 36/127: memberCannotAcknowledgeAnotherMembersClaim()
+running test case 37/127: updateFactsEnforcesDocumentOwnershipAndRejectsMalformedOrUnauthorizedPatches()
+running test case 38/127: documentValidationRejectsMalformedRosterAndUnknownFields()
+running test case 39/127: assessorAssignmentAndReportValidationAreStateAndRoleBound()
+running test case 40/127: auditAndListPreserveVisibilityAndPageMetadata()
+running test case 41/127: acknowledgementRequiresRejectedStateAndExpectedVersion()
+running test case 42/127: absentClaimsAreNotFoundAndNullActorIsForbidden()
+running test case 43/127: assessorMustMatchTheAssignmentToWriteAnAssessmentReport()
+running test case 44/127: createValidatesActorKeyAndExactRequestedAmount()
+running test case 45/127: factsRequireNonemptyAllowedFieldsAndCorrectRole()
+running test case 46/127: transitionRequiresHumanIdentityAndConfiguredAllowedEdge()
+[INFO] Tests run: 35, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.524 s -- in com.papaya.claims.claim.service.ClaimServiceTest
+[INFO] Running com.papaya.claims.claim.effects.MockEffectDeliveryTest
+running test case 47/127: paymentDispatchConfirmsPaymentUsingEventIdAndOtherEffectsDoNotTouchPayments()
+05:51:27.204 [main] INFO com.papaya.claims.claim.effects.MockEffectDelivery -- mock_effect_delivered eventId=35e1b60d-e32d-4555-bdd9-18fd35a64668 effect=trigger_payment_system traceId=null spanId=null
+05:51:27.207 [main] INFO com.papaya.claims.claim.effects.MockEffectDelivery -- mock_effect_delivered eventId=d31a307c-ea52-4fe9-b470-39ad47330926 effect=notify_member_approval traceId=null spanId=null
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.010 s -- in com.papaya.claims.claim.effects.MockEffectDeliveryTest
+[INFO] Running com.papaya.claims.claim.effects.OutboxDispatcherTest
+running test case 48/127: deliveryFailureSchedulesRetryAndRecordsFailureMetric()
+05:51:27.247 [main] WARN com.papaya.claims.claim.effects.OutboxDispatcher -- mock_effect_delivery_failed eventId=d0004b53-48b4-4dd0-bc7d-8931225cff12 effect=trigger_payment_system exceptionType=IllegalStateException
+running test case 49/127: deliversInsidePersistedParentTraceContextWhenTraceparentIsValid()
+running test case 50/127: emptyBatchDoesNothingAndInvalidDispatcherSettingsFailFast()
+running test case 51/127: claimsBoundedBatchDeliversAndMarksSuccessfulEvents()
+running test case 52/127: losingDeliveryLeaseDoesNotCountEventAsDelivered()
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.054 s -- in com.papaya.claims.claim.effects.OutboxDispatcherTest
+[INFO] Running com.papaya.claims.claim.api.dto.TransitionResultViewTest
+running test case 53/127: mapsClaimAuditAndReplayStatusToTheDocumentedTransportResult()
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.papaya.claims.claim.api.dto.TransitionResultViewTest
+[INFO] Running com.papaya.claims.claim.api.dto.CreateClaimRequestValidationTest
+running test case 54/127: validatesPolicyLimitAsNonnegativeNumericEighteenTwoAtTheHttpBoundary()
+05:51:27.363 [main] INFO org.hibernate.validator.internal.util.Version -- HV000001: Hibernate Validator 8.0.3.Final
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.339 s -- in com.papaya.claims.claim.api.dto.CreateClaimRequestValidationTest
+[INFO] Running com.papaya.claims.claim.api.dto.ApiContractTest
+running test case 55/127: mapsTransitionAuditAndWorkflowOptionsWithoutLosingRolesEffectsOrReplayStatus()
+running test case 56/127: apiErrorsCopyDetailsAndUseSafeEmptyDefaults()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in com.papaya.claims.claim.api.dto.ApiContractTest
+[INFO] Running com.papaya.claims.claim.api.dto.ClaimViewTest
+running test case 57/127: rejectsInvalidRequiredIdentityStateCurrencyVersionFactsAndTimestamps()
+running test case 58/127: copiesNestedFactValuesOnConstruction()
+running test case 59/127: rejectsPolicyLimitOutsideNumericEighteenTwo()
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in com.papaya.claims.claim.api.dto.ClaimViewTest
+[INFO] Running com.papaya.claims.claim.api.dto.PageResponseTest
+running test case 60/127: computesPageCountAndCopiesReturnedItems()
+running test case 61/127: rejectsNegativeAndOutOfRangeMetadataAndGuardsPageCountOverflow()
+running test case 62/127: emptyPageHasNoPagesAndRejectsInconsistentMetadata()
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in com.papaya.claims.claim.api.dto.PageResponseTest
+[INFO] Running com.papaya.claims.claim.api.ClaimControllerTest
+running test case 63/127: mutationUsesTheEffectiveCorrelationIdFromTheRequestFilter()
+running test case 64/127: routesEveryReadAndMutationThroughAuthenticatedWorkflowUseCases()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.027 s -- in com.papaya.claims.claim.api.ClaimControllerTest
+[INFO] Running com.papaya.claims.claim.domain.persistence.EffectsRepositoryTest
+running test case 65/127: mapsOutboxRowsAndReportsBothDeliveryUpdateOutcomes()
+running test case 66/127: mapsPaymentInsertConfirmationExistenceAndConditionalConfirmation()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.011 s -- in com.papaya.claims.claim.domain.persistence.EffectsRepositoryTest
+[INFO] Running com.papaya.claims.claim.domain.persistence.ClaimRepositoryTest
+running test case 67/127: scopesMembersButAllowsAdminAndSystemViewsAndMapsEmptyAndPresentRows()
+running test case 68/127: mapsWritesAndReturnsCompareAndSetOutcome()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.011 s -- in com.papaya.claims.claim.domain.persistence.ClaimRepositoryTest
+[INFO] Running com.papaya.claims.claim.domain.persistence.MyBatisSystemOperationAuditRepositoryTest
+running test case 69/127: mapsEveryAuditFieldToAppendOnlyMapper()
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.papaya.claims.claim.domain.persistence.MyBatisSystemOperationAuditRepositoryTest
+[INFO] Running com.papaya.claims.claim.domain.persistence.IdempotencyRepositoryTest
+running test case 70/127: mapsAbsentAndPresentReceiptsAndPreservesAllInsertFields()
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in com.papaya.claims.claim.domain.persistence.IdempotencyRepositoryTest
+[INFO] Running com.papaya.claims.claim.domain.persistence.UuidTypeHandlerTest
+running test case 71/127: malformedDatabaseUuidIsRejectedAndSqlExceptionsArePropagated()
+running test case 72/127: bindsUuidAndReadsUuidOrDatabaseTextAcrossAllSupportedResultShapes()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.045 s -- in com.papaya.claims.claim.domain.persistence.UuidTypeHandlerTest
+[INFO] Running com.papaya.claims.claim.domain.DomainContractTest
+running test case 73/127: pageBoundsAndOverflowAreExplicit()
+running test case 74/127: validatesClaimAmountsCurrencyVersionAndRequiredTimestamps()
+running test case 75/127: factsAcceptJsonNumbersButRejectInvalidKeysAndUnsupportedObjects()
+running test case 76/127: actorCopiesRolesAndRequiresProtectedSystemRole()
+running test case 77/127: factsDefensivelyCopyNestedJsonCollectionsAndPreserveDecimalPrecision()
+running test case 78/127: enforcesRequiredValuesAcrossDomainRecords()
+running test case 79/127: validatesAuditTransitionAndOperationalAuditContracts()
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s -- in com.papaya.claims.claim.domain.DomainContractTest
+[INFO] Running com.papaya.claims.workflow.WorkflowEngineTest
+running test case 80/127: resolvesEffectIdsThroughStrategiesIntoPureTypedIntents()
+running test case 81/127: plansEffectsForRejectionInformationPaymentAndArchiveEdges()
+running test case 82/127: rejectsUnknownEffectCatalogStrategiesWhenEngineIsConstructed()
+running test case 83/127: invalidEdgeWithNoOutgoingTransitionsReportsNone()
+running test case 84/127: rejectsBlankEffectIdsAndNullPayloads()
+running test case 85/127: usesConfiguredCycleTransitionIdRatherThanAStateSpecificBranch()
+running test case 86/127: evaluatesConfiguredEdgeAndReportsRoleGuardAndInvalidEdgeFailures()
+running test case 87/127: availableTransitionsIncludeAuthorizationAndGuardFailures()
+running test case 88/127: allowsThirdInformationRequestAndRejectsFourthWithExactConfiguredMessage()
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.105 s -- in com.papaya.claims.workflow.WorkflowEngineTest
+[INFO] Running com.papaya.claims.workflow.WorkflowConfigTest
+running test case 89/127: rejectsInvalidAppealPeriodAndMissingWorkflowResourceAtConfigurationBoundary()
+05:51:28.281 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'appealPeriod' defined in com.papaya.claims.config.WorkflowConfiguration: Failed to instantiate [java.time.Duration]: Factory method 'appealPeriod' threw exception with message: claims.workflow.appeal-period must be positive
+05:51:28.314 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'workflowDefinition' defined in com.papaya.claims.config.WorkflowConfiguration: Failed to instantiate [com.papaya.claims.workflow.WorkflowDefinition]: Factory method 'workflowDefinition' threw exception with message: Unable to load workflow definition from classpath:missing-workflow.yml
+running test case 90/127: acceptsStateAndEdgeExtensionUsingExistingGuardAndEffect()
+running test case 91/127: rejectsDuplicateTransitionIdsAndDuplicateValues()
+running test case 92/127: rejectsDuplicateYamlKeysUnknownRolesAndBadInitialState()
+running test case 93/127: rejectsNullMalformedYamlAndWrongTopLevelOrTransitionCollectionShapes()
+running test case 94/127: rejectsMalformedCollectionsCyclePolicyAndRoleCatalog()
+running test case 95/127: rejectsNonObjectCatalogEntriesAndNonintegralCycleLimits()
+running test case 96/127: rejectsUnknownStrategiesDanglingStatesAndDuplicateEdges()
+running test case 97/127: startsWorkflowBeansAndBindsConfiguredAppealPeriod()
+running test case 98/127: rejectsNonpositiveAppealDurationInEvaluationContext()
+running test case 99/127: loadsFrozenWorkflowAndCyclePolicy()
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.548 s -- in com.papaya.claims.workflow.WorkflowConfigTest
+[INFO] Running com.papaya.claims.workflow.GuardEvaluatorTest
+running test case 100/127: rejectsUnknownStrategiesMalformedDocumentsAndOutOfRangeAmounts()
+running test case 101/127: workflowEvidenceNormalizesEachTrustedTimestampAndRejectsUnsupportedCounters()
+running test case 102/127: validatesAssessorReportAndExactAmount()
+running test case 103/127: validatesReasonAndStrictlyNewInformationTimestamp()
+running test case 104/127: rejectsDocumentRostersWithoutRequiredDocumentsAndIdentifiersOutsideTheContract()
+running test case 105/127: requiresPersistedPaymentAndConfirmedReference()
+running test case 106/127: paymentConfirmationAndInformationTimestampRequireCompleteTrustedEvidence()
+running test case 107/127: validatesDocumentRosterIdentityShapeRequirednessAndPresence()
+running test case 108/127: amountGuardHandlesExactBoundariesAndRejectsInvalidScaleAndPrecision()
+running test case 109/127: enforcesAppealExpiryOrAcknowledgementAfterRejectionAtMicrosecondPrecision()
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.020 s -- in com.papaya.claims.workflow.GuardEvaluatorTest
+[INFO] Running com.papaya.claims.common.web.TraceparentTest
+running test case 110/127: ignoresAbsentMalformedUnsupportedAndInvalidTraceparents()
+running test case 111/127: capturesAndRestoresW3cTraceContext()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.papaya.claims.common.web.TraceparentTest
+[INFO] Running com.papaya.claims.common.web.SessionControllerTest
+running test case 112/127: exposesTheCsrfHeaderParameterAndTokenForAuthenticatedSessions()
+running test case 113/127: returnsNoCsrfFieldsWhenSecurityDidNotProvideAToken()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.papaya.claims.common.web.SessionControllerTest
+[INFO] Running com.papaya.claims.common.web.GlobalExceptionHandlerTest
+running test case 114/127: malformedAndUnexpectedErrorsDoNotExposeInternalExceptionMessages()
+05:51:28.462 [main] ERROR com.papaya.claims.common.web.GlobalExceptionHandler -- request_failed correlationId=safe-id exceptionType=IllegalStateException
+running test case 115/127: mapsBusinessErrorAndCarriesEffectiveCorrelationId()
+running test case 116/127: validationErrorsContainFieldDetailsAndStablePublicMessage()
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.014 s -- in com.papaya.claims.common.web.GlobalExceptionHandlerTest
+[INFO] Running com.papaya.claims.common.web.CorrelationIdFilterTest
+running test case 117/127: preservesOnlyBoundedSafeIdsAndReturnsTheEffectiveCorrelationId()
+05:51:28.477 [main] INFO com.papaya.claims.common.web.CorrelationIdFilter -- http_request method=GET path=/api/v1/claims status=200 durationMs=0 correlationId=client:trace-17 traceId=null parentSpanId=null
+running test case 118/127: currentIdUsesExistingRequestAttributeAndGeneratesWhenAbsent()
+running test case 119/127: removesMdcWhenDownstreamFails()
+05:51:28.480 [main] INFO com.papaya.claims.common.web.CorrelationIdFilter -- http_request method=POST path=/api/v1/claims status=200 durationMs=0 correlationId=valid-17 traceId=null parentSpanId=null
+05:51:28.480 [main] INFO com.papaya.claims.common.web.CorrelationIdFilter -- http_request method=GET path=/api/v1/claims status=200 durationMs=0 correlationId=e7a68d76-fdbe-402d-b3d8-3e3403f493c4 traceId=null parentSpanId=null
+running test case 120/127: replacesMalformedOrOversizedIdsWithGeneratedUuid()
+05:51:28.482 [main] INFO com.papaya.claims.common.web.CorrelationIdFilter -- http_request method=GET path=/api/v1/claims status=200 durationMs=0 correlationId=d24b4f6d-b123-45db-b189-dca43be2ec46 traceId=null parentSpanId=null
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in com.papaya.claims.common.web.CorrelationIdFilterTest
+[INFO] Running com.papaya.claims.common.web.JsonRequestSizeFilterTest
+running test case 121/127: onlyInspectsJsonApiRequestsAndCachedBodySupportsReaderAndRepeatedStreams()
+running test case 122/127: rejectsOversizedJsonEvenWhenContentLengthIsUnknown()
+running test case 123/127: passesAWithinLimitBodyToTheNextFilterUnchanged()
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.020 s -- in com.papaya.claims.common.web.JsonRequestSizeFilterTest
+[INFO] Running com.papaya.claims.audit.ClaimAuditAspectTest
+running test case 124/127: failureAdviceHandlesMissingIdentityAndDoesNotMaskBusinessFailureWhenAuditFails()
+05:51:28.513 [main] ERROR com.papaya.claims.audit.ClaimFailureAuditAspect -- failure_audit_write_failed operation=transition errorType=IllegalStateException
+running test case 125/127: selectedMutationsDeclareRuntimeAuditActionAndResource()
+running test case 126/127: springAopProxyAuditsAnnotatedFailureAndPreservesTheBusinessException()
+running test case 127/127: failureAdviceUsesAnnotationMetadataAndReplacesUnsafeCorrelationIds()
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.189 s -- in com.papaya.claims.audit.ClaimAuditAspectTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 127, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ claims-workflow ---
+[INFO] Building jar: /workspace/target/claims-workflow-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] --- spring-boot:3.5.16:repackage (repackage) @ claims-workflow ---
+[INFO] Replacing main artifact /workspace/target/claims-workflow-1.0.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to /workspace/target/claims-workflow-1.0.0-SNAPSHOT.jar.original
+[INFO] 
+[INFO] --- failsafe:3.5.6:integration-test (default) @ claims-workflow ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.papaya.claims.claim.domain.persistence.PaymentOutboxIT
+05:51:30.628 [main] INFO org.testcontainers.images.PullPolicy -- Image pull policy will be performed by: DefaultPullPolicy()
+05:51:30.638 [main] INFO org.testcontainers.utility.ImageNameSubstitutor -- Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
+05:51:30.960 [main] INFO org.testcontainers.DockerClientFactory -- Testcontainers version: 1.21.3
+05:51:31.661 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
+05:51:31.689 [main] INFO org.testcontainers.DockerClientFactory -- Docker host IP address is 172.18.0.1
+05:51:31.705 [main] INFO org.testcontainers.DockerClientFactory -- Connected to docker: 
+  Server Version: 29.1.3
+  API Version: 1.52
+  Operating System: Linux Mint 22.3
+  Total Memory: 23768 MB
+05:51:32.040 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Creating container for image: testcontainers/ryuk:0.12.0
+05:51:32.046 [main] INFO org.testcontainers.utility.RegistryAuthLocator -- Failure when attempting to lookup auth config. Please ignore if you don't have images in an authenticated registry. Details: (dockerImageName: testcontainers/ryuk:0.12.0, configFile: /root/.docker/config.json, configEnv: DOCKER_AUTH_CONFIG). Falling back to docker-java default behaviour. Exception message: Status 404: No config supplied. Checked in order: /root/.docker/config.json (file not found), DOCKER_AUTH_CONFIG (not set)
+05:51:32.173 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 is starting: 3a47e45c8616eddd0d69f222d43734da10ef44b311b4ffac2c8fc98ed9942977
+05:51:32.360 [main] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 started in PT0.320054461S
+05:51:32.365 [main] INFO org.testcontainers.utility.RyukResourceReaper -- Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+05:51:32.365 [main] INFO org.testcontainers.DockerClientFactory -- Checking the system...
+05:51:32.365 [main] INFO org.testcontainers.DockerClientFactory -- ✔︎ Docker server version should be at least 1.6.0
+05:51:32.366 [main] INFO tc.postgres:16-alpine -- Creating container for image: postgres:16-alpine
+05:51:32.400 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine is starting: 04ee95b8ca69b2fd59b89a84964a9a59cf20d96ac95559ad262b7881811da378
+05:51:33.361 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine started in PT0.99470966S
+05:51:33.361 [main] INFO tc.postgres:16-alpine -- Container is started (JDBC URL: jdbc:postgresql://172.18.0.1:32895/claims?loggerLevel=OFF)
+Oct 17, 2026 5:51:33 AM liquibase.database
+INFO: Set default schema name to public
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: Creating database history table with name: public.databasechangelog
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Oct 17, 2026 5:51:34 AM liquibase.snapshot
+INFO: Creating snapshot
+Oct 17, 2026 5:51:34 AM liquibase.lockservice
+INFO: Successfully acquired change log lock
+Oct 17, 2026 5:51:34 AM liquibase.command
+INFO: Using deploymentId: 2216293636
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Running Changeset: db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::002-claim-persistence::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex ran successfully in 31ms
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::002-claim-persistence::codex ran successfully in 41ms
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex ran successfully in 3ms
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex ran successfully in 3ms
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex ran successfully in 15ms
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: Custom SQL executed
+Running Changeset: db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex
+Running Changeset: db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex
+Oct 17, 2026 5:51:34 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex ran successfully in 3ms
+Oct 17, 2026 5:51:34 AM liquibase.util
+INFO: UPDATE SUMMARY
+Oct 17, 2026 5:51:34 AM liquibase.util
+INFO: Run:                          6
+
+UPDATE SUMMARY
+Run:                          6
+Previously run:               0
+Filtered out:                 0
+-------------------------------
+Total change sets:            6
+
+Oct 17, 2026 5:51:34 AM liquibase.util
+INFO: Previously run:               0
+Oct 17, 2026 5:51:34 AM liquibase.util
+INFO: Filtered out:                 0
+Oct 17, 2026 5:51:34 AM liquibase.util
+INFO: -------------------------------
+Oct 17, 2026 5:51:34 AM liquibase.util
+INFO: Total change sets:            6
+Oct 17, 2026 5:51:34 AM liquibase.util
+INFO: Update summary generated
+Oct 17, 2026 5:51:34 AM liquibase.command
+INFO: Update command completed successfully.
+Oct 17, 2026 5:51:34 AM liquibase.lockservice
+INFO: Successfully released change log lock
+Liquibase: Update has been successful. Rows affected: 6
+Oct 17, 2026 5:51:34 AM liquibase.command
+INFO: Command execution complete
+running test case 1/9: outboxRepositoryUsesConfiguredLeaseAndSupportsRetryAndDelivery()
+running test case 2/9: paymentRepositoryCreatesChecksAndConfirmsPayment()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.290 s -- in com.papaya.claims.claim.domain.persistence.PaymentOutboxIT
+[INFO] Running com.papaya.claims.claim.domain.persistence.AuditImmutabilityIT
+05:51:36.741 [main] INFO tc.postgres:16-alpine -- Creating container for image: postgres:16-alpine
+05:51:36.785 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine is starting: 44ac46fd1d90ecd103ed1301d3b361a79c9e5b6d6bcb7e22559cfe7b911de82e
+05:51:37.765 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine started in PT1.023402848S
+05:51:37.765 [main] INFO tc.postgres:16-alpine -- Container is started (JDBC URL: jdbc:postgresql://172.18.0.1:32896/claims?loggerLevel=OFF)
+Oct 17, 2026 5:51:37 AM liquibase.database
+INFO: Set default schema name to public
+Oct 17, 2026 5:51:37 AM liquibase.changelog
+INFO: Creating database history table with name: public.databasechangelog
+Oct 17, 2026 5:51:37 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Oct 17, 2026 5:51:37 AM liquibase.snapshot
+INFO: Creating snapshot
+Oct 17, 2026 5:51:37 AM liquibase.lockservice
+INFO: Successfully acquired change log lock
+Oct 17, 2026 5:51:37 AM liquibase.command
+INFO: Using deploymentId: 2216293636
+Oct 17, 2026 5:51:37 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Oct 17, 2026 5:51:37 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:37 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex ran successfully in 15ms
+Running Changeset: db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::002-claim-persistence::codex
+Oct 17, 2026 5:51:37 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:37 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::002-claim-persistence::codex ran successfully in 40ms
+Oct 17, 2026 5:51:38 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:38 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex ran successfully in 2ms
+Running Changeset: db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex
+Oct 17, 2026 5:51:38 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:38 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex ran successfully in 3ms
+Oct 17, 2026 5:51:38 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:38 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex ran successfully in 15ms
+Oct 17, 2026 5:51:38 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:38 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex ran successfully in 3ms
+Oct 17, 2026 5:51:38 AM liquibase.util
+INFO: UPDATE SUMMARY
+Oct 17, 2026 5:51:38 AM liquibase.util
+INFO: Run:                          6
+Running Changeset: db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex
+
+UPDATE SUMMARY
+Run:                          6
+Previously run:               0
+Filtered out:                 0
+-------------------------------
+Total change sets:            6
+
+Oct 17, 2026 5:51:38 AM liquibase.util
+INFO: Previously run:               0
+Oct 17, 2026 5:51:38 AM liquibase.util
+INFO: Filtered out:                 0
+Oct 17, 2026 5:51:38 AM liquibase.util
+INFO: -------------------------------
+Oct 17, 2026 5:51:38 AM liquibase.util
+INFO: Total change sets:            6
+Oct 17, 2026 5:51:38 AM liquibase.util
+INFO: Update summary generated
+Oct 17, 2026 5:51:38 AM liquibase.command
+INFO: Update command completed successfully.
+Liquibase: Update has been successful. Rows affected: 6
+Oct 17, 2026 5:51:38 AM liquibase.lockservice
+INFO: Successfully released change log lock
+Oct 17, 2026 5:51:38 AM liquibase.command
+INFO: Command execution complete
+running test case 3/9: auditRepositoryAppendsAndReadsAndRuntimeCannotRewriteEitherAuditTable()
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.616 s -- in com.papaya.claims.claim.domain.persistence.AuditImmutabilityIT
+[INFO] Running com.papaya.claims.claim.domain.persistence.IdempotencyIT
+05:51:38.361 [main] INFO tc.postgres:16-alpine -- Creating container for image: postgres:16-alpine
+05:51:38.407 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine is starting: 262749682aee9ae56276c4dd1c5bdeb00466ca0a9909e0abb01a8b5ee9c489d6
+05:51:39.381 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine started in PT1.020559845S
+05:51:39.381 [main] INFO tc.postgres:16-alpine -- Container is started (JDBC URL: jdbc:postgresql://172.18.0.1:32897/claims?loggerLevel=OFF)
+Running Changeset: db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::002-claim-persistence::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex
+Oct 17, 2026 5:51:39 AM liquibase.database
+INFO: Set default schema name to public
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: Creating database history table with name: public.databasechangelog
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Oct 17, 2026 5:51:39 AM liquibase.snapshot
+INFO: Creating snapshot
+Oct 17, 2026 5:51:39 AM liquibase.lockservice
+INFO: Successfully acquired change log lock
+Oct 17, 2026 5:51:39 AM liquibase.command
+INFO: Using deploymentId: 2216293636
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex ran successfully in 7ms
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::002-claim-persistence::codex ran successfully in 19ms
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex ran successfully in 2ms
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex ran successfully in 1ms
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex ran successfully in 8ms
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:39 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex ran successfully in 2ms
+Oct 17, 2026 5:51:39 AM liquibase.util
+INFO: UPDATE SUMMARY
+Oct 17, 2026 5:51:39 AM liquibase.util
+INFO: Run:                          6
+Oct 17, 2026 5:51:39 AM liquibase.util
+INFO: Previously run:               0
+Oct 17, 2026 5:51:39 AM liquibase.util
+INFO: Filtered out:                 0
+Oct 17, 2026 5:51:39 AM liquibase.util
+INFO: -------------------------------
+Oct 17, 2026 5:51:39 AM liquibase.util
+INFO: Total change sets:            6
+Oct 17, 2026 5:51:39 AM liquibase.util
+INFO: Update summary generated
+Oct 17, 2026 5:51:39 AM liquibase.command
+INFO: Update command completed successfully.
+Running Changeset: db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex
+Running Changeset: db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex
+
+UPDATE SUMMARY
+Run:                          6
+Previously run:               0
+Filtered out:                 0
+-------------------------------
+Total change sets:            6
+
+Oct 17, 2026 5:51:39 AM liquibase.lockservice
+INFO: Successfully released change log lock
+Oct 17, 2026 5:51:39 AM liquibase.command
+INFO: Command execution complete
+Liquibase: Update has been successful. Rows affected: 6
+running test case 4/9: repositoryRoundTripsReceiptAndPropagatesUniqueConflict()
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.373 s -- in com.papaya.claims.claim.domain.persistence.IdempotencyIT
+[INFO] Running com.papaya.claims.claim.domain.persistence.ConcurrencyIT
+05:51:39.736 [main] INFO tc.postgres:16-alpine -- Creating container for image: postgres:16-alpine
+05:51:39.776 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine is starting: 09bf1fcbd7ca2344f21e887e6f78b966494129b07cdb2366c9ffabde72128687
+05:51:40.752 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine started in PT1.015903846S
+05:51:40.753 [main] INFO tc.postgres:16-alpine -- Container is started (JDBC URL: jdbc:postgresql://172.18.0.1:32898/claims?loggerLevel=OFF)
+Oct 17, 2026 5:51:40 AM liquibase.database
+INFO: Set default schema name to public
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: Creating database history table with name: public.databasechangelog
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Oct 17, 2026 5:51:40 AM liquibase.snapshot
+INFO: Creating snapshot
+Oct 17, 2026 5:51:40 AM liquibase.lockservice
+INFO: Successfully acquired change log lock
+Oct 17, 2026 5:51:40 AM liquibase.command
+INFO: Using deploymentId: 2216293636
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex ran successfully in 7ms
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::002-claim-persistence::codex ran successfully in 20ms
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex ran successfully in 2ms
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex ran successfully in 2ms
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex ran successfully in 9ms
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:40 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex ran successfully in 2ms
+Running Changeset: db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::002-claim-persistence::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex
+Running Changeset: db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex
+
+UPDATE SUMMARY
+Run:                          6
+Previously run:               0
+Filtered out:                 0
+-------------------------------
+Total change sets:            6
+
+Oct 17, 2026 5:51:40 AM liquibase.util
+INFO: UPDATE SUMMARY
+Oct 17, 2026 5:51:40 AM liquibase.util
+INFO: Run:                          6
+Oct 17, 2026 5:51:40 AM liquibase.util
+INFO: Previously run:               0
+Oct 17, 2026 5:51:40 AM liquibase.util
+INFO: Filtered out:                 0
+Oct 17, 2026 5:51:40 AM liquibase.util
+INFO: -------------------------------
+Oct 17, 2026 5:51:40 AM liquibase.util
+INFO: Total change sets:            6
+Oct 17, 2026 5:51:40 AM liquibase.util
+INFO: Update summary generated
+Oct 17, 2026 5:51:40 AM liquibase.command
+INFO: Update command completed successfully.
+Oct 17, 2026 5:51:40 AM liquibase.lockservice
+INFO: Successfully released change log lock
+Oct 17, 2026 5:51:40 AM liquibase.command
+INFO: Command execution complete
+Liquibase: Update has been successful. Rows affected: 6
+running test case 5/9: idempotencyTransactionLockSerializesSameKeyAndExposesCommittedReceipt()
+running test case 6/9: competingClaimCasUpdatesAllowOnlyOneWriter()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.766 s -- in com.papaya.claims.claim.domain.persistence.ConcurrencyIT
+[INFO] Running com.papaya.claims.claim.domain.persistence.ClaimPersistenceIT
+05:51:41.505 [main] INFO tc.postgres:16-alpine -- Creating container for image: postgres:16-alpine
+05:51:41.550 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine is starting: a4fcfc8b5022637bd4ac6a663c8e57b453a8fce213d149046ce9b0cb77178295
+05:51:42.467 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine started in PT0.962371781S
+05:51:42.467 [main] INFO tc.postgres:16-alpine -- Container is started (JDBC URL: jdbc:postgresql://172.18.0.1:32899/claims?loggerLevel=OFF)
+Oct 17, 2026 5:51:42 AM liquibase.database
+INFO: Set default schema name to public
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: Creating database history table with name: public.databasechangelog
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Oct 17, 2026 5:51:42 AM liquibase.snapshot
+INFO: Creating snapshot
+Oct 17, 2026 5:51:42 AM liquibase.lockservice
+INFO: Successfully acquired change log lock
+Oct 17, 2026 5:51:42 AM liquibase.command
+INFO: Using deploymentId: 2216293636
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex ran successfully in 9ms
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::002-claim-persistence::codex ran successfully in 21ms
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex ran successfully in 3ms
+Running Changeset: db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::002-claim-persistence::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex
+Running Changeset: db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex ran successfully in 2ms
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex ran successfully in 7ms
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:42 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex ran successfully in 1ms
+
+UPDATE SUMMARY
+Run:                          6
+Previously run:               0
+Filtered out:                 0
+-------------------------------
+Total change sets:            6
+
+Oct 17, 2026 5:51:42 AM liquibase.util
+INFO: UPDATE SUMMARY
+Oct 17, 2026 5:51:42 AM liquibase.util
+INFO: Run:                          6
+Oct 17, 2026 5:51:42 AM liquibase.util
+INFO: Previously run:               0
+Oct 17, 2026 5:51:42 AM liquibase.util
+INFO: Filtered out:                 0
+Oct 17, 2026 5:51:42 AM liquibase.util
+INFO: -------------------------------
+Liquibase: Update has been successful. Rows affected: 6
+Oct 17, 2026 5:51:42 AM liquibase.util
+INFO: Total change sets:            6
+Oct 17, 2026 5:51:42 AM liquibase.util
+INFO: Update summary generated
+Oct 17, 2026 5:51:42 AM liquibase.command
+INFO: Update command completed successfully.
+Oct 17, 2026 5:51:42 AM liquibase.lockservice
+INFO: Successfully released change log lock
+Oct 17, 2026 5:51:42 AM liquibase.command
+INFO: Command execution complete
+running test case 7/9: repositoryRoundTripListsAndCasLeaveImmutableIdentityAndCoverageUntouched()
+running test case 8/9: migrationOwnsSchemaAndRuntimeCannotCreateObjects()
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.325 s -- in com.papaya.claims.claim.domain.persistence.ClaimPersistenceIT
+[INFO] Running com.papaya.claims.claim.domain.persistence.TransactionRollbackIT
+05:51:42.831 [main] INFO tc.postgres:16-alpine -- Creating container for image: postgres:16-alpine
+05:51:42.865 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine is starting: db3a36907e303d0c11d848f5f1f68ec1b7aaa6ff0a9471d508bdf9e9241b2e59
+05:51:43.776 [main] INFO tc.postgres:16-alpine -- Container postgres:16-alpine started in PT0.944744041S
+05:51:43.776 [main] INFO tc.postgres:16-alpine -- Container is started (JDBC URL: jdbc:postgresql://172.18.0.1:32900/claims?loggerLevel=OFF)
+Oct 17, 2026 5:51:43 AM liquibase.database
+INFO: Set default schema name to public
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: Creating database history table with name: public.databasechangelog
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Oct 17, 2026 5:51:43 AM liquibase.snapshot
+INFO: Creating snapshot
+Oct 17, 2026 5:51:43 AM liquibase.lockservice
+INFO: Successfully acquired change log lock
+Oct 17, 2026 5:51:43 AM liquibase.command
+INFO: Using deploymentId: 2216293636
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: Reading from public.databasechangelog
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex ran successfully in 8ms
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::002-claim-persistence::codex ran successfully in 20ms
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex ran successfully in 2ms
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex ran successfully in 2ms
+Running Changeset: db/changelog/changes/001-initial-schema.sql::001-initial-claims-schema::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::002-claim-persistence::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::003-audit-immutability-function::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::004-claim-audit-immutability::codex
+Running Changeset: db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex
+Running Changeset: db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex
+
+UPDATE SUMMARY
+Run:                          6
+Previously run:               0
+Filtered out:                 0
+-------------------------------
+Total change sets:            6
+
+Liquibase: Update has been successful. Rows affected: 6
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/002-persistence.sql::005-system-audit-immutability::codex ran successfully in 7ms
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: Custom SQL executed
+Oct 17, 2026 5:51:43 AM liquibase.changelog
+INFO: ChangeSet db/changelog/changes/006-outbox-trace-context.sql::006-outbox-trace-context::codex ran successfully in 3ms
+Oct 17, 2026 5:51:43 AM liquibase.util
+INFO: UPDATE SUMMARY
+Oct 17, 2026 5:51:43 AM liquibase.util
+INFO: Run:                          6
+Oct 17, 2026 5:51:43 AM liquibase.util
+INFO: Previously run:               0
+Oct 17, 2026 5:51:43 AM liquibase.util
+INFO: Filtered out:                 0
+Oct 17, 2026 5:51:43 AM liquibase.util
+INFO: -------------------------------
+Oct 17, 2026 5:51:43 AM liquibase.util
+INFO: Total change sets:            6
+Oct 17, 2026 5:51:43 AM liquibase.util
+INFO: Update summary generated
+Oct 17, 2026 5:51:43 AM liquibase.command
+INFO: Update command completed successfully.
+Oct 17, 2026 5:51:43 AM liquibase.lockservice
+INFO: Successfully released change log lock
+Oct 17, 2026 5:51:43 AM liquibase.command
+INFO: Command execution complete
+running test case 9/9: oneSpringTransactionRollsBackClaimAuditReceiptPaymentAndOutboxTogether()
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.312 s -- in com.papaya.claims.claim.domain.persistence.TransactionRollbackIT
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- failsafe:3.5.6:verify (default) @ claims-workflow ---
+[INFO] 
+[INFO] --- jacoco:0.8.13:report (report) @ claims-workflow ---
+[INFO] Loading execution data file /workspace/target/jacoco.exec
+[INFO] Analyzed bundle 'claims-workflow' with 74 classes
+[INFO] 
+[INFO] --- jacoco:0.8.13:check (check) @ claims-workflow ---
+[INFO] Loading execution data file /workspace/target/jacoco.exec
+[INFO] Analyzed bundle 'claims-workflow' with 74 classes
+[INFO] All coverage checks have been met.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  26.353 s
+[INFO] Finished at: 2026-10-17T05:51:44Z
+[INFO] ------------------------------------------------------------------------

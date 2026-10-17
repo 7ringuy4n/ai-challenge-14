@@ -1,6 +1,6 @@
 {
   "requirement": "REQ-20261017-017",
-  "recorded_at_utc": "2026-10-17T05:22:00Z",
+  "recorded_at_utc": "2026-10-17T06:05:46Z",
   "branch": "develop",
   "status": "IN_PROGRESS_NOT_ACCEPTED",
   "environment": {
@@ -13,14 +13,14 @@
   "functional": {
     "status": "PASS",
     "combined_live_cases": 29,
-    "command": "CLAIMS_EVIDENCE_DIR=reports/verification/acceptance-matrix python3 scripts/run-scenarios.py",
-    "console": "reports/verification/acceptance-matrix/console.log",
-    "http_exchanges": "reports/verification/acceptance-matrix/http-exchanges.jsonl",
+    "command": "CLAIMS_API_BASE=http://127.0.0.1:8080 CLAIMS_EVIDENCE_DIR=reports/verification/REQ-017-boundary-live python3 scripts/run-scenarios.py",
+    "console": "reports/verification/REQ-017-boundary-live/console.log",
+    "http_exchanges": "reports/verification/REQ-017-boundary-live/http-exchanges.jsonl",
     "cross_member": {
       "status": "PASS",
       "cases": 7,
       "command": "python3 -O scripts/browser/verify-cross-member.py",
-      "report": "reports/verification/REQ-017-cross-member/run-20261017T050909578984Z/cross-member.json"
+      "report": "reports/verification/REQ-017-cross-member/run-20261017T060255912442Z/cross-member.json"
     },
     "browser": {
       "status": "PASS",
@@ -29,42 +29,42 @@
       "api_requests": 155,
       "console_errors": 0,
       "screenshots": 15,
-      "report": "reports/verification/REQ-017-browser/run-2026-10-17T050718217Z/browser-e2e.json"
+      "report": "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/browser-e2e.json"
     },
     "postman": {
       "status": "PASS",
-      "requests": 24,
+      "requests": 34,
       "assertions": 14,
       "failures": 0,
-      "report": "reports/verification/REQ-017-postman.log"
+      "report": "reports/verification/REQ-017-boundary-postman.log"
     },
     "smoke": {
       "status": "PASS",
-      "report": "reports/verification/REQ-017-smoke.log"
+      "report": "reports/verification/REQ-017-boundary-smoke-default.log"
     }
   },
   "quality": {
     "status": "PASS",
     "command": "docker run --rm --network host -v /var/run/docker.sock:/var/run/docker.sock -v \"$PWD:/workspace\" -v /tmp/claims-m2:/root/.m2 -w /workspace maven:3.9.11-eclipse-temurin-21 mvn -B -Pquality clean verify",
-    "unit_tests": 126,
+    "unit_tests": 127,
     "integration_tests": 9,
     "failures": 0,
     "errors": 0,
     "skipped": 0,
     "liquibase_changesets": 6,
     "line_coverage": {
-      "covered": 942,
+      "covered": 944,
       "missed": 29,
-      "percent": 97.0134,
+      "percent": 97.0195,
       "minimum": 95
     },
     "branch_coverage": {
-      "covered": 580,
+      "covered": 582,
       "missed": 63,
-      "percent": 90.2022,
+      "percent": 90.2326,
       "minimum": 90
     },
-    "log": "reports/verification/REQ-019-quality-final.log"
+    "log": "reports/verification/REQ-017-quality-after-boundary-fix.log"
   },
   "tracing": {
     "status": "PASS",
@@ -77,24 +77,43 @@
     "finding": "P2: cross-member Python assert checks disabled by -O",
     "resolution": "replaced with explicit status checks; python3 -O live verification passed 7/7",
     "rereview": "PASS",
-    "evidence": "reports/verification/REQ-017-review.json"
+    "evidence": "reports/verification/REQ-017-review.json",
+    "performance_rereview": "PASS; reports/sub-agents/T13/01/review-01.md",
+    "member_name_boundary": "PASS; reports/sub-agents/T14/02/review-02.md"
   },
   "performance": {
-    "status": "NOT_RUN",
-    "reason": "seven final-source full JMeter reruns pending; approved targets P95<=500ms, P99<=1000ms, HTTP errors<=1%",
+    "status": "NOT_RUN_FINAL_SOURCE_CHANGED",
+    "command": "In detached clean checkout c6dccfef1ba24292f078b826e430c19d8ec74e92: scripts/performance/run-profile.sh {baseline,normal,peak,stress,spike,soak,concurrent-claims}; restore only generated reports/performance/baseline.jtl between profiles; python3 scripts/performance/compare-runs.py reports/verification/REQ-017-jmeter-rerun",
+    "jmeter": "Apache JMeter 5.6.3",
+    "java": "OpenJDK 21.0.12.1",
+    "source_commit": "c6dccfef1ba24292f078b826e430c19d8ec74e92",
+    "source_worktree": "CLEAN for all seven runs; exact_working_tree_source_hash matches commit",
+    "profiles": 7,
+    "total_samples": 1564951,
+    "max_p95_ms": 341,
+    "max_p99_ms": 470,
+    "max_error_rate": 0,
+    "approved_targets": "P95<=500ms, P99<=1000ms, HTTP errors<=1%",
+    "comparison": "reports/verification/REQ-017-jmeter-rerun/comparison.json",
+    "evidence_dir": "reports/verification/REQ-017-jmeter-rerun",
     "profile_hashes_before": "reports/verification/REQ-017-jmeter-profile-hashes-before.txt",
-    "profile_hashes_after": "reports/verification/REQ-017-jmeter-profile-hashes-after.txt"
+    "profile_hashes_after": "reports/verification/REQ-017-jmeter-profile-hashes-after.txt",
+    "profile_hashes_unchanged": true,
+    "independent_review": "PASS",
+    "review_evidence": "reports/sub-agents/T13/01/review-01.md",
+    "reason": "The seven clean-source JMeter profiles passed on c6dccfe, then a P2 configuration-length fix changed source. All seven profiles must rerun against the next committed source revision.",
+    "previous_source_commit": "c6dccfef1ba24292f078b826e430c19d8ec74e92"
   },
   "audit": {
     "status": "PARTIAL",
     "local_accessible_sessions": 62,
-    "local_accessible_records_exported": 7233,
+    "local_accessible_records_exported": 7287,
     "transcript_integrity": "PASS: all 62 hashes match; paths are unique and contained",
     "exporter": "scripts/audit/export-codex-sessions.py",
     "inventory": "reports/audit/REQ-017-session-inventory.json",
     "host_managed_raw_payloads": "NOT_CAPTURED",
     "mandatory_full_capture_gate": "BLOCKED_PENDING_USER_DECISION",
-    "note": "Accessible local Codex session and archived session inventory/transcript reconciliation is still required. No merge or push will occur while this binding gate remains unsatisfied."
+    "note": "Local accessible session/archive inventory and transcript export are complete with integrity checks; raw host-managed model payloads remain inaccessible. No merge or push will occur while this binding gate remains unsatisfied."
   },
   "acceptance": "NOT_ACCEPTED"
 }

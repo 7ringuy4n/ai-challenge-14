@@ -38,3 +38,11 @@ Implemented the approved local `CLAIMS_MEMBER_USERNAMES` configuration (default 
 Final-source Java 21/Maven quality verification passed 126 unit and 9 PostgreSQL/Testcontainers tests, 0 failures/errors/skips, six Liquibase changesets, 97.0134% line coverage (942/971) and 90.2022% branch coverage (580/643). OpenTelemetry evidence from the same combined live run verifies inbound parent → HTTP server → secured request → two asynchronous outbox spans and matching application log trace/span IDs. Independent T14 review found a P2 in Python `assert` checks under `-O`; it was fixed and independently rereviewed PASS.
 
 Still in progress: final-source full seven-profile JMeter rerun and local Codex session audit. Host-managed model raw payloads remain `NOT_CAPTURED`/`PARTIAL` and the user's mandatory full-capture merge condition remains unresolved. No merge or push is performed. Full status and evidence: `reports/verification/REQ-017-current.json`.
+
+## 2026-10-17 — REQ-017 final verification progress
+
+All seven byte-identical JMeter profiles ran against clean source commit `c6dccfef1ba24292f078b826e430c19d8ec74e92` and passed P95 ≤500 ms, P99 ≤1,000 ms, and errors ≤1%; independent evidence review passed. 1,564,951 samples, compressed JTLs, dashboard archives, resource/database/outbox measurements, and comparison are retained under `reports/verification/REQ-017-jmeter-rerun/`. Local session export/integrity verification passed for 62 sessions and 7,287 accessible records. Raw host-managed payloads remain unavailable and block acceptance/merge.
+
+## 2026-10-17 — REQ-017 review remediation
+
+Resolved the independent P2 for oversized configured member usernames by capping total length at 127, matching the 120-character persisted identity column after the `member-` prefix. Boundary review passed; focused test passed 5/5; full Maven quality suite passed 127 unit + 9 PostgreSQL/Testcontainers tests with 97.0195% line / 90.2326% branch coverage. The seven prior JMeter profiles are valid for c6dccfe only; rerun against the new committed source before final acceptance.

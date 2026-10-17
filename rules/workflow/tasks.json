@@ -898,8 +898,13 @@
       "acceptance": [
         "Seven full executable JMeter profiles against source commit exactly matching recorded source hash and byte-identical profiles; all approved limits pass"
       ],
-      "evidence": [],
-      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
+      "evidence": [
+        "reports/verification/REQ-017-jmeter-rerun/comparison.json",
+        "reports/sub-agents/T13/01/review-01.md",
+        "reports/verification/REQ-017-jmeter-profile-hashes-before.txt",
+        "reports/verification/REQ-017-jmeter-profile-hashes-after.txt"
+      ],
+      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review. Prior seven-profile run on c6dccfe passed and was independently reviewed; current source then changed for T14 P2 member identity length. T13 remains running until all seven profiles are rerun on the corrected committed source."
     },
     {
       "id": "T14",
@@ -944,9 +949,15 @@
         "reports/verification/REQ-019-focused-final.log",
         "reports/verification/REQ-019-quality-final.log",
         "reports/verification/REQ-019-final-compose-setup.log",
-        "reports/verification/REQ-017-review.json"
+        "reports/verification/REQ-017-review.json",
+        "reports/sub-agents/T14/02/review-02.md",
+        "reports/verification/REQ-017-member-name-boundary.log",
+        "reports/verification/REQ-017-quality-after-boundary-fix.log",
+        "reports/verification/REQ-017-boundary-compose-default.log",
+        "reports/verification/REQ-017-boundary-live/console.log",
+        "reports/verification/REQ-017-boundary-postman.log"
       ],
-      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review. T14 implementation and live checks passed; independent review P2 harness issue fixed and rereview passed. Latest member cross-check run uses python3 -O and passes 7/7."
+      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review. T14 implementation and live checks passed; independent review P2 harness issue fixed and rereview passed. Latest member cross-check run uses python3 -O and passes 7/7. Independent review P2 on max member identity length fixed (total username capped at 127 to fit member_id VARCHAR(120)); boundary rereview passed. Full quality 127+9 passed; smoke, 29 live cases, 17 Chrome cases, 7 cross-member checks and Postman passed on corrected source. Final source commit/JMeter rerun pending."
     },
     {
       "id": "T15",
@@ -974,7 +985,9 @@
         "docs/testing/traceability-matrix.md",
         "reports/verification/acceptance-matrix/console.log",
         "reports/verification/acceptance-matrix/http-exchanges.jsonl",
-        "reports/telemetry/REQ-017-trace-verification.json"
+        "reports/telemetry/REQ-017-trace-verification.json",
+        "reports/acceptance/FINAL-ACCEPTANCE.md",
+        "reports/verification/REQ-017-requirement-matrix.json"
       ],
       "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
     },
@@ -1002,7 +1015,10 @@
         "All locally accessible project-related session and archived-session events are inventoried and hashed; available message/tool events are captured honestly; inaccessible payloads marked NOT_CAPTURED; mandatory full-capture criterion evaluated without waiver"
       ],
       "evidence": [
-        "docs/submission/llm-interactions.jsonl"
+        "docs/submission/llm-interactions.jsonl",
+        "reports/audit/REQ-017-session-inventory.json",
+        "reports/audit/transcripts/",
+        "reports/sub-agents/T13/01/review-01.md"
       ],
       "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and changes are serialized. Do not mark accepted without actual evidence and independent review."
     }
