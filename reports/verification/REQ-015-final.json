@@ -12,7 +12,8 @@
     "main": "521cb1427f910ebbd01129cc1a950c55b899ee87",
     "origin_push": "NOT_PERFORMED",
     "main_merge": "NOT_PERFORMED",
-    "develop_work_commit": "PENDING_COORDINATOR_COMMIT"
+    "develop_work_commit": "ab1462d0163583b153d005ef6c1c2be8bb33d0cd",
+    "author_override": "Existing repository author identity applied with per-command git -c; global config unchanged"
   },
   "source_hash": {
     "algorithm": "sha256 over sorted per-file hashes of application, build, scripts, performance profiles, and Postman artifacts",
