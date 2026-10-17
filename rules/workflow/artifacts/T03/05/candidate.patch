@@ -1,0 +1,175 @@
+diff --git a/docker/Dockerfile b/docker/Dockerfile
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/docker/Dockerfile
+@@ -0,0 +1,15 @@
++FROM maven:3.9.11-eclipse-temurin-21 AS build
++WORKDIR /workspace
++COPY pom.xml .
++COPY src ./src
++RUN mvn -B -DskipTests package
++
++FROM eclipse-temurin:21-jre-alpine
++RUN addgroup -S app && adduser -S -G app -h /app app
++WORKDIR /app
++COPY --from=build --chown=app:app /workspace/target/claims-workflow-1.0.0-SNAPSHOT.jar /app/app.jar
++USER app:app
++EXPOSE 8080
++HEALTHCHECK --interval=10s --timeout=3s --start-period=45s --retries=6 \
++  CMD wget -q -O /dev/null http://127.0.0.1:8080/actuator/health || exit 1
++ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]
+diff --git a/docker/compose.yml b/docker/compose.yml
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/docker/compose.yml
+@@ -0,0 +1,48 @@
++services:
++  database:
++    image: postgres:16
++    restart: unless-stopped
++    environment:
++      POSTGRES_DB: claims
++      POSTGRES_USER: ${CLAIMS_MIGRATION_DB_USER:?Set CLAIMS_MIGRATION_DB_USER in .env}
++      POSTGRES_PASSWORD: ${CLAIMS_MIGRATION_DB_PASSWORD:?Set CLAIMS_MIGRATION_DB_PASSWORD in .env}
++      CLAIMS_RUNTIME_DB_USER: ${CLAIMS_RUNTIME_DB_USER:?Set CLAIMS_RUNTIME_DB_USER in .env}
++      CLAIMS_RUNTIME_DB_PASSWORD: ${CLAIMS_RUNTIME_DB_PASSWORD:?Set CLAIMS_RUNTIME_DB_PASSWORD in .env}
++    volumes:
++      - claims-data:/var/lib/postgresql/data
++      - ./initdb/10-runtime-role.sh:/docker-entrypoint-initdb.d/10-runtime-role.sh:ro
++    healthcheck:
++      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
++      interval: 5s
++      timeout: 3s
++      retries: 20
++      start_period: 10s
++
++  app:
++    build:
++      context: ..
++      dockerfile: docker/Dockerfile
++    restart: unless-stopped
++    depends_on:
++      database:
++        condition: service_healthy
++    environment:
++      CLAIMS_DATABASE_URL: ${CLAIMS_DATABASE_URL:?Set CLAIMS_DATABASE_URL in .env}
++      CLAIMS_RUNTIME_DB_USER: ${CLAIMS_RUNTIME_DB_USER:?Set CLAIMS_RUNTIME_DB_USER in .env}
++      CLAIMS_RUNTIME_DB_PASSWORD: ${CLAIMS_RUNTIME_DB_PASSWORD:?Set CLAIMS_RUNTIME_DB_PASSWORD in .env}
++      CLAIMS_MIGRATION_DB_USER: ${CLAIMS_MIGRATION_DB_USER:?Set CLAIMS_MIGRATION_DB_USER in .env}
++      CLAIMS_MIGRATION_DB_PASSWORD: ${CLAIMS_MIGRATION_DB_PASSWORD:?Set CLAIMS_MIGRATION_DB_PASSWORD in .env}
++      SERVER_PORT: 8080
++      CLAIMS_DEMO_PASSWORD: ${CLAIMS_DEMO_PASSWORD:?Set CLAIMS_DEMO_PASSWORD in .env}
++      CLAIMS_SYSTEM_PASSWORD: ${CLAIMS_SYSTEM_PASSWORD:?Set CLAIMS_SYSTEM_PASSWORD in .env}
++    ports:
++      - "127.0.0.1:${SERVER_PORT:-8080}:8080"
++    healthcheck:
++      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/actuator/health || exit 1"]
++      interval: 10s
++      timeout: 3s
++      retries: 12
++      start_period: 60s
++
++volumes:
++  claims-data:
+diff --git a/docker/initdb/10-runtime-role.sh b/docker/initdb/10-runtime-role.sh
+new file mode 100755
+index 0000000..1111111
+--- /dev/null
++++ b/docker/initdb/10-runtime-role.sh
+@@ -0,0 +1,16 @@
++#!/bin/sh
++set -eu
++
++# The official image runs init scripts only on first database creation.
++# psql variable quoting safely handles generated passwords without logging them.
++psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
++  --set=runtime_user="$CLAIMS_RUNTIME_DB_USER" \
++  --set=runtime_password="$CLAIMS_RUNTIME_DB_PASSWORD" <<'SQL'
++SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', :'runtime_user', :'runtime_password')
++\gexec
++ALTER DEFAULT PRIVILEGES FOR ROLE claims_migration IN SCHEMA public
++  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO claims_runtime;
++ALTER DEFAULT PRIVILEGES FOR ROLE claims_migration IN SCHEMA public
++  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO claims_runtime;
++SQL
++
+diff --git a/.env.example b/.env.example
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/.env.example
+@@ -0,0 +1,8 @@
++CLAIMS_DATABASE_URL=jdbc:postgresql://database:5432/claims
++CLAIMS_RUNTIME_DB_USER=claims_runtime
++CLAIMS_RUNTIME_DB_PASSWORD=CHANGE_ME_RUNTIME_PASSWORD
++CLAIMS_MIGRATION_DB_USER=claims_migration
++CLAIMS_MIGRATION_DB_PASSWORD=CHANGE_ME_MIGRATION_PASSWORD
++SERVER_PORT=8080
++CLAIMS_DEMO_PASSWORD=CHANGE_ME_DEMO_PASSWORD
++CLAIMS_SYSTEM_PASSWORD=CHANGE_ME_SYSTEM_PASSWORD
+diff --git a/scripts/setup.sh b/scripts/setup.sh
+new file mode 100755
+index 0000000..1111111
+--- /dev/null
++++ b/scripts/setup.sh
+@@ -0,0 +1,32 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++env_file=.env
++example=.env.example
++if [[ ! -f "$env_file" ]]; then
++  cp "$example" "$env_file"
++  chmod 600 "$env_file"
++fi
++
++replace_dummy() {
++  local key=$1 value
++  value=$(awk -F= -v key="$key" '$1 == key { sub(/^[^=]*=/, ""); print; found=1; exit } END { if (!found) exit 1 }' "$env_file") || {
++    echo "Missing $key in .env" >&2
++    return 1
++  }
++  if [[ "$value" == CHANGE_ME_* || -z "$value" ]]; then
++    value=$(openssl rand -hex 32)
++    sed -i "s|^${key}=.*|${key}=${value}|" "$env_file"
++  fi
++}
++
++replace_dummy CLAIMS_RUNTIME_DB_PASSWORD
++replace_dummy CLAIMS_MIGRATION_DB_PASSWORD
++replace_dummy CLAIMS_DEMO_PASSWORD
++replace_dummy CLAIMS_SYSTEM_PASSWORD
++chmod 600 "$env_file"
++
++compose=(docker compose --env-file "$env_file" -f docker/compose.yml)
++"${compose[@]}" config --quiet
++"${compose[@]}" up -d --build --wait --wait-timeout 180
++echo "Claims services are healthy. Run bash scripts/smoke.sh to verify the API."
+diff --git a/scripts/smoke.sh b/scripts/smoke.sh
+new file mode 100755
+index 0000000..1111111
+--- /dev/null
++++ b/scripts/smoke.sh
+@@ -0,0 +1,20 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++env_file=.env
++if [[ ! -f "$env_file" ]]; then
++  echo "Run bash scripts/setup.sh first." >&2
++  exit 1
++fi
++read_env() {
++  awk -F= -v key="$1" '$1 == key { sub(/^[^=]*=/, ""); print; exit }' "$env_file"
++}
++port=$(read_env SERVER_PORT)
++demo_password=$(read_env CLAIMS_DEMO_PASSWORD)
++base="http://127.0.0.1:${port:-8080}"
++# Suppress response bodies and curl diagnostics so credentials and tokens never appear.
++curl --silent --show-error --fail --output /dev/null --user "clerk:${demo_password}" \
++  "$base/actuator/health" 2>/dev/null || { echo "Authenticated health check failed." >&2; exit 1; }
++curl --silent --show-error --fail --output /dev/null --user "clerk:${demo_password}" \
++  "$base/api/v1/claims?page=0&size=1" 2>/dev/null || { echo "Authenticated claims API check failed." >&2; exit 1; }
++echo "Authenticated health and claims API checks passed."

@@ -1,0 +1,38 @@
+{
+  "task_id": "T10",
+  "attempt": "01",
+  "author": "application_boundary_worker",
+  "status": "submitted",
+  "scope": "Five new test files only; no application source, build, database, Docker, manifest, memory, or history changes.",
+  "patch": "rules/workflow/artifacts/T10/01/candidate.patch",
+  "new_files": [
+    "src/test/java/com/papaya/claims/application/ApplicationBoundaryTest.java",
+    "src/test/java/com/papaya/claims/application/DispatcherBoundaryTest.java",
+    "src/test/java/com/papaya/claims/configuration/WorkflowConfigurationTest.java",
+    "src/test/java/com/papaya/claims/observability/TraceContextFilterTest.java",
+    "src/test/java/com/papaya/claims/security/SecurityBoundaryTest.java"
+  ],
+  "test_methods": {
+    "src/test/java/com/papaya/claims/application/ApplicationBoundaryTest.java": 8,
+    "src/test/java/com/papaya/claims/application/DispatcherBoundaryTest.java": 5,
+    "src/test/java/com/papaya/claims/configuration/WorkflowConfigurationTest.java": 3,
+    "src/test/java/com/papaya/claims/observability/TraceContextFilterTest.java": 3,
+    "src/test/java/com/papaya/claims/security/SecurityBoundaryTest.java": 4
+  },
+  "verification": {
+    "status": "NOT_RUN",
+    "reason": "Worker assignment forbids builds and test execution; coordinator owns serialized checks.",
+    "command": "mvn -B -Dtest=ApplicationBoundaryTest,DispatcherBoundaryTest,TraceContextFilterTest,SecurityBoundaryTest,WorkflowConfigurationTest test"
+  },
+  "review": {
+    "status": "NOT_RUN",
+    "reason": "Independent review is assigned to the coordinator workflow after patch integration."
+  },
+  "implementation_notes": [
+    "Application tests assert stable BusinessException codes/statuses and repository non-mutation across malformed create/fact/transition inputs and role/phase boundaries.",
+    "Dispatcher tests cover ambient transaction refusal, empty/null polls, delivery order, bounded retry scheduling and retry-state persistence failure.",
+    "Trace tests exercise current-span reuse, created-span lifetime, exception propagation, response/request context and MDC cleanup.",
+    "Security tests cover credential separation and invalid principal/authority paths; configuration tests cover UTC microsecond clock and workflow path loading."
+  ],
+  "test_method_total": 23
+}

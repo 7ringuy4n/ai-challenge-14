@@ -1,0 +1,18 @@
+{
+  "task": "T02",
+  "attempt": "06",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    "src/main/java/com/papaya/claims/persistence/MyBatisAuditRepository.java",
+    "src/main/java/com/papaya/claims/persistence/MyBatisClaimRepository.java",
+    "src/main/java/com/papaya/claims/persistence/MyBatisCommandRepository.java",
+    "src/main/java/com/papaya/claims/persistence/MyBatisEffectRepository.java",
+    "src/test/java/com/papaya/claims/persistence/PersistenceProxyTest.java"
+  ],
+  "change": "Removed final from all four @Repository adapter classes so Spring can create class-based exception-translation proxies. Added PersistenceProxyTest that constructs each adapter and proves CGLIB proxy creation through Spring ProxyFactory.",
+  "evidence": "NOT_RUN by worker; root should run PersistenceProxyTest and the full Spring application startup/acceptance check.",
+  "artifact_note": "The parent request called this a T02/04 delta, but T02/04 already contains a submitted UUID-handler patch. This was placed in the next noncolliding attempt directory T02/06.",
+  "assumptions": [
+    "Class-based proxying is configured or selected by the Spring runtime; preserving the adapter interfaces while making implementations non-final supports both JDK and CGLIB proxying."
+  ]
+}

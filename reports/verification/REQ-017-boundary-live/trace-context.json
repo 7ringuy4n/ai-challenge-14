@@ -1,0 +1,5 @@
+{
+  "session_traceparent": "00-222e3bd455284df5a158424e34feb951-7cea12ef07e54eab-01",
+  "approval_traceparent": "00-90ed56e053744ed290a9281b5cf9ec5f-192cbdb496f44049-01",
+  "expected_outbox_trace_id": "90ed56e053744ed290a9281b5cf9ec5f"
+}

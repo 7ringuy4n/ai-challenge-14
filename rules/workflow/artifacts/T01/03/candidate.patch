@@ -1,0 +1,11 @@
+--- a/src/test/java/com/papaya/claims/engine/WorkflowEngineTest.java
++++ b/src/test/java/com/papaya/claims/engine/WorkflowEngineTest.java
+@@ -43,7 +43,7 @@
+     }
+     @Test void fourthInformationRequestHasExactEscalationMessage() {
+         var error = assertThrows(com.papaya.claims.contract.BusinessException.class, () -> evaluate("UNDER_ASSESSMENT", "PENDING_INFO", "assessor", Map.of("missingInfoDescription", "More"), 3));
+-        assertEquals(422, error.status()); assertEquals(MAX_REQUESTS_MESSAGE, error.getMessage());
++        assertEquals(422, error.status()); assertEquals(ConfiguredWorkflowEngine.MAX_REQUESTS_MESSAGE, error.getMessage());
+     }
+     @Test void thirdInformationRequestIsAccepted() {
+         var d = evaluate("UNDER_ASSESSMENT", "PENDING_INFO", "assessor", Map.of("missingInfoDescription", "More"), 2);

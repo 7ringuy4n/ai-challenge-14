@@ -1,0 +1,383 @@
+diff --git a/src/main/java/com/papaya/claims/engine/WorkflowLoader.java b/src/main/java/com/papaya/claims/engine/WorkflowLoader.java
+--- a/src/main/java/com/papaya/claims/engine/WorkflowLoader.java
++++ b/src/main/java/com/papaya/claims/engine/WorkflowLoader.java
+@@ -36,47 +36,47 @@
+                 g.value, convert(g.guards), g.message)).toList();
+     }
+     private static void validate(Raw raw, String path) {
+-        if (raw == null) fail(path, "$", "document is empty");
++        if (raw == null) throw fail(path, "$", "document is empty");
+         required(raw.version, path, "version"); required(raw.initialState, path, "initialState");
+-        if (raw.states == null || raw.states.isEmpty()) fail(path, "states", "must contain at least one state");
+-        if (new HashSet<>(raw.states).size() != raw.states.size()) fail(path, "states", "contains duplicate state");
+-        if (!raw.states.contains(raw.initialState)) fail(path, "initialState", "must name a configured state");
+-        if (raw.roles == null || raw.roles.isEmpty() || new HashSet<>(raw.roles).size() != raw.roles.size()) fail(path, "roles", "must contain unique roles");
+-        if (raw.maxInformationRequests < 0) fail(path, "maxInformationRequests", "must be nonnegative");
+-        if (raw.transitions == null) fail(path, "transitions", "is required");
++        if (raw.states == null || raw.states.isEmpty()) throw fail(path, "states", "must contain at least one state");
++        if (new HashSet<>(raw.states).size() != raw.states.size()) throw fail(path, "states", "contains duplicate state");
++        if (!raw.states.contains(raw.initialState)) throw fail(path, "initialState", "must name a configured state");
++        if (raw.roles == null || raw.roles.isEmpty() || new HashSet<>(raw.roles).size() != raw.roles.size()) throw fail(path, "roles", "must contain unique roles");
++        if (raw.maxInformationRequests < 0) throw fail(path, "maxInformationRequests", "must be nonnegative");
++        if (raw.transitions == null) throw fail(path, "transitions", "is required");
+         var edges = new HashSet<String>();
+         for (int i = 0; i < raw.transitions.size(); i++) {
+             RawTransition t = raw.transitions.get(i); String at = "transitions[" + i + "]";
+-            if (t == null) fail(path, at, "must not be null");
++            if (t == null) throw fail(path, at, "must not be null");
+             required(t.from, path, at + ".from"); required(t.to, path, at + ".to"); required(t.role, path, at + ".role");
+-            if (!raw.states.contains(t.from) || !raw.states.contains(t.to)) fail(path, at, "from/to must name configured states");
+-            if (!raw.roles.contains(t.role)) fail(path, at + ".role", "must name a configured role");
+-            if (!edges.add(t.from + "\u0000" + t.to)) fail(path, at, "duplicate from/to edge");
++            if (!raw.states.contains(t.from) || !raw.states.contains(t.to)) throw fail(path, at, "from/to must name configured states");
++            if (!raw.roles.contains(t.role)) throw fail(path, at + ".role", "must name a configured role");
++            if (!edges.add(t.from + "\u0000" + t.to)) throw fail(path, at, "duplicate from/to edge");
+             if (t.timerAction != null) try { WorkflowDefinition.TimerAction.valueOf(t.timerAction); }
+-            catch (IllegalArgumentException e) { fail(path, at + ".timerAction", "must be NONE, START, or RESET"); }
++            catch (IllegalArgumentException e) { throw fail(path, at + ".timerAction", "must be NONE, START, or RESET"); }
+             if (t.effects == null) t.effects = List.of();
+-            for (String effect : t.effects) if (!EffectRegistry.supports(effect)) fail(path, at + ".effects", "unknown effect ID " + effect);
++            for (String effect : t.effects) if (!EffectRegistry.supports(effect)) throw fail(path, at + ".effects", "unknown effect ID " + effect);
+             if (t.clearFacts == null) t.clearFacts = List.of();
+             validateGuards(t.guards, path, at + ".guards", 0);
+         }
+     }
+     private static void validateGuards(List<RawGuard> guards, String path, String at, int depth) {
+-        if (depth > 12) fail(path, at, "guard nesting exceeds 12");
++        if (depth > 12) throw fail(path, at, "guard nesting exceeds 12");
+         if (guards == null) return;
+         for (int i = 0; i < guards.size(); i++) {
+             RawGuard g = guards.get(i); String field = at + "[" + i + "]";
+-            if (g == null || !GUARDS.contains(g.type)) fail(path, field + ".type", "unknown guard type");
+-            if (g.type.equals("any") && (g.guards == null || g.guards.isEmpty())) fail(path, field + ".guards", "any requires child guards");
+-            if (Set.of("present", "isTrue", "lessOrEqual", "after", "beforeOrEqual", "allDocumentsValid").contains(g.type) && blank(g.field)) fail(path, field + ".field", "is required for " + g.type);
+-            if (Set.of("lessOrEqual", "after", "beforeOrEqual").contains(g.type) && blank(g.otherField) && g.value == null) fail(path, field, "requires value or otherField");
+-            if (g.type.equals("equal") && blank(g.field)) fail(path, field + ".field", "is required for equal");
+-            if (g.type.equals("equal") && blank(g.otherField) && g.value == null) fail(path, field, "equal requires value or otherField");
++            if (g == null || !GUARDS.contains(g.type)) throw fail(path, field + ".type", "unknown guard type");
++            if (g.type.equals("any") && (g.guards == null || g.guards.isEmpty())) throw fail(path, field + ".guards", "any requires child guards");
++            if (Set.of("present", "isTrue", "lessOrEqual", "after", "beforeOrEqual", "allDocumentsValid").contains(g.type) && blank(g.field)) throw fail(path, field + ".field", "is required for " + g.type);
++            if (Set.of("lessOrEqual", "after", "beforeOrEqual").contains(g.type) && blank(g.otherField) && g.value == null) throw fail(path, field, "requires value or otherField");
++            if (g.type.equals("equal") && blank(g.field)) throw fail(path, field + ".field", "is required for equal");
++            if (g.type.equals("equal") && blank(g.otherField) && g.value == null) throw fail(path, field, "equal requires value or otherField");
+             validateGuards(g.guards, path, field + ".guards", depth + 1);
+         }
+     }
+-    private static void required(String v, String p, String f) { if (blank(v)) fail(p, f, "is required"); }
++    private static void required(String v, String p, String f) { if (blank(v)) throw fail(p, f, "is required"); }
+     private static boolean blank(String v) { return v == null || v.isBlank(); }
+-    private static void fail(String path, String field, String message) { throw new IllegalArgumentException(path + ": " + field + " " + message); }
++    private static IllegalArgumentException fail(String path, String field, String message) { return new IllegalArgumentException(path + ": " + field + " " + message); }
+ 
+     public static final class Raw {
+         public String version, initialState;
+diff --git a/src/main/java/com/papaya/claims/application/ClaimService.java b/src/main/java/com/papaya/claims/application/ClaimService.java
+--- a/src/main/java/com/papaya/claims/application/ClaimService.java
++++ b/src/main/java/com/papaya/claims/application/ClaimService.java
+@@ -37,16 +37,16 @@
+     @Override public ClaimSnapshot create(Actor actor, String memberId, BigDecimal limit, String currency,
+                                            List<String> requiredDocuments) {
+         Objects.requireNonNull(actor); requireAny(actor, Set.of("document_clerk", "team_lead", "member"));
+-        if ("member".equals(actor.role()) && !actor.userId().equals(memberId)) forbidden();
++        if ("member".equals(actor.role()) && !actor.userId().equals(memberId)) throw forbidden();
+         Model.requireText(memberId, "memberId");
+-        if (memberId.length() > 120 || memberId.indexOf(0) >= 0) invalid("memberId exceeds 120 characters or contains a null character");
+-        if (limit == null || limit.signum() < 0 || limit.scale() > 2 || limit.precision() > 18 || limit.precision() - limit.scale() > 16) invalid("Policy limit must be nonnegative with at most two decimal places");
++        if (memberId.length() > 120 || memberId.indexOf(0) >= 0) throw invalid("memberId exceeds 120 characters or contains a null character");
++        if (limit == null || limit.signum() < 0 || limit.scale() > 2 || limit.precision() > 18 || limit.precision() - limit.scale() > 16) throw invalid("Policy limit must be nonnegative with at most two decimal places");
+         validateCurrency(currency);
+-        if (requiredDocuments == null || requiredDocuments.isEmpty() || requiredDocuments.size() > 30) invalid("requiredDocuments must contain 1 to 30 document keys");
++        if (requiredDocuments == null || requiredDocuments.isEmpty() || requiredDocuments.size() > 30) throw invalid("requiredDocuments must contain 1 to 30 document keys");
+         var docs = new LinkedHashSet<String>();
+         for (String doc : requiredDocuments) {
+             Model.requireText(doc, "document key");
+-            if (doc.length() > 80 || doc.indexOf(0) >= 0 || !docs.add(doc)) invalid("Document keys must be unique, at most 80 characters, and contain no null character");
++            if (doc.length() > 80 || doc.indexOf(0) >= 0 || !docs.add(doc)) throw invalid("Document keys must be unique, at most 80 characters, and contain no null character");
+         }
+         UUID id = UUID.randomUUID();
+         ClaimSnapshot claim = new ClaimSnapshot(id, memberId, engine.initialState(), limit, currency,
+@@ -68,12 +68,12 @@
+         ClaimSnapshot result = transactions.execute(status -> {
+             ClaimSnapshot current = locked(id);
+             requireRead(actor, current);
+-            if (engine.options(current, actor, now()).isEmpty()) conflict("Terminal claims cannot be changed");
+-            if (current.version() != expectedVersion) conflict("Claim version is stale");
++            if (engine.options(current, actor, now()).isEmpty()) throw conflict("Terminal claims cannot be changed");
++            if (current.version() != expectedVersion) throw conflict("Claim version is stale");
+             Map<String,Object> accepted = validateUpdates(actor, current, updates);
+             var merged = new LinkedHashMap<>(current.facts()); merged.putAll(accepted);
+             ClaimSnapshot next = current.updateFacts(merged);
+-            if (!claims.compareAndSet(next, current.version())) conflict("Claim version is stale");
++            if (!claims.compareAndSet(next, current.version())) throw conflict("Claim version is stale");
+             return next;
+         });
+         return result;
+@@ -81,13 +81,13 @@
+ 
+     @Override public ClaimSnapshot transition(Actor actor, UUID id, TransitionCommand command) {
+         Objects.requireNonNull(actor, "actor");
+-        if ("system".equals(actor.role())) forbidden();
++        if ("system".equals(actor.role())) throw forbidden();
+         return performTransition(actor, id, command);
+     }
+ 
+     @Override public ClaimSnapshot systemTransition(Actor actor, UUID id, TransitionCommand command) {
+         Objects.requireNonNull(actor, "actor");
+-        if (!"system".equals(actor.role())) forbidden();
++        if (!"system".equals(actor.role())) throw forbidden();
+         return performTransition(actor, id, command);
+     }
+ 
+@@ -99,10 +99,10 @@
+             Optional<CommandReceipt> prior = commands.find(id, actor.userId(), command.idempotencyKey());
+             if (prior.isPresent()) {
+                 if (!MessageDigest.isEqual(prior.get().requestHash().getBytes(StandardCharsets.US_ASCII), hash.getBytes(StandardCharsets.US_ASCII)))
+-                    conflict("Idempotency key was already used with a different command");
++                    throw conflict("Idempotency key was already used with a different command");
+                 return prior.get().result();
+             }
+-            if (command.expectedVersion() != current.version()) conflict("Claim version is stale");
++            if (command.expectedVersion() != current.version()) throw conflict("Claim version is stale");
+             Instant now = now();
+             Decision decision = engine.evaluate(current, actor, command, now);
+             boolean paymentEffect = decision.effects().contains("create_payment_request");
+@@ -115,7 +115,7 @@
+             ClaimSnapshot next = new ClaimSnapshot(transitioned.id(), transitioned.memberId(), transitioned.state(),
+                     transitioned.policyLimit(), transitioned.currency(), finalFacts, transitioned.informationRequests(),
+                     transitioned.version(), transitioned.assessmentStartedAt(), transitioned.lastInformationRequestedAt());
+-            if (!claims.compareAndSet(next, current.version())) conflict("Claim version is stale");
++            if (!claims.compareAndSet(next, current.version())) throw conflict("Claim version is stale");
+             String trace = Optional.ofNullable(MDC.get("traceId")).orElse("unavailable");
+             audits.append(new AuditEntry(UUID.randomUUID(), id, next.version(), now, current.state(), next.state(),
+                     actor.userId(), actor.role(), command.notes(), engine.configVersion(), trace));
+@@ -151,7 +151,7 @@
+             case "member" -> Set.of("memberAcknowledged");
+             default -> Set.of();
+         };
+-        if (allowed.isEmpty()) forbidden();
++        if (allowed.isEmpty()) throw forbidden();
+         boolean phaseAllowed = switch (actor.role()) {
+             case "document_clerk" -> Set.of("SUBMITTED", "PENDING_INFO").contains(claim.state());
+             case "team_lead" -> "DOCUMENTS_VERIFIED".equals(claim.state());
+@@ -160,13 +160,13 @@
+             case "member" -> "REJECTED".equals(claim.state());
+             default -> false;
+         };
+-        if (!phaseAllowed) conflict("Facts cannot be changed in the current claim state");
++        if (!phaseAllowed) throw conflict("Facts cannot be changed in the current claim state");
+         for (String key : updates.keySet()) {
+-            if (key == null || key.indexOf(0) >= 0) invalid("Fact names must not contain null characters");
+-            if (!allowed.contains(key)) invalid("Fact is not writable by this role: " + key);
+-        }
+-        if (updates.isEmpty()) invalid("At least one fact update is required");
+-        if (updates.size() > 12) invalid("Too many fact updates");
++            if (key == null || key.indexOf(0) >= 0) throw invalid("Fact names must not contain null characters");
++            if (!allowed.contains(key)) throw invalid("Fact is not writable by this role: " + key);
++        }
++        if (updates.isEmpty()) throw invalid("At least one fact update is required");
++        if (updates.size() > 12) throw invalid("Too many fact updates");
+         var accepted = new LinkedHashMap<String,Object>();
+         for (var entry : updates.entrySet()) {
+             String key = entry.getKey(); Object value = entry.getValue();
+@@ -178,29 +178,29 @@
+                 }
+                 case "assessorId" -> accepted.put(key, boundedText(value, 120, key));
+                 case "reportComplete", "memberAcknowledged", "paymentConfirmed" -> {
+-                    if (!(value instanceof Boolean)) invalid(key + " must be a boolean"); accepted.put(key, value);
++                    if (!(value instanceof Boolean)) throw invalid(key + " must be a boolean"); accepted.put(key, value);
+                 }
+                 case "assessmentAmount" -> accepted.put(key, validateAmount(value));
+-                case "assessmentCurrency" -> { if (!(value instanceof String s)) invalid(key + " must be text"); validateCurrency((String)value); accepted.put(key, value); }
++                case "assessmentCurrency" -> { if (!(value instanceof String s)) throw invalid(key + " must be text"); validateCurrency((String)value); accepted.put(key, value); }
+                 case "rejectionReason", "missingInfoDescription" -> accepted.put(key, boundedText(value, 2000, key));
+                 case "paymentReference" -> accepted.put(key, boundedText(value, 160, key));
+-                default -> invalid("Unsupported fact");
++                default -> throw invalid("Unsupported fact");
+             }
+         }
+         if ("finance".equals(actor.role()) && (updates.containsKey("paymentConfirmed") || updates.containsKey("paymentReference"))) {
+-            if (!effects.paymentRequestExists(claim.id())) conflict("A payment request must exist before confirmation");
++            if (!effects.paymentRequestExists(claim.id())) throw conflict("A payment request must exist before confirmation");
+             Object reference = updates.getOrDefault("paymentReference", claim.facts().get("paymentReference"));
+-            if (!(reference instanceof String text) || text.isBlank()) invalid("Payment reference is required for confirmation");
++            if (!(reference instanceof String text) || text.isBlank()) throw invalid("Payment reference is required for confirmation");
+         }
+         return accepted;
+     }
+     private Map<String,Object> validateDocuments(ClaimSnapshot claim, Object value) {
+-        if (!(value instanceof Map<?,?> supplied) || supplied.size() > 30) invalid("documents must be a map");
++        if (!(value instanceof Map<?,?> supplied) || supplied.size() > 30) throw invalid("documents must be a map");
+         Object requiredValue = claim.facts().get("requiredDocuments");
+         Set<String> required = requiredValue instanceof List<?> list ? new HashSet<>(list.stream().map(String::valueOf).toList()) : Set.of();
+         var docs = new LinkedHashMap<String,Object>();
+         for (var e : ((Map<?,?>)value).entrySet()) {
+-            if (!(e.getKey() instanceof String key) || !required.contains(key) || !(e.getValue() instanceof Boolean)) invalid("Document results must match required keys and be booleans");
++            if (!(e.getKey() instanceof String key) || !required.contains(key) || !(e.getValue() instanceof Boolean)) throw invalid("Document results must match required keys and be booleans");
+             docs.put((String)e.getKey(), e.getValue());
+         }
+         return Collections.unmodifiableMap(docs);
+@@ -209,14 +209,14 @@
+         BigDecimal amount;
+         try { amount = value instanceof BigDecimal b ? b : new BigDecimal(String.valueOf(value)); }
+         catch (RuntimeException error) { throw new BusinessException("INVALID_AMOUNT", 400, "Assessment amount must be a decimal number"); }
+-        if (amount.signum() < 0 || amount.scale() > 2 || amount.precision() > 18 || amount.precision() - amount.scale() > 16) invalid("Assessment amount must be nonnegative with at most two decimals");
++        if (amount.signum() < 0 || amount.scale() > 2 || amount.precision() > 18 || amount.precision() - amount.scale() > 16) throw invalid("Assessment amount must be nonnegative with at most two decimals");
+         return amount;
+     }
+     private static String boundedText(Object value, int max, String field) {
+-        if (!(value instanceof String)) invalid(field + " must be nonblank text of at most " + max + " characters");
++        if (!(value instanceof String)) throw invalid(field + " must be nonblank text of at most " + max + " characters");
+         String text = (String) value;
+         if (text.isBlank() || text.length() > max || text.indexOf(0) >= 0)
+-            invalid(field + " must be nonblank text of at most " + max + " characters and contain no null character");
++            throw invalid(field + " must be nonblank text of at most " + max + " characters and contain no null character");
+         return text;
+     }
+     private static void validateCurrency(String currency) {
+@@ -227,18 +227,18 @@
+     private Instant now() { return clock.instant().truncatedTo(ChronoUnit.MICROS); }
+     private static String hash(TransitionCommand command, String actorRole) {
+         if (command.target().indexOf(0) >= 0 || command.idempotencyKey().indexOf(0) >= 0 || command.notes().indexOf(0) >= 0 || actorRole.indexOf(0) >= 0)
+-            invalid("Command strings must not contain null characters");
++            throw invalid("Command strings must not contain null characters");
+         try {
+             String stable = command.target() + "\u0000" + command.expectedVersion() + "\u0000" + command.notes() + "\u0000" + actorRole;
+             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(stable.getBytes(StandardCharsets.UTF_8)));
+         } catch (Exception e) { throw new IllegalStateException(e); }
+     }
+     private boolean canRead(Actor actor, ClaimSnapshot claim) { return "member".equals(actor.role()) ? actor.userId().equals(claim.memberId()) : STAFF.contains(actor.role()) || "system".equals(actor.role()); }
+-    private void requireReadable(Actor actor) { if (actor == null || !(STAFF.contains(actor.role()) || "member".equals(actor.role()) || "system".equals(actor.role()))) forbidden(); }
+-    private void requireRead(Actor actor, ClaimSnapshot claim) { requireReadable(actor); if (!canRead(actor, claim)) forbidden(); }
+-    private static void requireAny(Actor actor, Set<String> roles) { if (!roles.contains(actor.role())) forbidden(); }
+-    private static void invalid(String message) { throw new BusinessException("INVALID_INPUT", 400, message); }
+-    private static void forbidden() { throw new BusinessException("FORBIDDEN_ROLE", 403, "The authenticated actor cannot perform this operation"); }
+-    private static void conflict(String message) { throw new BusinessException("CONFLICT", 409, message); }
++    private void requireReadable(Actor actor) { if (actor == null || !(STAFF.contains(actor.role()) || "member".equals(actor.role()) || "system".equals(actor.role()))) throw forbidden(); }
++    private void requireRead(Actor actor, ClaimSnapshot claim) { requireReadable(actor); if (!canRead(actor, claim)) throw forbidden(); }
++    private static void requireAny(Actor actor, Set<String> roles) { if (!roles.contains(actor.role())) throw forbidden(); }
++    private static BusinessException invalid(String message) { return new BusinessException("INVALID_INPUT", 400, message); }
++    private static BusinessException forbidden() { return new BusinessException("FORBIDDEN_ROLE", 403, "The authenticated actor cannot perform this operation"); }
++    private static BusinessException conflict(String message) { return new BusinessException("CONFLICT", 409, message); }
+     private static BusinessException notFound() { return new BusinessException("NOT_FOUND", 404, "Claim was not found"); }
+ }
+diff --git a/src/test/java/com/papaya/claims/engine/ValidationControlFlowTest.java b/src/test/java/com/papaya/claims/engine/ValidationControlFlowTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/engine/ValidationControlFlowTest.java
+@@ -0,0 +1,47 @@
++package com.papaya.claims.engine;
++
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.io.TempDir;
++
++class ValidationControlFlowTest {
++    @TempDir Path temp;
++
++    private void rejects(String yaml, String expected) throws Exception {
++        Path file = temp.resolve("workflow.yml");
++        Files.writeString(file, yaml);
++        assertThatThrownBy(() -> WorkflowLoader.load(file))
++                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining(expected);
++    }
++
++    private String base(String roles, String transitions) {
++        return "version: 'test'\ninitialState: A\nstates: [A, B]\nroles: " + roles
++                + "\nmaxInformationRequests: 3\ntransitions:\n" + transitions;
++    }
++    private String edge(String guard) {
++        return "  - from: A\n    to: B\n    role: clerk\n    guards:\n" + guard + "    effects: []\n";
++    }
++
++    @Test void rejectsNullAndDuplicateRoleEntriesAndMissingTransitionCollection() throws Exception {
++        rejects(base("[null]", edge("      - type: present\n        field: x\n")), "must name a configured role");
++        rejects(base("[clerk, clerk]", edge("      - type: present\n        field: x\n")), "must contain unique roles");
++        rejects("version: test\ninitialState: A\nstates: [A]\nroles: [clerk]\ntransitions: null\n", "transitions is required");
++    }
++
++    @Test void rejectsNullTransitionAndNullGuardEntries() throws Exception {
++        rejects(base("[clerk]", "  - null\n"), "transitions[0] must not be null");
++        rejects(base("[clerk]", "  - from: A\n    to: B\n    role: clerk\n    guards:\n      - null\n"), "unknown guard type");
++    }
++
++    @Test void rejectsMissingEqualFieldAndAcceptsLiteralOrOtherFieldOperands() throws Exception {
++        rejects(base("[clerk]", edge("      - type: equal\n        value: yes\n")), "field is required for equal");
++        rejects(base("[clerk]", edge("      - type: equal\n        field: left\n")), "equal requires value or otherField");
++        String validLiteral = base("[clerk]", edge("      - type: equal\n        field: left\n        value: yes\n"));
++        Path file = temp.resolve("valid.yml"); Files.writeString(file, validLiteral);
++        WorkflowLoader.load(file);
++        String validOtherField = base("[clerk]", edge("      - type: equal\n        field: left\n        otherField: right\n"));
++        Files.writeString(file, validOtherField); WorkflowLoader.load(file);
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/application/ValidationControlFlowTest.java b/src/test/java/com/papaya/claims/application/ValidationControlFlowTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/application/ValidationControlFlowTest.java
+@@ -0,0 +1,64 @@
++package com.papaya.claims.application;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++import static org.mockito.ArgumentMatchers.any;
++import static org.mockito.ArgumentMatchers.anyLong;
++import static org.mockito.Mockito.*;
++
++import com.papaya.claims.contract.BusinessException;
++import com.papaya.claims.contract.ClaimRepository;
++import com.papaya.claims.contract.Model.*;
++import com.papaya.claims.contract.CommandRepository;
++import com.papaya.claims.contract.AuditRepository;
++import com.papaya.claims.contract.EffectRepository;
++import java.math.BigDecimal;
++import java.util.*;
++import org.junit.jupiter.api.Test;
++
++class ValidationControlFlowTest {
++    @Test void memberCreationMustMatchAuthenticatedMemberAndCurrencyMayNotBeNullOrEmpty() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimService service = TransitionServiceTest.service(claims, mock(CommandRepository.class), mock(AuditRepository.class), mock(EffectRepository.class));
++        assertThatThrownBy(() -> service.create(new Actor("member-1", "member"), "member-2", BigDecimal.TEN, "USD", List.of("invoice")))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("cannot perform");
++        assertThat(service.create(new Actor("member-1", "member"), "member-1", BigDecimal.TEN, "USD", List.of("invoice")).memberId()).isEqualTo("member-1");
++        for (String currency : Arrays.asList(null, ""))
++            assertThatThrownBy(() -> service.create(new Actor("clerk", "document_clerk"), "member-1", BigDecimal.TEN, currency, List.of("invoice")))
++                    .isInstanceOf(BusinessException.class).hasMessageContaining("ISO currency");
++    }
++
++    @Test void documentFactsRejectNonMapWrongValueTypeAndMoreThanThirtyEntries() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimSnapshot claim = new ClaimSnapshot(UUID.randomUUID(), "member-1", "SUBMITTED", BigDecimal.TEN, "USD",
++                Map.of("requiredDocuments", java.util.stream.IntStream.range(0, 31).mapToObj(i -> "doc" + i).toList()), 0, 2, null, null);
++        when(claims.findForUpdate(claim.id())).thenReturn(Optional.of(claim));
++        ClaimService service = TransitionServiceTest.service(claims, mock(CommandRepository.class), mock(AuditRepository.class), mock(EffectRepository.class));
++        assertThatThrownBy(() -> service.patchFacts(new Actor("clerk", "document_clerk"), claim.id(), 2, Map.of("documents", "bad")))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("documents must be a map");
++        Map<String,Object> badValues = new HashMap<>(); badValues.put("documents", Map.of("doc0", "yes"));
++        assertThatThrownBy(() -> service.patchFacts(new Actor("clerk", "document_clerk"), claim.id(), 2, badValues))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("must match required keys and be booleans");
++        Map<String,Object> tooMany = new LinkedHashMap<>();
++        for (int i = 0; i < 31; i++) tooMany.put("doc" + i, true);
++        assertThatThrownBy(() -> service.patchFacts(new Actor("clerk", "document_clerk"), claim.id(), 2, Map.of("documents", tooMany)))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("documents must be a map");
++    }
++
++    @Test void nullFactKeysAndFailedCompareAndSetRemainExplicitFailures() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimSnapshot claim = new ClaimSnapshot(UUID.randomUUID(), "member-1", "UNDER_ASSESSMENT", BigDecimal.TEN, "USD", Map.of(), 0, 2, null, null);
++        when(claims.findForUpdate(claim.id())).thenReturn(Optional.of(claim));
++        ClaimService service = TransitionServiceTest.service(claims, mock(CommandRepository.class), mock(AuditRepository.class), mock(EffectRepository.class));
++        Map<String,Object> nullKey = new HashMap<>(); nullKey.put(null, true);
++        assertThatThrownBy(() -> service.patchFacts(new Actor("assessor", "assessor"), claim.id(), 2, nullKey))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("Fact names");
++        when(claims.compareAndSet(any(), anyLong())).thenReturn(false);
++        assertThatThrownBy(() -> service.patchFacts(new Actor("assessor", "assessor"), claim.id(), 2, Map.of("reportComplete", true)))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("Claim version is stale");
++    }
++
++    @Test void nullCommandNotesAreNormalizedAtContractBoundary() {
++        assertThat(new TransitionCommand("APPROVED", 0, "key", null).notes()).isEmpty();
++    }
++}

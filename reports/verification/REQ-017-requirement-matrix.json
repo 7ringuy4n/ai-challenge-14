@@ -1,0 +1,299 @@
+{
+  "requirement": "REQ-20261017-017",
+  "updated_at_utc": "2026-10-17T07:18:30Z",
+  "overall_status": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION",
+  "functional_requirements": [
+    {
+      "id": "C14-01",
+      "requirement": "Workflow config has 8 states/9 edges and role, guard, effect metadata",
+      "implementation_and_test_evidence": "`workflow.yml; ResourceContractTest; WorkflowConfigTest`",
+      "live_evidence": "HTTP transitions/options case 25; API boundary",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-02",
+      "requirement": "Five-event success path closes",
+      "implementation_and_test_evidence": "`ClaimServiceTest; ClaimPersistenceIT`",
+      "live_evidence": "cases 9-20: complete approved/payment path, audit, close",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-03",
+      "requirement": "Rejection reason, appeal instructions, system closure",
+      "implementation_and_test_evidence": "`ClaimServiceTest; workflow.yml; browser-e2e.mjs`",
+      "live_evidence": "Browser case 17 rejects and acknowledges a claim; API acceptance cases test the approved close path",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-04",
+      "requirement": "Information loop resets timer and stale completion",
+      "implementation_and_test_evidence": "`ClaimServiceTest; workflow.yml`",
+      "live_evidence": "Focused unit evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-05",
+      "requirement": "Illegal edge reports source/target/options",
+      "implementation_and_test_evidence": "`WorkflowEngineTest; GlobalExceptionHandlerTest`",
+      "live_evidence": "case 21 terminal illegal transition; exact detail via captured JSON",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-06",
+      "requirement": "Unauthorized role no mutation/audit/outbox",
+      "implementation_and_test_evidence": "`ClaimServiceTest; SecurityConfigurationTest`",
+      "live_evidence": "cases 8,16,26",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-07",
+      "requirement": "Missing/invalid docs fail with guard detail",
+      "implementation_and_test_evidence": "`GuardEvaluatorTest; ClaimServiceTest`",
+      "live_evidence": "Focused unit evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-08",
+      "requirement": "Assessment requires assigned assessor",
+      "implementation_and_test_evidence": "`ClaimServiceTest; GuardEvaluatorTest`",
+      "live_evidence": "Focused unit evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-09",
+      "requirement": "Incomplete assessment cannot decide",
+      "implementation_and_test_evidence": "`ClaimServiceTest; GuardEvaluatorTest`",
+      "live_evidence": "Focused unit evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-10",
+      "requirement": "Amount/currency boundaries",
+      "implementation_and_test_evidence": "`CreateClaimRequestValidationTest; ClaimServiceTest`",
+      "live_evidence": "case 28 invalid currency; unit boundary suite",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-11",
+      "requirement": "Reason/description required",
+      "implementation_and_test_evidence": "`TransitionRequest validation; ClaimServiceTest`",
+      "live_evidence": "Focused unit/API validation evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-12",
+      "requirement": "Fresh information receipt required",
+      "implementation_and_test_evidence": "`ClaimServiceTest; ClaimPersistenceIT`",
+      "live_evidence": "Focused unit/PG evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-13",
+      "requirement": "Persisted payment/confirmed reference required",
+      "implementation_and_test_evidence": "`PaymentOutboxIT; ClaimServiceTest`",
+      "live_evidence": "cases 14-18 live payment + close",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-14",
+      "requirement": "Appeal time/ack deterministic",
+      "implementation_and_test_evidence": "`ClaimServiceTest`",
+      "live_evidence": "Focused unit evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-15",
+      "requirement": "3 cycles and exact fourth escalation; claim independence",
+      "implementation_and_test_evidence": "`ClaimServiceTest; workflow.yml`",
+      "live_evidence": "Focused unit evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-16",
+      "requirement": "Audit fields/order/scope",
+      "implementation_and_test_evidence": "`ClaimPersistenceIT; audit API`",
+      "live_evidence": "cases 6,20; HTTP transcript",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-17",
+      "requirement": "DB audit append-only and no cascade",
+      "implementation_and_test_evidence": "`AuditImmutabilityIT`",
+      "live_evidence": "PostgreSQL/Testcontainers evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-18",
+      "requirement": "Failure rolls back state/audit/counter/payment",
+      "implementation_and_test_evidence": "`TransactionRollbackIT`",
+      "live_evidence": "PostgreSQL/Testcontainers evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-19",
+      "requirement": "Rollback dispatch none; after-commit retry",
+      "implementation_and_test_evidence": "`OutboxDispatcherTest; PaymentOutboxIT`",
+      "live_evidence": "PostgreSQL outbox tests; live payment in cases 14-18",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-20",
+      "requirement": "Same version one concurrent winner",
+      "implementation_and_test_evidence": "`ConcurrencyIT`",
+      "live_evidence": "PostgreSQL/Testcontainers evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-21",
+      "requirement": "Idempotent same payload replay; changed payload conflict",
+      "implementation_and_test_evidence": "`IdempotencyIT`",
+      "live_evidence": "cases 3-4,24",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-22",
+      "requirement": "Config-only workflow extension/dynamic options",
+      "implementation_and_test_evidence": "`WorkflowEngineTest; ResourceContractTest`",
+      "live_evidence": "case 25 confirms dynamic options; config extension is unit-only",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-23",
+      "requirement": "Invalid workflow config fails clearly",
+      "implementation_and_test_evidence": "`WorkflowConfigTest`",
+      "live_evidence": "Focused unit/startup contract evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-24",
+      "requirement": "Terminal state has no outgoing choices",
+      "implementation_and_test_evidence": "`WorkflowEngineTest`",
+      "live_evidence": "case 25",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-25",
+      "requirement": "HTTP auth/ownership/system spoof",
+      "implementation_and_test_evidence": "`SecurityConfigurationTest; ClaimServiceTest; verify-cross-member.py`",
+      "live_evidence": "cases 1,5,16,26 plus 7 live two-member HTTP checks and unchanged PostgreSQL state",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-26",
+      "requirement": "Malformed UUID/missing claim/oversized/invalid input",
+      "implementation_and_test_evidence": "`GlobalExceptionHandlerTest; JsonRequestSizeFilterTest`",
+      "live_evidence": "cases 22-23,27-28",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-27",
+      "requirement": "UI dynamic states/options/audit safe render",
+      "implementation_and_test_evidence": "`static UI code; browser-e2e.mjs`",
+      "live_evidence": "Real Chrome CDP 17/17 checks; screenshots, console and request/status evidence saved per run",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-28",
+      "requirement": "Compose fresh/repeated setup, durable DB/runtime credentials",
+      "implementation_and_test_evidence": "`Compose setup + PostgreSQL tests`",
+      "live_evidence": "compose logs and live run evidence",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    },
+    {
+      "id": "C14-29",
+      "requirement": "CSRF invalid/missing/valid; no secret logs",
+      "implementation_and_test_evidence": "`SecurityConfigurationTest; CorrelationIdFilterTest`",
+      "live_evidence": "cases 2,7,9-18; HTTP transcript",
+      "status": "PASS",
+      "qualification": "See this row: live scenario may be supplemented by unit, PostgreSQL/Testcontainers, browser, or workflow configuration evidence; not every requirement is a dedicated HTTP case."
+    }
+  ],
+  "conversation_requirements": [
+    {
+      "id": "REQ-20261017-002..014",
+      "status": "PASS",
+      "coverage": "Original Challenge 14 implementation requirements mapped in C14-01..29; source/test/PG evidence in traceability matrix and quality report."
+    },
+    {
+      "id": "REQ-20261017-015",
+      "status": "PASS_WITH_OPEN_GATES",
+      "coverage": "Verification history and current checks are preserved; new runtime/browser/cross-member/trace evidence supplements previous findings. See REQ-017-current.json."
+    },
+    {
+      "id": "REQ-20261017-016",
+      "status": "PASS_WITH_HARDWARE_CONSTRAINED_EXCEPTION",
+      "coverage": "Original threshold remains FAIL (P95 564ms; instrumented 638ms). REQ-020 local exception accepted after review-03 PASS; production-scale performance UNVERIFIED.",
+      "historical_status": "FAIL"
+    },
+    {
+      "id": "REQ-20261017-017",
+      "status": "PASS_WITH_REVISED_AUDIT_SCOPE",
+      "coverage": "Original functional and verification gates pass; accessible proof-of-work is PASS for 67 sessions/8923 records. Raw host payloads remain PARTIAL/NOT_CAPTURED."
+    },
+    {
+      "id": "REQ-20261017-018",
+      "status": "PASS",
+      "coverage": "Validated configurable CLAIMS_MEMBER_USERNAMES defaults to member-demo; unit config tests and two-principal live PostgreSQL checks pass; SecurityConfiguration independent review and rereview pass. Current final source is commit 0435e1b; source and current functional evidence remain verified."
+    },
+    {
+      "id": "REQ-20261017-019",
+      "status": "PASS_RECORD_ONLY",
+      "coverage": "Approval confirmation is preserved verbatim in docs/submission/user-prompts.jsonl and dated requirement ledger; it authorizes existing REQ-018 implementation."
+    },
+    {
+      "id": "REQ-20261017-020",
+      "status": "ACCEPTED_WITH_PERFORMANCE_EXCEPTION",
+      "coverage": "Hardware-constrained local exception and LLM proof-of-work accepted after independent review-03 PASS. Regression and workflow validation pass; source production performance remains unverified; raw payload capture remains partial."
+    }
+  ],
+  "evidence": {
+    "live_cases": "reports/verification/REQ-017-final-live/console.log",
+    "http_exchanges": "reports/verification/REQ-017-final-live/http-exchanges.jsonl",
+    "quality": "reports/verification/REQ-019-quality-final.log",
+    "browser": "reports/verification/REQ-017-browser/run-2026-10-17T050718217Z/browser-e2e.json",
+    "cross_member": "reports/verification/REQ-017-cross-member/run-20261017T050909578984Z/cross-member.json",
+    "trace": "reports/telemetry/REQ-017-trace-verification.json",
+    "peer_review": "reports/verification/REQ-017-review.json",
+    "jmeter": "reports/verification/REQ-017-jmeter-final/comparison.json",
+    "llm_audit": "reports/verification/REQ-017-llm-audit.json",
+    "performance_peer_review": "reports/sub-agents/T13/01/review-01.md",
+    "jmeter_diagnostics": "reports/verification/REQ-017-jmeter-ab",
+    "jmeter_peer_review": "reports/sub-agents/T13/02/review-02.md"
+  },
+  "remaining_gates": [],
+  "post_acceptance_actions": [
+    {
+      "action": "Commit reviewed evidence to develop and merge into the verified existing main baseline",
+      "status": "AUTHORIZED_PENDING_EXECUTION",
+      "qualification": "Do not push; verify resulting main commit and record merge evidence."
+    }
+  ]
+}

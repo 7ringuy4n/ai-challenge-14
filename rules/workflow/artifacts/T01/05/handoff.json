@@ -1,0 +1,43 @@
+{
+  "task": "T01",
+  "attempt": "05",
+  "status": "BLOCKED",
+  "model": "gpt-6-luna",
+  "reasoning_effort": "medium",
+  "contract_version": "CH14-Contracts-v1",
+  "contract_sha256": "77eb655cd9afd38454f467930be37cd177b9a17ed32c6d4814a431694de64e51",
+  "base_source_sha256": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+  "patch_paths": [
+    "src/main/java/com/papaya/claims/workflow/",
+    "src/test/java/com/papaya/claims/workflow/"
+  ],
+  "criteria": [
+    "Parse immutable YAML and validate duplicate/dangling states, IDs, edges, roles, guards, effects, and malformed operands.",
+    "Preserve all nine configured edges and all configured role, guard, effect, failure text, and cycle policy.",
+    "Provide a pure configured engine with strategy-based guards/effects, available transition decisions, and distinct invalid-edge, unauthorized-role, and guard-failure results.",
+    "Use trusted persisted claim and server-stamped receipt/payment/appeal facts; honor injected Clock and PostgreSQL microsecond timestamp precision.",
+    "Allow three information requests and return the exact configured fourth-attempt text.",
+    "Test guard/role/cycle/config/immutability/timestamp/invalid-edge and config-only extension behavior."
+  ],
+  "tests": [
+    {
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=WorkflowEngineTest,WorkflowConfigTest,GuardEvaluatorTest test",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol forbids builds and tests; additionally no source patch was produced because previous T01 drafts target obsolete engine packages/config/API and could not be safely promoted without reimplementing and validating the frozen contract."
+    }
+  ],
+  "decisions": [
+    "The task's allowed source package is com.papaya.claims.workflow and the current domain API is Claim, ClaimFacts, Actor, and TransitionCommand.",
+    "Prior T01 attempts 01-04 use com.papaya.claims.engine, a superseded YAML schema, and nonexistent com.papaya.claims.contract.Model types; their patches are not applicable as implementation evidence.",
+    "The current YAML guard catalog provides IDs and messages but does not encode operands; deriving operand semantics from earlier obsolete drafts would invent a contract."
+  ],
+  "risks": [
+    "No implementation is available for coordinator application; T01 remains unimplemented.",
+    "docs/challenge-14/DESIGN-SPEC.md named in the initial inspection attempt does not exist; authoritative current contract is docs/challenge-14/CONTRACTS.md."
+  ],
+  "shared_changes": [],
+  "interaction_audit": {
+    "raw_request": "NOT_CAPTURED",
+    "reason": "Host-managed model payload is inaccessible to this worker."
+  }
+}

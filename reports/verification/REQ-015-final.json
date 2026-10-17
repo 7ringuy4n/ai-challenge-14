@@ -1,0 +1,720 @@
+{
+  "requirement_ids": [
+    "REQ-20261017-015",
+    "REQ-20261017-016"
+  ],
+  "task_id": "T08",
+  "status": "IN_PROGRESS_NOT_ACCEPTED",
+  "generated_utc": "2026-10-17T04:17:28Z",
+  "git": {
+    "branch": "develop",
+    "head_before_this_evidence_commit": "4cf063b1280f75a4004129095c7cef7024cb44dd",
+    "main": "521cb1427f910ebbd01129cc1a950c55b899ee87",
+    "origin_push": "NOT_PERFORMED",
+    "main_merge": "NOT_PERFORMED",
+    "develop_work_commit": "ab1462d0163583b153d005ef6c1c2be8bb33d0cd",
+    "author_override": "Existing repository author identity applied with per-command git -c; global config unchanged"
+  },
+  "source_hash": {
+    "algorithm": "sha256 over sorted per-file hashes of application, build, scripts, performance profiles, and Postman artifacts",
+    "roots": [
+      "src/main/java",
+      "src/main/resources",
+      "src/test/java",
+      "docker",
+      "scripts",
+      "pom.xml",
+      "performance",
+      "postman"
+    ],
+    "value": "459b8c01c853f4f38e6fbce1369933f58ecf6f6eb18508953871d4ef0fa33af7"
+  },
+  "environment": {
+    "java": "21.0.12.1",
+    "maven": "3.9.11",
+    "jmeter": "5.6.3",
+    "newman": "6.2.1",
+    "docker": "29.1.3",
+    "maven_local_repo": "/tmp/claims-m2",
+    "default_sandbox_docker_access": "BLOCKED permission denied; approved escalated invocation used; no daemon/socket permissions changed"
+  },
+  "verification": [
+    {
+      "id": "clean-quality",
+      "status": "PASS",
+      "command": "env JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Pquality clean verify",
+      "log": "reports/verification/quality-REQ015-final.log.gz",
+      "unit_tests": 123,
+      "integration_tests": 9,
+      "total": 132,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "reported_progress": "running test case N/123 (unit), running test case N/9 (PostgreSQL integration)",
+      "liquibase_changesets": 6,
+      "coverage": {
+        "line": {
+          "covered": 920,
+          "total": 948,
+          "percent": 97.0464,
+          "required": 95
+        },
+        "branch": {
+          "covered": 565,
+          "total": 627,
+          "percent": 90.1116,
+          "required": 90
+        }
+      },
+      "environment_note": "One default-sandbox rerun failed before Testcontainers because Docker socket access was denied; final elevated invocation exited 0."
+    },
+    {
+      "id": "live-acceptance",
+      "status": "PASS",
+      "command": "CLAIMS_API_BASE=http://127.0.0.1:8080 CLAIMS_EVIDENCE_DIR=reports/verification/acceptance-matrix python3 scripts/run-scenarios.py",
+      "cases": 29,
+      "passed": 29,
+      "failed": 0,
+      "exchanges": 31,
+      "console": "reports/verification/acceptance-matrix/console.log",
+      "http_evidence": "reports/verification/acceptance-matrix/http-exchanges.jsonl",
+      "trace_context": "reports/verification/acceptance-matrix/trace-context.json",
+      "redactions": [
+        "Authorization",
+        "Cookie",
+        "X-CSRF-TOKEN",
+        "session response csrfToken"
+      ],
+      "run": "single combined PostgreSQL-backed application run"
+    },
+    {
+      "id": "performance",
+      "status": "PASS_WITH_PROVENANCE_LIMIT",
+      "tool": "Apache JMeter 5.6.3",
+      "approved_targets": {
+        "p95_ms_max": 500,
+        "p99_ms_max": 1000,
+        "error_rate_max": 0.01
+      },
+      "selected_runs": [
+        {
+          "profile": "baseline",
+          "status": "PASS",
+          "configured_concurrency": 1,
+          "ramp_seconds": 1,
+          "duration_seconds": 30,
+          "samples": 20707,
+          "requests_per_second": 691.3394764957264,
+          "error_rate": 0.0,
+          "latency_ms": {
+            "p50": 1,
+            "p95": 2,
+            "p99": 4
+          },
+          "by_sampler": {
+            "Get session and CSRF token": {
+              "samples": 10353,
+              "errors": 0
+            },
+            "Create claim": {
+              "samples": 1,
+              "errors": 0
+            },
+            "Authenticated list claims": {
+              "samples": 10353,
+              "errors": 0
+            }
+          },
+          "containers": {
+            "docker-app-1": {
+              "max_cpu_percent": 68.16,
+              "max_memory_mib": 882.7
+            },
+            "docker-otel-collector-1": {
+              "max_cpu_percent": 24.41,
+              "max_memory_mib": 175.6
+            },
+            "docker-database-1": {
+              "max_cpu_percent": 26.45,
+              "max_memory_mib": 121.0
+            },
+            "claims-challenge14-app-1": {
+              "max_cpu_percent": 3.2,
+              "max_memory_mib": 419.5
+            },
+            "claims-challenge14-db-1": {
+              "max_cpu_percent": 2.24,
+              "max_memory_mib": 62.58
+            }
+          },
+          "max_db_connections": 21,
+          "max_db_transactions_committed": 4244037,
+          "max_db_transactions_rolled_back": 48,
+          "max_outbox_pending": 0,
+          "outbox_delivered_delta": 0,
+          "outbox_failed_count": 0,
+          "outbox_deliveries_per_second": 0.0,
+          "max_outbox_oldest_pending_seconds": 0,
+          "targets": {
+            "error_rate_max": 0.01,
+            "p95_ms": 500,
+            "p99_ms": 1000
+          },
+          "evidence_dir": "reports/performance/baseline-20261017T035738Z"
+        },
+        {
+          "profile": "concurrent-claims",
+          "status": "PASS",
+          "configured_concurrency": 50,
+          "ramp_seconds": 10,
+          "duration_seconds": 60,
+          "samples": 93559,
+          "requests_per_second": 1559.6805921381656,
+          "error_rate": 0.0,
+          "latency_ms": {
+            "p50": 15,
+            "p95": 90,
+            "p99": 160
+          },
+          "by_sampler": {
+            "Get session and CSRF token": {
+              "samples": 46562,
+              "errors": 0
+            },
+            "Create claim": {
+              "samples": 50,
+              "errors": 0
+            },
+            "Record required invoice": {
+              "samples": 50,
+              "errors": 0
+            },
+            "Clerk verifies documents": {
+              "samples": 50,
+              "errors": 0
+            },
+            "Lead assigns assessor": {
+              "samples": 50,
+              "errors": 0
+            },
+            "Lead starts assessment": {
+              "samples": 50,
+              "errors": 0
+            },
+            "Assessor records report": {
+              "samples": 50,
+              "errors": 0
+            },
+            "Assessor approves": {
+              "samples": 50,
+              "errors": 0
+            },
+            "Finance initiates payment": {
+              "samples": 50,
+              "errors": 0
+            },
+            "Concurrent complete claims workflow": {
+              "samples": 50,
+              "errors": 0
+            },
+            "Authenticated list claims": {
+              "samples": 46547,
+              "errors": 0
+            }
+          },
+          "containers": {
+            "docker-app-1": {
+              "max_cpu_percent": 540.72,
+              "max_memory_mib": 881.9
+            },
+            "docker-otel-collector-1": {
+              "max_cpu_percent": 42.82,
+              "max_memory_mib": 360.9
+            },
+            "docker-database-1": {
+              "max_cpu_percent": 133.87,
+              "max_memory_mib": 121.2
+            },
+            "claims-challenge14-app-1": {
+              "max_cpu_percent": 4.56,
+              "max_memory_mib": 419.5
+            },
+            "claims-challenge14-db-1": {
+              "max_cpu_percent": 4.8,
+              "max_memory_mib": 62.71
+            }
+          },
+          "max_db_connections": 21,
+          "max_db_transactions_committed": 4200889,
+          "max_db_transactions_rolled_back": 48,
+          "max_outbox_pending": 53,
+          "outbox_delivered_delta": 250,
+          "outbox_failed_count": 0,
+          "outbox_deliveries_per_second": 4.166666666666667,
+          "max_outbox_oldest_pending_seconds": 2.128297,
+          "targets": {
+            "error_rate_max": 0.01,
+            "p95_ms": 500,
+            "p99_ms": 1000
+          },
+          "evidence_dir": "reports/performance/concurrent-claims-20261017T035624Z"
+        },
+        {
+          "profile": "normal",
+          "status": "PASS",
+          "configured_concurrency": 10,
+          "ramp_seconds": 10,
+          "duration_seconds": 60,
+          "samples": 134994,
+          "requests_per_second": 2251.588691518639,
+          "error_rate": 0.0,
+          "latency_ms": {
+            "p50": 3,
+            "p95": 8,
+            "p99": 12
+          },
+          "by_sampler": {
+            "Get session and CSRF token": {
+              "samples": 67494,
+              "errors": 0
+            },
+            "Create claim": {
+              "samples": 10,
+              "errors": 0
+            },
+            "Authenticated list claims": {
+              "samples": 67490,
+              "errors": 0
+            }
+          },
+          "containers": {
+            "docker-app-1": {
+              "max_cpu_percent": 303.88,
+              "max_memory_mib": 887.5
+            },
+            "docker-otel-collector-1": {
+              "max_cpu_percent": 39.84,
+              "max_memory_mib": 180.0
+            },
+            "docker-database-1": {
+              "max_cpu_percent": 131.68,
+              "max_memory_mib": 122.2
+            },
+            "claims-challenge14-app-1": {
+              "max_cpu_percent": 1.07,
+              "max_memory_mib": 419.5
+            },
+            "claims-challenge14-db-1": {
+              "max_cpu_percent": 3.97,
+              "max_memory_mib": 62.68
+            }
+          },
+          "max_db_connections": 21,
+          "max_db_transactions_committed": 4511525,
+          "max_db_transactions_rolled_back": 48,
+          "max_outbox_pending": 0,
+          "outbox_delivered_delta": 0,
+          "outbox_failed_count": 0,
+          "outbox_deliveries_per_second": 0.0,
+          "max_outbox_oldest_pending_seconds": 0,
+          "targets": {
+            "error_rate_max": 0.01,
+            "p95_ms": 500,
+            "p99_ms": 1000
+          },
+          "evidence_dir": "reports/performance/normal-20261017T035812Z"
+        },
+        {
+          "profile": "peak",
+          "status": "PASS",
+          "configured_concurrency": 100,
+          "ramp_seconds": 30,
+          "duration_seconds": 60,
+          "samples": 136859,
+          "requests_per_second": 2281.2114544787814,
+          "error_rate": 0.0,
+          "latency_ms": {
+            "p50": 12,
+            "p95": 109,
+            "p99": 139
+          },
+          "by_sampler": {
+            "Get session and CSRF token": {
+              "samples": 68398,
+              "errors": 0
+            },
+            "Create claim": {
+              "samples": 100,
+              "errors": 0
+            },
+            "Authenticated list claims": {
+              "samples": 68361,
+              "errors": 0
+            }
+          },
+          "containers": {
+            "docker-app-1": {
+              "max_cpu_percent": 313.31,
+              "max_memory_mib": 1027.072
+            },
+            "docker-otel-collector-1": {
+              "max_cpu_percent": 43.35,
+              "max_memory_mib": 191.8
+            },
+            "docker-database-1": {
+              "max_cpu_percent": 138.13,
+              "max_memory_mib": 122.3
+            },
+            "claims-challenge14-app-1": {
+              "max_cpu_percent": 4.47,
+              "max_memory_mib": 419.6
+            },
+            "claims-challenge14-db-1": {
+              "max_cpu_percent": 0.05,
+              "max_memory_mib": 62.06
+            }
+          },
+          "max_db_connections": 21,
+          "max_db_transactions_committed": 4785417,
+          "max_db_transactions_rolled_back": 48,
+          "max_outbox_pending": 0,
+          "outbox_delivered_delta": 0,
+          "outbox_failed_count": 0,
+          "outbox_deliveries_per_second": 0.0,
+          "max_outbox_oldest_pending_seconds": 0,
+          "targets": {
+            "error_rate_max": 0.01,
+            "p95_ms": 500,
+            "p99_ms": 1000
+          },
+          "evidence_dir": "reports/performance/peak-20261017T035919Z"
+        },
+        {
+          "profile": "soak",
+          "status": "PASS",
+          "configured_concurrency": 25,
+          "ramp_seconds": 15,
+          "duration_seconds": 300,
+          "samples": 789762,
+          "requests_per_second": 2632.8647199821307,
+          "error_rate": 0.0,
+          "latency_ms": {
+            "p50": 7,
+            "p95": 21,
+            "p99": 30
+          },
+          "by_sampler": {
+            "Get session and CSRF token": {
+              "samples": 394873,
+              "errors": 0
+            },
+            "Create claim": {
+              "samples": 25,
+              "errors": 0
+            },
+            "Authenticated list claims": {
+              "samples": 394864,
+              "errors": 0
+            }
+          },
+          "containers": {
+            "docker-app-1": {
+              "max_cpu_percent": 308.85,
+              "max_memory_mib": 1209.344
+            },
+            "docker-otel-collector-1": {
+              "max_cpu_percent": 46.4,
+              "max_memory_mib": 205.0
+            },
+            "docker-database-1": {
+              "max_cpu_percent": 173.53,
+              "max_memory_mib": 123.2
+            },
+            "claims-challenge14-app-1": {
+              "max_cpu_percent": 4.89,
+              "max_memory_mib": 373.8
+            },
+            "claims-challenge14-db-1": {
+              "max_cpu_percent": 4.46,
+              "max_memory_mib": 54.48
+            }
+          },
+          "max_db_connections": 21,
+          "max_db_transactions_committed": 6725842,
+          "max_db_transactions_rolled_back": 48,
+          "max_outbox_pending": 0,
+          "outbox_delivered_delta": 0,
+          "outbox_failed_count": 0,
+          "outbox_deliveries_per_second": 0.0,
+          "max_outbox_oldest_pending_seconds": 0,
+          "targets": {
+            "error_rate_max": 0.01,
+            "p95_ms": 500,
+            "p99_ms": 1000
+          },
+          "evidence_dir": "reports/performance/soak-20261017T040209Z"
+        },
+        {
+          "profile": "spike",
+          "status": "PASS",
+          "configured_concurrency": 150,
+          "ramp_seconds": 5,
+          "duration_seconds": 30,
+          "samples": 63620,
+          "requests_per_second": 2117.208559353057,
+          "error_rate": 0.0,
+          "latency_ms": {
+            "p50": 21,
+            "p95": 174,
+            "p99": 290
+          },
+          "by_sampler": {
+            "Get session and CSRF token": {
+              "samples": 31750,
+              "errors": 0
+            },
+            "Create claim": {
+              "samples": 150,
+              "errors": 0
+            },
+            "Authenticated list claims": {
+              "samples": 31720,
+              "errors": 0
+            }
+          },
+          "containers": {
+            "docker-app-1": {
+              "max_cpu_percent": 306.49,
+              "max_memory_mib": 1207.296
+            },
+            "docker-otel-collector-1": {
+              "max_cpu_percent": 47.97,
+              "max_memory_mib": 188.5
+            },
+            "docker-database-1": {
+              "max_cpu_percent": 173.47,
+              "max_memory_mib": 124.2
+            },
+            "claims-challenge14-app-1": {
+              "max_cpu_percent": 0.11,
+              "max_memory_mib": 373.2
+            },
+            "claims-challenge14-db-1": {
+              "max_cpu_percent": 3.78,
+              "max_memory_mib": 54.12
+            }
+          },
+          "max_db_connections": 21,
+          "max_db_transactions_committed": 5143409,
+          "max_db_transactions_rolled_back": 48,
+          "max_outbox_pending": 0,
+          "outbox_delivered_delta": 0,
+          "outbox_failed_count": 0,
+          "outbox_deliveries_per_second": 0.0,
+          "max_outbox_oldest_pending_seconds": 0,
+          "targets": {
+            "error_rate_max": 0.01,
+            "p95_ms": 500,
+            "p99_ms": 1000
+          },
+          "evidence_dir": "reports/performance/spike-20261017T040134Z"
+        },
+        {
+          "profile": "stress",
+          "status": "PASS",
+          "configured_concurrency": 500,
+          "ramp_seconds": 60,
+          "duration_seconds": 60,
+          "samples": 115392,
+          "requests_per_second": 1912.711962737655,
+          "error_rate": 0.0,
+          "latency_ms": {
+            "p50": 77,
+            "p95": 452,
+            "p99": 567
+          },
+          "by_sampler": {
+            "Get session and CSRF token": {
+              "samples": 57557,
+              "errors": 0
+            },
+            "Create claim": {
+              "samples": 498,
+              "errors": 0
+            },
+            "Authenticated list claims": {
+              "samples": 57337,
+              "errors": 0
+            }
+          },
+          "containers": {
+            "docker-app-1": {
+              "max_cpu_percent": 358.22,
+              "max_memory_mib": 1209.344
+            },
+            "docker-otel-collector-1": {
+              "max_cpu_percent": 25.8,
+              "max_memory_mib": 179.8
+            },
+            "docker-database-1": {
+              "max_cpu_percent": 125.64,
+              "max_memory_mib": 122.3
+            },
+            "claims-challenge14-app-1": {
+              "max_cpu_percent": 4.38,
+              "max_memory_mib": 419.6
+            },
+            "claims-challenge14-db-1": {
+              "max_cpu_percent": 4.41,
+              "max_memory_mib": 62.14
+            }
+          },
+          "max_db_connections": 22,
+          "max_db_transactions_committed": 5017106,
+          "max_db_transactions_rolled_back": 48,
+          "max_outbox_pending": 0,
+          "outbox_delivered_delta": 0,
+          "outbox_failed_count": 0,
+          "outbox_deliveries_per_second": 0.0,
+          "max_outbox_oldest_pending_seconds": 0,
+          "targets": {
+            "error_rate_max": 0.01,
+            "p95_ms": 500,
+            "p99_ms": 1000
+          },
+          "evidence_dir": "reports/performance/stress-20261017T040026Z"
+        }
+      ],
+      "provenance": "Full seven-profile run source predates final CorrelationIdFilter inbound trace-context logging-only change. Runs were from a dirty worktree; exact working-tree source hash was not captured. Recorded git commit identifies only the base commit, and profile SHA-256 identifies each JMX file. A 5-second post-adjustment baseline validated runner JSON metadata/compression/provenance, not full load performance.",
+      "short_runner_check": {
+        "status": "PASS",
+        "run": "reports/performance/baseline-20261017T042138Z",
+        "samples": 1809,
+        "errors": 0,
+        "p95_ms": 4,
+        "p99_ms": 5,
+        "duration_seconds": 5,
+        "purpose": "runner JSON metadata and compressed artifacts validation only",
+        "metadata_json_valid": true,
+        "outputs_compressed": true,
+        "exact_working_tree_source_hash": "NOT_CAPTURED (worktree dirty)"
+      },
+      "diagnostic_excluded": "reports/performance/baseline-20261017T041632Z (JMeter HTTP run completed, but run.json Java version JSON was malformed; excluded from aggregate; runner fixed and rerun)"
+    },
+    {
+      "id": "distributed-tracing",
+      "status": "PASS",
+      "trace_report": "reports/telemetry/trace-verification.json",
+      "collector_excerpt": "reports/telemetry/otel-collector-recent.log.gz",
+      "application_log": "reports/telemetry/application.log",
+      "verified": "inbound W3C traceparent matches server span parent; security span child of server; claims.outbox.delivery child of security; outbox log trace/span matches exported span"
+    },
+    {
+      "id": "compose-startup-migrations-smoke",
+      "status": "PASS",
+      "setup": "reports/verification/compose-REQ015-final.log.gz",
+      "smoke": "reports/verification/api-smoke-REQ015-final.log",
+      "application": "Compose app and PostgreSQL healthy; six Liquibase changesets applied"
+    },
+    {
+      "id": "postman",
+      "status": "PASS",
+      "command": "bash scripts/run-postman.sh",
+      "newman": "6.2.1",
+      "requests": 27,
+      "assertions": 14,
+      "failures": 0,
+      "evidence": "reports/verification/postman/newman-final.log"
+    },
+    {
+      "id": "diagrams",
+      "status": "PASS",
+      "editable_source_and_svg_png": [
+        "claims-architecture",
+        "claims-workflow",
+        "database-schema",
+        "security-boundaries",
+        "deployment"
+      ],
+      "renderer": "docs/architecture/images/render_diagrams.py"
+    },
+    {
+      "id": "jmeter-runner-smoke",
+      "status": "PASS",
+      "command": "JMETER_DURATION=5 scripts/performance/run-profile.sh baseline",
+      "evidence": "reports/performance/baseline-20261017T041700Z",
+      "metadata_json_valid": true,
+      "outputs_compressed": true
+    },
+    {
+      "id": "independent-review",
+      "status": "PASS_NO_CRITICAL_OR_HIGH",
+      "reviewer": "/root/final_integrated_review",
+      "model": "gpt-6-luna",
+      "reasoning": "medium",
+      "reports": [
+        "reports/sub-agents/T08/review-01.md",
+        "reports/sub-agents/T08/review-02.md"
+      ],
+      "scope": "security, evidence redaction, trace context/logging, outbox span context, JMeter credential handling/profile correctness, persistence/concurrency"
+    },
+    {
+      "id": "llm-audit",
+      "status": "PARTIAL",
+      "record": "docs/submission/llm-interactions.jsonl",
+      "reason": "Host-managed raw coordinator/reviewer payloads inaccessible; actual available task packets/results summarized, inaccessible request/response NOT_CAPTURED."
+    },
+    {
+      "id": "jmeter-rootless-provisioning",
+      "status": "PASS",
+      "command": "Download/checksum/extraction via scripts/performance/install-jmeter.sh; separate version check uses set -o pipefail and grep -Fq 5.6.3 against the full jmeter -v output; malformed existing-target refusal check exits 2",
+      "exit_code": 0,
+      "version": "5.6.3",
+      "checksum": "SHA-512 matched the pinned official Apache release checksum",
+      "root_privileges": "not used",
+      "evidence": [
+        "reports/verification/jmeter-provision-check.json",
+        "reports/verification/jmeter-provision-check.log"
+      ],
+      "source": "https://downloads.apache.org/jmeter/binaries/apache-jmeter-5.6.3.tgz"
+    }
+  ],
+  "remaining": [
+    {
+      "check": "Byte-identical final source full JMeter suite",
+      "status": "NOT_RUN",
+      "reason": "Seven complete profiles ran before final logging-only source adjustment. The post-adjustment 5-second run validates runner, not performance."
+    },
+    {
+      "check": "Browser/UI automated scenario",
+      "status": "NOT_RUN",
+      "reason": "No browser automation/E2E UI scenario configured or executed; API checks and diagram outputs do not establish browser behavior."
+    },
+    {
+      "check": "Live cross-member ownership test with two provisioned member principals",
+      "status": "NOT_RUN",
+      "reason": "Runtime provisions only member-demo; cross-owner behavior is covered by service/security tests."
+    },
+    {
+      "check": "Requirement-level all-bullet live execution",
+      "status": "NOT_RUN",
+      "reason": "29 grouped scenarios ran together, but traceability matrix documents requirement bullets not separately exercised over HTTP, including rejection lifecycle."
+    },
+    {
+      "check": "Full host-managed LLM payload tracing",
+      "status": "NOT_RUN",
+      "reason": "Host prevents retrieval of raw payloads; records explicitly mark NOT_CAPTURED/PARTIAL."
+    }
+  ],
+  "reviewed_findings": {
+    "critical": 0,
+    "high": 0,
+    "p2_exposure": "fixed; CSRF response token redacted and declared",
+    "p3_test_name": "fixed",
+    "concurrency_timing_note": "existing advisory-lock integration test retains bounded 250ms negative wait",
+    "p2_jmeter_version_capture": "fixed; full jmeter -v output captured and 5.6.3 asserted with pipefail",
+    "p3_jmeter_target_guard": "fixed; malformed preexisting target refusal returned exit 2",
+    "p3_jmeter_evidence_path": "fixed after independent review; final references point to captured provisioning log"
+  },
+  "acceptance": "NOT_ACCEPTED; user requested continued work and project acceptance is withheld while identified verification gaps remain."
+}

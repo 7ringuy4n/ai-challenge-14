@@ -1,0 +1,60 @@
+diff --git a/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java b/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java
+--- a/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java
++++ b/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java
+@@ -63,11 +63,11 @@ class ModelBoundaryTest {
+         source.put("new", "fact");
+ 
+         Map<?, ?> frozenNested = (Map<?, ?>) snapshot.facts().get("nested");
+         List<?> frozenValues = (List<?>) frozenNested.get("values");
+         assertThat(frozenValues).isEqualTo(List.of(
+                 new BigInteger("9000000000000000000"), new BigDecimal("1.2300")));
+-        assertThat(frozenNested).doesNotContainKey("later");
++        assertThat(frozenNested.containsKey("later")).isFalse();
+         assertThat(snapshot.facts()).doesNotContainKey("new");
+         assertMapRejectsMutation(frozenNested);
+         assertListRejectsMutation(frozenValues);
+     }
+@@ -85,7 +86,13 @@ class ModelBoundaryTest {
+                 .isInstanceOf(UnsupportedOperationException.class);
+     }
+ 
++    @Test
++    void rejectsUnsupportedMutableFactValues() {
++        assertThatThrownBy(() -> Model.freezeMap(Map.of("value", new StringBuilder("mutable"))))
++                .isInstanceOf(BusinessException.class).extracting("code").isEqualTo("INVALID_FACT");
++    }
++
+     @Test
+     void transitionClearsOnlyNamedFactsAndAdvancesSnapshotVersion() {
+         ClaimSnapshot original = claim(BigDecimal.TEN, 1, 7,
+                 Map.of("reportComplete", true, "amount", new BigDecimal("3.50"), "keep", "value"));
+diff --git a/src/test/java/com/papaya/claims/engine/GuardBoundaryTest.java b/src/test/java/com/papaya/claims/engine/GuardBoundaryTest.java
+--- a/src/test/java/com/papaya/claims/engine/GuardBoundaryTest.java
++++ b/src/test/java/com/papaya/claims/engine/GuardBoundaryTest.java
+@@ -73,8 +73,14 @@ class GuardBoundaryTest {
+ 
+         ClaimSnapshot exactAtRoundedBoundary = new ClaimSnapshot(UUID.randomUUID(), "member-1", "PENDING_INFO",
+                 BigDecimal.TEN, "USD", Map.of("receivedAt", "2026-10-16T00:00:00.0000008Z"), 1, 0, null,
+                 Instant.parse("2026-10-16T00:00:00.000000Z"));
+         assertThat(evaluator.failures(List.of(afterLastRequest), exactAtRoundedBoundary,
+-                Instant.parse("2026-10-16T00:00:01Z"))).isEmpty();
++                Instant.parse("2026-10-16T00:00:01Z"))).hasSize(1);
++
++        ClaimSnapshot nextMicrosecond = new ClaimSnapshot(UUID.randomUUID(), "member-1", "PENDING_INFO",
++                BigDecimal.TEN, "USD", Map.of("receivedAt", "2026-10-16T00:00:00.000001Z"), 1, 0, null,
++                Instant.parse("2026-10-16T00:00:00.000000Z"));
++        assertThat(evaluator.failures(List.of(afterLastRequest), nextMicrosecond,
++                Instant.parse("2026-10-16T00:00:01Z"))).isEmpty();
+     }
+ }
+diff --git a/src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java b/src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java
+--- a/src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java
++++ b/src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java
+@@ -44,6 +44,6 @@ class WorkflowValidationTest {
+     @Test
+     void rejectsBlankRequiredFieldsAndEmptyStateCollections() throws Exception {
+         rejects("blank-version.yml", valid().replace("version: 'test'", "version: '  '"), "version is required");
+-        rejects("blank-edge.yml", valid().replace("    from: A", "    from: '  '"), "transitions[0].from is required");
++        rejects("blank-edge.yml", valid().replace("  - from: A", "  - from: '  '"), "transitions[0].from is required");
+         rejects("empty-states.yml", valid().replace("states: [A, B]", "states: []"), "states must contain at least one state");
+     }

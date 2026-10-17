@@ -1,0 +1,771 @@
+--- a/src/main/java/com/papaya/claims/persistence/AuditMapper.java
++++ b/src/main/java/com/papaya/claims/persistence/AuditMapper.java
+@@ -1,3 +1,11 @@
+ package com.papaya.claims.persistence;
+-import org.apache.ibatis.annotations.*; import java.util.*;
+-@Mapper public interface AuditMapper { int append(AuditRow row); List<AuditRow> findByClaimId(UUID id); }
++
++import java.util.List;
++import java.util.UUID;
++import org.apache.ibatis.annotations.Mapper;
++
++@Mapper
++public interface AuditMapper {
++    int append(AuditRow row);
++    List<AuditRow> findByClaimId(UUID id);
++}
+--- a/src/main/java/com/papaya/claims/persistence/AuditRow.java
++++ b/src/main/java/com/papaya/claims/persistence/AuditRow.java
+@@ -1,3 +1,17 @@
+ package com.papaya.claims.persistence;
+-import java.time.Instant; import java.util.UUID;
+-public record AuditRow(UUID auditId,UUID claimId,long sequence,Instant timestamp,String fromState,String toState,String userId,String role,String notes,String configVersion,String traceId) {}
++
++import java.time.Instant;
++import java.util.UUID;
++
++public record AuditRow(
++        UUID auditId,
++        UUID claimId,
++        long sequence,
++        Instant timestamp,
++        String fromState,
++        String toState,
++        String userId,
++        String role,
++        String notes,
++        String configVersion,
++        String traceId) {}
+--- a/src/main/java/com/papaya/claims/persistence/ClaimMapper.java
++++ b/src/main/java/com/papaya/claims/persistence/ClaimMapper.java
+@@ -1,3 +1,15 @@
+ package com.papaya.claims.persistence;
+-import org.apache.ibatis.annotations.*; import java.util.*;
+-@Mapper public interface ClaimMapper { int insert(ClaimRow row); ClaimRow find(UUID id); ClaimRow findForUpdate(UUID id); List<ClaimRow> list(); int compareAndSet(@Param("row") ClaimRow row,@Param("expectedVersion") long expectedVersion); }
++
++import java.util.List;
++import java.util.UUID;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++
++@Mapper
++public interface ClaimMapper {
++    int insert(ClaimRow row);
++    ClaimRow find(UUID id);
++    ClaimRow findForUpdate(UUID id);
++    List<ClaimRow> list();
++    int compareAndSet(@Param("row") ClaimRow row, @Param("expectedVersion") long expectedVersion);
++}
+--- a/src/main/java/com/papaya/claims/persistence/ClaimRow.java
++++ b/src/main/java/com/papaya/claims/persistence/ClaimRow.java
+@@ -1,3 +1,17 @@
+ package com.papaya.claims.persistence;
+-import java.math.BigDecimal; import java.time.Instant; import java.util.UUID;
+-public record ClaimRow(UUID id,String memberId,String state,BigDecimal policyLimit,String currency,String facts,int informationRequests,long version,Instant assessmentStartedAt,Instant lastInformationRequestedAt) {}
++
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.UUID;
++
++public record ClaimRow(
++        UUID id,
++        String memberId,
++        String state,
++        BigDecimal policyLimit,
++        String currency,
++        String facts,
++        int informationRequests,
++        long version,
++        Instant assessmentStartedAt,
++        Instant lastInformationRequestedAt) {}
+--- a/src/main/java/com/papaya/claims/persistence/CommandMapper.java
++++ b/src/main/java/com/papaya/claims/persistence/CommandMapper.java
+@@ -1,3 +1,14 @@
+ package com.papaya.claims.persistence;
+-import org.apache.ibatis.annotations.*; import java.util.*;
+-@Mapper public interface CommandMapper { ReceiptRow find(@Param("claimId") UUID claimId,@Param("userId") String userId,@Param("key") String key); int insert(@Param("claimId") UUID claimId,@Param("userId") String userId,@Param("key") String key,@Param("requestHash") String requestHash,@Param("result") String result); }
++
++import java.util.UUID;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++
++@Mapper
++public interface CommandMapper {
++    ReceiptRow find(@Param("claimId") UUID claimId, @Param("userId") String userId,
++                    @Param("key") String key);
++    int insert(@Param("claimId") UUID claimId, @Param("userId") String userId,
++               @Param("key") String key, @Param("requestHash") String requestHash,
++               @Param("result") String result);
++}
+--- a/src/main/java/com/papaya/claims/persistence/EffectMapper.java
++++ b/src/main/java/com/papaya/claims/persistence/EffectMapper.java
+@@ -1,3 +1,18 @@
+ package com.papaya.claims.persistence;
+-import org.apache.ibatis.annotations.*; import java.util.*;
+-@Mapper public interface EffectMapper { int enqueue(OutboxRow row); List<OutboxRow> pending(); int markDelivered(UUID id); int markFailed(@Param("id") UUID id,@Param("error") String error,@Param("retryAt") java.time.Instant retryAt); int createPaymentRequest(@Param("claimId") UUID claimId,@Param("requestId") UUID requestId); boolean paymentRequestExists(UUID claimId); }
++
++import java.time.Instant;
++import java.util.List;
++import java.util.UUID;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++
++@Mapper
++public interface EffectMapper {
++    int enqueue(OutboxRow row);
++    List<OutboxRow> pending();
++    int markDelivered(UUID id);
++    int markFailed(@Param("id") UUID id, @Param("error") String error,
++                   @Param("retryAt") Instant retryAt);
++    int createPaymentRequest(@Param("claimId") UUID claimId, @Param("requestId") UUID requestId);
++    boolean paymentRequestExists(UUID claimId);
++}
+--- a/src/main/java/com/papaya/claims/persistence/MyBatisAuditRepository.java
++++ b/src/main/java/com/papaya/claims/persistence/MyBatisAuditRepository.java
+@@ -1,11 +1,29 @@
+ package com.papaya.claims.persistence;
+ 
+-import com.fasterxml.jackson.core.JsonProcessingException;
+-import com.fasterxml.jackson.databind.ObjectMapper;
+-import com.papaya.claims.contract.*;
+-import com.papaya.claims.contract.Model.*;
++import com.papaya.claims.contract.AuditRepository;
++import com.papaya.claims.contract.Model.AuditEntry;
++import java.util.List;
++import java.util.UUID;
+ import org.springframework.stereotype.Repository;
+-import org.springframework.transaction.annotation.Transactional;
+-import java.time.Instant;
+-import java.util.*;
+-@Repository public final class MyBatisAuditRepository implements AuditRepository { private final AuditMapper mapper; public MyBatisAuditRepository(AuditMapper mapper){this.mapper=mapper;} public void append(AuditEntry a){mapper.append(new AuditRow(a.auditId(),a.claimId(),a.sequence(),a.timestamp(),a.fromState(),a.toState(),a.userId(),a.role(),a.notes(),a.configVersion(),a.traceId()));} public List<AuditEntry> findByClaimId(UUID id){return mapper.findByClaimId(id).stream().map(PersistenceJson::audit).toList();} }
++
++@Repository
++public final class MyBatisAuditRepository implements AuditRepository {
++    private final AuditMapper mapper;
++
++    public MyBatisAuditRepository(AuditMapper mapper) {
++        this.mapper = mapper;
++    }
++
++    @Override
++    public void append(AuditEntry entry) {
++        mapper.append(new AuditRow(
++                entry.auditId(), entry.claimId(), entry.sequence(), entry.timestamp(),
++                entry.fromState(), entry.toState(), entry.userId(), entry.role(), entry.notes(),
++                entry.configVersion(), entry.traceId()));
++    }
++
++    @Override
++    public List<AuditEntry> findByClaimId(UUID id) {
++        return mapper.findByClaimId(id).stream().map(PersistenceJson::audit).toList();
++    }
++}
+--- a/src/main/java/com/papaya/claims/persistence/MyBatisClaimRepository.java
++++ b/src/main/java/com/papaya/claims/persistence/MyBatisClaimRepository.java
+@@ -1,11 +1,48 @@
+ package com.papaya.claims.persistence;
+ 
+-import com.fasterxml.jackson.core.JsonProcessingException;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+-import com.papaya.claims.contract.*;
+-import com.papaya.claims.contract.Model.*;
++import com.papaya.claims.contract.ClaimRepository;
++import com.papaya.claims.contract.Model.ClaimSnapshot;
++import java.util.List;
++import java.util.Optional;
++import java.util.UUID;
+ import org.springframework.stereotype.Repository;
+ import org.springframework.transaction.annotation.Transactional;
+-import java.time.Instant;
+-import java.util.*;
+-@Repository public final class MyBatisClaimRepository implements ClaimRepository { private final ClaimMapper mapper; private final ObjectMapper json; public MyBatisClaimRepository(ClaimMapper mapper,ObjectMapper json){this.mapper=mapper;this.json=json;} public void insert(ClaimSnapshot c){mapper.insert(PersistenceJson.row(json,c));} public Optional<ClaimSnapshot> find(UUID id){return Optional.ofNullable(mapper.find(id)).map(r->PersistenceJson.claim(json,r));} @Transactional public Optional<ClaimSnapshot> findForUpdate(UUID id){return Optional.ofNullable(mapper.findForUpdate(id)).map(r->PersistenceJson.claim(json,r));} public List<ClaimSnapshot> list(){return mapper.list().stream().map(r->PersistenceJson.claim(json,r)).toList();} public boolean compareAndSet(ClaimSnapshot c,long expected){return mapper.compareAndSet(PersistenceJson.row(json,c),expected)==1;} }
++
++@Repository
++public final class MyBatisClaimRepository implements ClaimRepository {
++    private final ClaimMapper mapper;
++    private final ObjectMapper json;
++
++    public MyBatisClaimRepository(ClaimMapper mapper, ObjectMapper json) {
++        this.mapper = mapper;
++        this.json = json;
++    }
++
++    @Override
++    public void insert(ClaimSnapshot claim) {
++        mapper.insert(PersistenceJson.row(json, claim));
++    }
++
++    @Override
++    public Optional<ClaimSnapshot> find(UUID id) {
++        return Optional.ofNullable(mapper.find(id)).map(row -> PersistenceJson.claim(json, row));
++    }
++
++    @Override
++    @Transactional
++    public Optional<ClaimSnapshot> findForUpdate(UUID id) {
++        return Optional.ofNullable(mapper.findForUpdate(id))
++                .map(row -> PersistenceJson.claim(json, row));
++    }
++
++    @Override
++    public List<ClaimSnapshot> list() {
++        return mapper.list().stream().map(row -> PersistenceJson.claim(json, row)).toList();
++    }
++
++    @Override
++    public boolean compareAndSet(ClaimSnapshot updated, long expectedVersion) {
++        return mapper.compareAndSet(PersistenceJson.row(json, updated), expectedVersion) == 1;
++    }
++}
+--- a/src/main/java/com/papaya/claims/persistence/MyBatisCommandRepository.java
++++ b/src/main/java/com/papaya/claims/persistence/MyBatisCommandRepository.java
+@@ -1,11 +1,31 @@
+ package com.papaya.claims.persistence;
+ 
+-import com.fasterxml.jackson.core.JsonProcessingException;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+-import com.papaya.claims.contract.*;
+-import com.papaya.claims.contract.Model.*;
++import com.papaya.claims.contract.CommandRepository;
++import com.papaya.claims.contract.Model.CommandReceipt;
++import java.util.Optional;
++import java.util.UUID;
+ import org.springframework.stereotype.Repository;
+-import org.springframework.transaction.annotation.Transactional;
+-import java.time.Instant;
+-import java.util.*;
+-@Repository public final class MyBatisCommandRepository implements CommandRepository { private final CommandMapper mapper; private final ObjectMapper json; public MyBatisCommandRepository(CommandMapper mapper,ObjectMapper json){this.mapper=mapper;this.json=json;} public Optional<CommandReceipt> find(UUID id,String user,String key){var r=mapper.find(id,user,key);return r==null?Optional.empty():Optional.of(PersistenceJson.receipt(json,r.result()));} public void insert(UUID id,String user,String key,CommandReceipt receipt){mapper.insert(id,user,key,receipt.requestHash(),PersistenceJson.write(json,receipt));} }
++
++@Repository
++public final class MyBatisCommandRepository implements CommandRepository {
++    private final CommandMapper mapper;
++    private final ObjectMapper json;
++
++    public MyBatisCommandRepository(CommandMapper mapper, ObjectMapper json) {
++        this.mapper = mapper;
++        this.json = json;
++    }
++
++    @Override
++    public Optional<CommandReceipt> find(UUID claimId, String userId, String idempotencyKey) {
++        ReceiptRow row = mapper.find(claimId, userId, idempotencyKey);
++        return row == null ? Optional.empty() : Optional.of(PersistenceJson.receipt(json, row.result()));
++    }
++
++    @Override
++    public void insert(UUID claimId, String userId, String idempotencyKey, CommandReceipt receipt) {
++        mapper.insert(claimId, userId, idempotencyKey, receipt.requestHash(),
++                PersistenceJson.write(json, receipt));
++    }
++}
+--- a/src/main/java/com/papaya/claims/persistence/MyBatisEffectRepository.java
++++ b/src/main/java/com/papaya/claims/persistence/MyBatisEffectRepository.java
+@@ -1,11 +1,53 @@
+ package com.papaya.claims.persistence;
+ 
+-import com.fasterxml.jackson.core.JsonProcessingException;
+-import com.fasterxml.jackson.databind.ObjectMapper;
+-import com.papaya.claims.contract.*;
+-import com.papaya.claims.contract.Model.*;
++import com.papaya.claims.contract.EffectRepository;
++import com.papaya.claims.contract.Model.OutboxMessage;
++import java.time.Instant;
++import java.util.List;
++import java.util.UUID;
+ import org.springframework.stereotype.Repository;
+-import org.springframework.transaction.annotation.Transactional;
+-import java.time.Instant;
+-import java.util.*;
+-@Repository public final class MyBatisEffectRepository implements EffectRepository { private final EffectMapper mapper; private final ObjectMapper json; public MyBatisEffectRepository(EffectMapper mapper,ObjectMapper json){this.mapper=mapper;this.json=json;} public void enqueue(List<OutboxMessage> messages){for(var m:messages)mapper.enqueue(new OutboxRow(m.id(),m.claimId(),m.effect(),m.payload(),m.attempts(),"pending",Instant.EPOCH));} public List<OutboxMessage> pending(){return mapper.pending().stream().map(r->new OutboxMessage(r.id(),r.claimId(),r.effect(),r.payload(),r.attempts())).toList();} public void markDelivered(UUID id){mapper.markDelivered(id);} public void markFailed(UUID id,String error,Instant retryAt){mapper.markFailed(id,error,retryAt);} public void createPaymentRequest(UUID claimId,UUID requestId){mapper.createPaymentRequest(claimId,requestId);} public boolean paymentRequestExists(UUID claimId){return mapper.paymentRequestExists(claimId);} }
++
++@Repository
++public final class MyBatisEffectRepository implements EffectRepository {
++    private final EffectMapper mapper;
++
++    public MyBatisEffectRepository(EffectMapper mapper) {
++        this.mapper = mapper;
++    }
++
++    @Override
++    public void enqueue(List<OutboxMessage> messages) {
++        for (OutboxMessage message : messages) {
++            mapper.enqueue(new OutboxRow(message.id(), message.claimId(), message.effect(),
++                    message.payload(), message.attempts(), "pending", Instant.EPOCH));
++        }
++    }
++
++    @Override
++    public List<OutboxMessage> pending() {
++        return mapper.pending().stream()
++                .map(row -> new OutboxMessage(
++                        row.id(), row.claimId(), row.effect(), row.payload(), row.attempts()))
++                .toList();
++    }
++
++    @Override
++    public void markDelivered(UUID id) {
++        mapper.markDelivered(id);
++    }
++
++    @Override
++    public void markFailed(UUID id, String error, Instant retryAt) {
++        mapper.markFailed(id, error, retryAt);
++    }
++
++    @Override
++    public void createPaymentRequest(UUID claimId, UUID requestId) {
++        mapper.createPaymentRequest(claimId, requestId);
++    }
++
++    @Override
++    public boolean paymentRequestExists(UUID claimId) {
++        return mapper.paymentRequestExists(claimId);
++    }
++}
+--- a/src/main/java/com/papaya/claims/persistence/OutboxRow.java
++++ b/src/main/java/com/papaya/claims/persistence/OutboxRow.java
+@@ -1,3 +1,13 @@
+ package com.papaya.claims.persistence;
+-import java.time.Instant; import java.util.UUID;
+-public record OutboxRow(UUID id,UUID claimId,String effect,String payload,int attempts,String status,Instant nextAttemptAt) {}
++
++import java.time.Instant;
++import java.util.UUID;
++
++public record OutboxRow(
++        UUID id,
++        UUID claimId,
++        String effect,
++        String payload,
++        int attempts,
++        String status,
++        Instant nextAttemptAt) {}
+--- a/src/main/java/com/papaya/claims/persistence/PersistenceJson.java
++++ b/src/main/java/com/papaya/claims/persistence/PersistenceJson.java
+@@ -1,13 +1,62 @@
+ package com.papaya.claims.persistence;
++
+ import com.fasterxml.jackson.core.JsonProcessingException;
+-import com.fasterxml.jackson.databind.*;
+-import java.util.*;
++import com.fasterxml.jackson.core.type.TypeReference;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.papaya.claims.contract.Model.AuditEntry;
++import com.papaya.claims.contract.Model.ClaimSnapshot;
++import com.papaya.claims.contract.Model.CommandReceipt;
++import java.util.LinkedHashMap;
++import java.util.Map;
++
+ final class PersistenceJson {
+- private PersistenceJson() {}
+- static String write(ObjectMapper mapper,Object value) { try { return mapper.writeValueAsString(value); } catch(JsonProcessingException e) { throw new IllegalStateException("Unable to encode persistence JSON",e); } }
+- static Map<String,Object> readMap(ObjectMapper mapper,String value) { try { return mapper.readValue(value, new TypeReference<LinkedHashMap<String,Object>>(){}); } catch(Exception e) { throw new IllegalStateException("Unable to decode persistence JSON",e); } }
+- static ClaimSnapshot claim(ObjectMapper m, ClaimRow r) { return new ClaimSnapshot(r.id(),r.memberId(),r.state(),r.policyLimit(),r.currency(),readMap(m,r.facts()),r.informationRequests(),r.version(),r.assessmentStartedAt(),r.lastInformationRequestedAt()); }
+- static ClaimRow row(ObjectMapper m, ClaimSnapshot c) { return new ClaimRow(c.id(),c.memberId(),c.state(),c.policyLimit(),c.currency(),write(m,c.facts()),c.informationRequests(),c.version(),c.assessmentStartedAt(),c.lastInformationRequestedAt()); }
+- static AuditEntry audit(AuditRow r) { return new AuditEntry(r.auditId(),r.claimId(),r.sequence(),r.timestamp(),r.fromState(),r.toState(),r.userId(),r.role(),r.notes(),r.configVersion(),r.traceId()); }
+- static CommandReceipt receipt(ObjectMapper m,String json) { try { return m.readValue(json,CommandReceipt.class); } catch(Exception e) { throw new IllegalStateException("Unable to decode command receipt",e); } }
++    private static final TypeReference<LinkedHashMap<String, Object>> FACT_MAP =
++            new TypeReference<>() {};
++
++    private PersistenceJson() {}
++
++    static String write(ObjectMapper mapper, Object value) {
++        try {
++            return mapper.writeValueAsString(value);
++        } catch (JsonProcessingException error) {
++            throw new IllegalStateException("Unable to encode persistence JSON", error);
++        }
++    }
++
++    static Map<String, Object> readMap(ObjectMapper mapper, String value) {
++        try {
++            return mapper.readValue(value, FACT_MAP);
++        } catch (Exception error) {
++            throw new IllegalStateException("Unable to decode persistence JSON", error);
++        }
++    }
++
++    static ClaimSnapshot claim(ObjectMapper mapper, ClaimRow row) {
++        return new ClaimSnapshot(
++                row.id(), row.memberId(), row.state(), row.policyLimit(), row.currency(),
++                readMap(mapper, row.facts()), row.informationRequests(), row.version(),
++                row.assessmentStartedAt(), row.lastInformationRequestedAt());
++    }
++
++    static ClaimRow row(ObjectMapper mapper, ClaimSnapshot claim) {
++        return new ClaimRow(
++                claim.id(), claim.memberId(), claim.state(), claim.policyLimit(), claim.currency(),
++                write(mapper, claim.facts()), claim.informationRequests(), claim.version(),
++                claim.assessmentStartedAt(), claim.lastInformationRequestedAt());
++    }
++
++    static AuditEntry audit(AuditRow row) {
++        return new AuditEntry(
++                row.auditId(), row.claimId(), row.sequence(), row.timestamp(), row.fromState(),
++                row.toState(), row.userId(), row.role(), row.notes(), row.configVersion(),
++                row.traceId());
++    }
++
++    static CommandReceipt receipt(ObjectMapper mapper, String json) {
++        try {
++            return mapper.readValue(json, CommandReceipt.class);
++        } catch (Exception error) {
++            throw new IllegalStateException("Unable to decode command receipt", error);
++        }
++    }
+ }
+--- a/src/main/java/com/papaya/claims/persistence/ReceiptRow.java
++++ b/src/main/java/com/papaya/claims/persistence/ReceiptRow.java
+@@ -1,3 +1,6 @@
+ package com.papaya.claims.persistence;
++
+ import java.util.UUID;
+-public record ReceiptRow(UUID claimId,String userId,String idempotencyKey,String requestHash,String result) {}
++
++public record ReceiptRow(
++        UUID claimId, String userId, String idempotencyKey, String requestHash, String result) {}
+--- a/src/test/java/com/papaya/claims/persistence/AuditImmutabilityIT.java
++++ b/src/test/java/com/papaya/claims/persistence/AuditImmutabilityIT.java
+@@ -1,18 +1,75 @@
+ package com.papaya.claims.persistence;
+ 
+-import com.papaya.claims.contract.Model.*; import org.junit.jupiter.api.*; import org.testcontainers.containers.PostgreSQLContainer; import org.testcontainers.junit.jupiter.*;
+-import java.math.BigDecimal; import java.time.Instant; import java.util.*; import static org.assertj.core.api.Assertions.*;
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ 
+-@Testcontainers(disabledWithoutDocker = false) class AuditImmutabilityIT {
+- @Container static final PostgreSQLContainer<?> postgres=new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("claims").withUsername("postgres").withPassword("integration-test-password"); static PostgresPersistenceSupport.Harness h;
+- @BeforeAll static void setup() throws Exception { h=PostgresPersistenceSupport.start(postgres); }
+- @Test void runtimeCanInsertAndReadAuditButCannotUpdateOrDelete() throws Exception {
+-  var c=new ClaimSnapshot(UUID.randomUUID(),"member-001","RECEIVED",new BigDecimal("50.00"),"USD",Map.of(),0,0,null,null); h.claims().insert(c);
+-  var a=new AuditEntry(UUID.randomUUID(),c.id(),1,Instant.now(),null,"RECEIVED","clerk","document_clerk","created","v1","trace-1"); h.audits().append(a); assertThat(h.audits().findByClaimId(c.id())).containsExactly(a);
+-  try(var con=h.dataSource().getConnection();var st=con.createStatement()){assertThatThrownBy(()->st.executeUpdate("UPDATE claim_audit SET notes='tampered' WHERE audit_id='"+a.auditId()+"'")).hasMessageContaining("permission denied"); assertThatThrownBy(()->st.executeUpdate("DELETE FROM claim_audit WHERE audit_id='"+a.auditId()+"'")).hasMessageContaining("permission denied");}
+- }
+- @Test void auditCannotBeMutatedEvenByTableOwnerBecauseTriggerDefendsIt() throws Exception {
+-  var c=new ClaimSnapshot(UUID.randomUUID(),"member-001","RECEIVED",new BigDecimal("50.00"),"USD",Map.of(),0,0,null,null); h.claims().insert(c); var a=new AuditEntry(UUID.randomUUID(),c.id(),1,Instant.now(),null,"RECEIVED","clerk","document_clerk","created","v1","trace-2"); h.audits().append(a);
+-  try(var con=DriverManager.getConnection(postgres.getJdbcUrl(),"claims_owner","integration-test-password");var st=con.createStatement()){assertThatThrownBy(()->st.executeUpdate("UPDATE claim_audit SET notes='tampered' WHERE audit_id='"+a.auditId()+"'")).hasMessageContaining("claim audit is immutable");}
+- }
++import com.papaya.claims.contract.Model.AuditEntry;
++import com.papaya.claims.contract.Model.ClaimSnapshot;
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.Map;
++import java.util.UUID;
++import org.junit.jupiter.api.BeforeAll;
++import org.junit.jupiter.api.Test;
++import org.testcontainers.containers.PostgreSQLContainer;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++
++@Testcontainers(disabledWithoutDocker = false)
++class AuditImmutabilityIT {
++    @Container
++    static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
++            .withDatabaseName("claims")
++            .withUsername("postgres")
++            .withPassword("integration-test-password");
++
++    private static PostgresPersistenceSupport.Harness harness;
++
++    @BeforeAll
++    static void setup() throws Exception {
++        harness = PostgresPersistenceSupport.start(postgres);
++    }
++
++    @Test
++    void runtimeCanInsertAndReadAuditButCannotUpdateOrDelete() throws Exception {
++        ClaimSnapshot claim = new ClaimSnapshot(UUID.randomUUID(), "member-001", "RECEIVED",
++                new BigDecimal("50.00"), "USD", Map.of(), 0, 0, null, null);
++        harness.claims().insert(claim);
++        AuditEntry entry = audit(claim.id(), "trace-1");
++
++        harness.audits().append(entry);
++
++        assertThat(harness.audits().findByClaimId(claim.id())).containsExactly(entry);
++        try (var connection = harness.dataSource().getConnection();
++             var statement = connection.createStatement()) {
++            assertThatThrownBy(() -> statement.executeUpdate(
++                    "UPDATE claim_audit SET notes='tampered' WHERE audit_id='" + entry.auditId() + "'"))
++                    .hasMessageContaining("permission denied");
++            assertThatThrownBy(() -> statement.executeUpdate(
++                    "DELETE FROM claim_audit WHERE audit_id='" + entry.auditId() + "'"))
++                    .hasMessageContaining("permission denied");
++        }
++    }
++
++    @Test
++    void auditCannotBeMutatedEvenByTableOwnerBecauseTriggerDefendsIt() throws Exception {
++        ClaimSnapshot claim = new ClaimSnapshot(UUID.randomUUID(), "member-001", "RECEIVED",
++                new BigDecimal("50.00"), "USD", Map.of(), 0, 0, null, null);
++        harness.claims().insert(claim);
++        AuditEntry entry = audit(claim.id(), "trace-2");
++        harness.audits().append(entry);
++
++        try (var connection = java.sql.DriverManager.getConnection(
++                        postgres.getJdbcUrl(), "claims_owner", "integration-test-password");
++             var statement = connection.createStatement()) {
++            assertThatThrownBy(() -> statement.executeUpdate(
++                    "UPDATE claim_audit SET notes='tampered' WHERE audit_id='" + entry.auditId() + "'"))
++                    .hasMessageContaining("claim audit is immutable");
++        }
++    }
++
++    private AuditEntry audit(UUID claimId, String traceId) {
++        return new AuditEntry(UUID.randomUUID(), claimId, 1, Instant.now(), null, "RECEIVED",
++                "clerk", "document_clerk", "created", "v1", traceId);
++    }
+ }
+--- a/src/test/java/com/papaya/claims/persistence/ClaimPersistenceIT.java
++++ b/src/test/java/com/papaya/claims/persistence/ClaimPersistenceIT.java
+@@ -1,16 +1,109 @@
+ package com.papaya.claims.persistence;
+ 
+-import com.papaya.claims.contract.Model.*; import org.junit.jupiter.api.*; import org.testcontainers.containers.PostgreSQLContainer; import org.testcontainers.junit.jupiter.*;
+-import java.math.BigDecimal; import java.time.Instant; import java.util.*; import static org.assertj.core.api.Assertions.*;
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ 
+-@Testcontainers(disabledWithoutDocker = false) class ClaimPersistenceIT {
+- @Container static final PostgreSQLContainer<?> postgres=new PostgreSQLContainer<>("postgres:16-alpine").withDatabaseName("claims").withUsername("postgres").withPassword("integration-test-password");
+- static PostgresPersistenceSupport.Harness h;
+- @BeforeAll static void setup() throws Exception { h=PostgresPersistenceSupport.start(postgres); }
+- private ClaimSnapshot claim(UUID id){return new ClaimSnapshot(id,"member-001","RECEIVED",new BigDecimal("100.00"),"USD",Map.of("proof",true),0,0,null,null);}
+- @Test void persistsJsonbAndReadsClaim() { var c=claim(UUID.randomUUID()); h.claims().insert(c); assertThat(h.claims().find(c.id())).contains(c); }
+- @Test void locksClaimInsideTransactionAndCasChecksVersion() { var c=claim(UUID.randomUUID()); h.claims().insert(c); var updated=c.updateFacts(Map.of("proof",false)); assertThat(h.transactions().execute(status->{assertThat(h.claims().findForUpdate(c.id())).contains(c);return h.claims().compareAndSet(updated,0);})).isTrue(); assertThat(h.claims().compareAndSet(c,0)).isFalse(); assertThat(h.claims().find(c.id()).orElseThrow().facts()).containsEntry("proof",false); }
+- @Test void transactionRollbackRemovesClaim() { var c=claim(UUID.randomUUID()); assertThatThrownBy(()->h.transactions().executeWithoutResult(status->{h.claims().insert(c);throw new IllegalStateException("rollback");})).isInstanceOf(IllegalStateException.class); assertThat(h.claims().find(c.id())).isEmpty(); }
+- @Test void receiptUniqueByClaimUserAndIdempotencyKeyAndStoresSnapshot() { var c=claim(UUID.randomUUID()); h.claims().insert(c); var receipt=new CommandReceipt("sha256",c); h.commands().insert(c.id(),"clerk","key-1",receipt); assertThat(h.commands().find(c.id(),"clerk","key-1")).contains(receipt); assertThatThrownBy(()->h.commands().insert(c.id(),"clerk","key-1",receipt)).hasMessageContaining("command_receipts"); h.commands().insert(c.id(),"lead","key-1",receipt); }
+- @Test void paymentRequestIsUniquePerClaimAndOutboxRetries() { var c=claim(UUID.randomUUID()); h.claims().insert(c); h.effects().createPaymentRequest(c.id(),UUID.randomUUID()); h.effects().createPaymentRequest(c.id(),UUID.randomUUID()); assertThat(h.effects().paymentRequestExists(c.id())).isTrue(); var id=UUID.randomUUID(); h.effects().enqueue(List.of(new OutboxMessage(id,c.id(),"notify_approval","{}",0))); assertThat(h.effects().pending()).extracting(OutboxMessage::id).contains(id); h.effects().markFailed(id,"network",Instant.now().plusSeconds(30)); assertThat(h.effects().pending()).extracting(OutboxMessage::id).doesNotContain(id); }
++import com.papaya.claims.contract.Model.ClaimSnapshot;
++import com.papaya.claims.contract.Model.CommandReceipt;
++import com.papaya.claims.contract.Model.OutboxMessage;
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.List;
++import java.util.Map;
++import java.util.UUID;
++import org.junit.jupiter.api.BeforeAll;
++import org.junit.jupiter.api.Test;
++import org.testcontainers.containers.PostgreSQLContainer;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++
++@Testcontainers(disabledWithoutDocker = false)
++class ClaimPersistenceIT {
++    @Container
++    static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
++            .withDatabaseName("claims")
++            .withUsername("postgres")
++            .withPassword("integration-test-password");
++
++    private static PostgresPersistenceSupport.Harness harness;
++
++    @BeforeAll
++    static void setup() throws Exception {
++        harness = PostgresPersistenceSupport.start(postgres);
++    }
++
++    private ClaimSnapshot claim(UUID id) {
++        return new ClaimSnapshot(id, "member-001", "RECEIVED", new BigDecimal("100.00"),
++                "USD", Map.of("proof", true), 0, 0, null, null);
++    }
++
++    @Test
++    void persistsJsonbAndReadsClaim() {
++        ClaimSnapshot claim = claim(UUID.randomUUID());
++
++        harness.claims().insert(claim);
++
++        assertThat(harness.claims().find(claim.id())).contains(claim);
++    }
++
++    @Test
++    void locksClaimInsideTransactionAndCasChecksVersion() {
++        ClaimSnapshot claim = claim(UUID.randomUUID());
++        harness.claims().insert(claim);
++        ClaimSnapshot updated = claim.updateFacts(Map.of("proof", false));
++
++        Boolean updatedSuccessfully = harness.transactions().execute(status -> {
++            assertThat(harness.claims().findForUpdate(claim.id())).contains(claim);
++            return harness.claims().compareAndSet(updated, 0);
++        });
++
++        assertThat(updatedSuccessfully).isTrue();
++        assertThat(harness.claims().compareAndSet(claim, 0)).isFalse();
++        assertThat(harness.claims().find(claim.id()).orElseThrow().facts())
++                .containsEntry("proof", false);
++    }
++
++    @Test
++    void transactionRollbackRemovesClaim() {
++        ClaimSnapshot claim = claim(UUID.randomUUID());
++
++        assertThatThrownBy(() -> harness.transactions().executeWithoutResult(status -> {
++            harness.claims().insert(claim);
++            throw new IllegalStateException("rollback");
++        })).isInstanceOf(IllegalStateException.class);
++
++        assertThat(harness.claims().find(claim.id())).isEmpty();
++    }
++
++    @Test
++    void receiptIsUniqueByClaimUserAndIdempotencyKeyAndStoresSnapshot() {
++        ClaimSnapshot claim = claim(UUID.randomUUID());
++        harness.claims().insert(claim);
++        CommandReceipt receipt = new CommandReceipt("sha256", claim);
++
++        harness.commands().insert(claim.id(), "clerk", "key-1", receipt);
++
++        assertThat(harness.commands().find(claim.id(), "clerk", "key-1")).contains(receipt);
++        assertThatThrownBy(() -> harness.commands().insert(claim.id(), "clerk", "key-1", receipt))
++                .hasMessageContaining("command_receipts");
++        harness.commands().insert(claim.id(), "lead", "key-1", receipt);
++    }
++
++    @Test
++    void paymentRequestIsUniquePerClaimAndOutboxRetries() {
++        ClaimSnapshot claim = claim(UUID.randomUUID());
++        harness.claims().insert(claim);
++        harness.effects().createPaymentRequest(claim.id(), UUID.randomUUID());
++        harness.effects().createPaymentRequest(claim.id(), UUID.randomUUID());
++
++        assertThat(harness.effects().paymentRequestExists(claim.id())).isTrue();
++        UUID outboxId = UUID.randomUUID();
++        harness.effects().enqueue(List.of(
++                new OutboxMessage(outboxId, claim.id(), "notify_approval", "{}", 0)));
++        assertThat(harness.effects().pending()).extracting(OutboxMessage::id).contains(outboxId);
++
++        harness.effects().markFailed(outboxId, "network", Instant.now().plusSeconds(30));
++
++        assertThat(harness.effects().pending()).extracting(OutboxMessage::id).doesNotContain(outboxId);
++    }
+ }
+--- a/src/test/java/com/papaya/claims/persistence/PostgresPersistenceSupport.java
++++ b/src/test/java/com/papaya/claims/persistence/PostgresPersistenceSupport.java
+@@ -2,35 +2,98 @@
+ 
+ import com.fasterxml.jackson.databind.ObjectMapper;
+ import com.fasterxml.jackson.databind.json.JsonMapper;
+-import com.papaya.claims.contract.*;
+-import liquibase.*; import liquibase.database.*; import liquibase.database.jvm.JdbcConnection; import liquibase.resource.ClassLoaderResourceAccessor;
+-import org.apache.ibatis.session.*; import org.mybatis.spring.SqlSessionFactoryBean; import org.mybatis.spring.SqlSessionTemplate;
++import java.sql.Connection;
++import java.sql.DriverManager;
++import java.sql.SQLException;
++import java.util.List;
++import javax.sql.DataSource;
++import liquibase.Contexts;
++import liquibase.DatabaseFactory;
++import liquibase.LabelExpression;
++import liquibase.Liquibase;
++import liquibase.database.Database;
++import liquibase.database.jvm.JdbcConnection;
++import liquibase.resource.ClassLoaderResourceAccessor;
++import org.apache.ibatis.session.SqlSessionFactory;
++import org.mybatis.spring.SqlSessionFactoryBean;
++import org.mybatis.spring.SqlSessionTemplate;
+ import org.postgresql.ds.PGSimpleDataSource;
+-import org.springframework.jdbc.datasource.DataSourceTransactionManager; import org.springframework.transaction.support.TransactionTemplate;
+-import javax.sql.DataSource; import java.sql.*; import java.util.*;
++import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
++import org.springframework.jdbc.datasource.DataSourceTransactionManager;
++import org.springframework.transaction.support.TransactionTemplate;
++import org.testcontainers.containers.PostgreSQLContainer;
+ 
+ public final class PostgresPersistenceSupport {
+- private PostgresPersistenceSupport() {}
+- public static Harness start(org.testcontainers.containers.PostgreSQLContainer<?> pg) throws Exception {
+-  try(Connection admin=DriverManager.getConnection(pg.getJdbcUrl(),pg.getUsername(),pg.getPassword())) {
+-   createRole(admin,"claims_owner",pg.getPassword()); createRole(admin,"claims_app",pg.getPassword());
+-   try(var grant=admin.createStatement()){grant.execute("GRANT CREATE ON SCHEMA public TO claims_owner");}
+-  }
+-  var owner=source(pg,"claims_owner",pg.getPassword());
+-  try(Connection c=owner.getConnection()) {
+-   var database=DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(c));
+-   try(var liquibase=new Liquibase("db/db.changelog-master.yml",new ClassLoaderResourceAccessor(),database)) { liquibase.update(new Contexts(),new LabelExpression()); }
+-  }
+-  var runtime=source(pg,"claims_app",pg.getPassword());
+-  var factoryBean=new SqlSessionFactoryBean(); factoryBean.setDataSource(runtime);
+-  factoryBean.setMapperLocations(new org.springframework.core.io.support.PathMatchingResourcePatternResolver().getResources("classpath*:mappers/*.xml"));
+-  var factory=factoryBean.getObject();
+-  var template=new SqlSessionTemplate(factory);
+-  var json=JsonMapper.builder().findAndAddModules().build();
+-  var tx=new TransactionTemplate(new DataSourceTransactionManager(runtime));
+-  return new Harness(runtime,factory,json,new MyBatisClaimRepository(template.getMapper(ClaimMapper.class),json),new MyBatisAuditRepository(template.getMapper(AuditMapper.class)),new MyBatisCommandRepository(template.getMapper(CommandMapper.class),json),new MyBatisEffectRepository(template.getMapper(EffectMapper.class),json),tx);
+- }
+- private static void createRole(Connection c,String role,String password) throws SQLException { try(var s=c.prepareStatement("SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', ?, ?)");){s.setString(1,role);s.setString(2,password);try(var r=s.executeQuery()){r.next();try(var ddl=c.createStatement()){ddl.execute(r.getString(1));}}} }
+- private static DataSource source(org.testcontainers.containers.PostgreSQLContainer<?> pg,String user,String pass){var ds=new PGSimpleDataSource();ds.setURL(pg.getJdbcUrl());ds.setUser(user);ds.setPassword(pass);return ds;}
+- public record Harness(DataSource dataSource,SqlSessionFactory factory,ObjectMapper json,MyBatisClaimRepository claims,MyBatisAuditRepository audits,MyBatisCommandRepository commands,MyBatisEffectRepository effects,TransactionTemplate transactions) {}
++    private PostgresPersistenceSupport() {}
++
++    public static Harness start(PostgreSQLContainer<?> postgres) throws Exception {
++        try (Connection admin = DriverManager.getConnection(
++                postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())) {
++            createRole(admin, "claims_owner", postgres.getPassword());
++            createRole(admin, "claims_app", postgres.getPassword());
++            try (var statement = admin.createStatement()) {
++                statement.execute("GRANT CREATE ON SCHEMA public TO claims_owner");
++            }
++        }
++
++        DataSource migrationDataSource = source(postgres, "claims_owner", postgres.getPassword());
++        try (Connection connection = migrationDataSource.getConnection()) {
++            Database database = DatabaseFactory.getInstance()
++                    .findCorrectDatabaseImplementation(new JdbcConnection(connection));
++            try (Liquibase liquibase = new Liquibase(
++                    "db/db.changelog-master.yml", new ClassLoaderResourceAccessor(), database)) {
++                liquibase.update(new Contexts(), new LabelExpression());
++            }
++        }
++
++        DataSource runtimeDataSource = source(postgres, "claims_app", postgres.getPassword());
++        SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
++        factoryBean.setDataSource(runtimeDataSource);
++        factoryBean.setMapperLocations(new PathMatchingResourcePatternResolver()
++                .getResources("classpath*:mappers/*.xml"));
++        SqlSessionFactory factory = factoryBean.getObject();
++        SqlSessionTemplate template = new SqlSessionTemplate(factory);
++        ObjectMapper json = JsonMapper.builder().findAndAddModules().build();
++        TransactionTemplate transactions = new TransactionTemplate(
++                new DataSourceTransactionManager(runtimeDataSource));
++
++        return new Harness(runtimeDataSource, factory, json,
++                new MyBatisClaimRepository(template.getMapper(ClaimMapper.class), json),
++                new MyBatisAuditRepository(template.getMapper(AuditMapper.class)),
++                new MyBatisCommandRepository(template.getMapper(CommandMapper.class), json),
++                new MyBatisEffectRepository(template.getMapper(EffectMapper.class)), transactions);
++    }
++
++    private static void createRole(Connection connection, String role, String password)
++            throws SQLException {
++        String createRoleSql = "SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', ?, ?)";
++        try (var statement = connection.prepareStatement(createRoleSql)) {
++            statement.setString(1, role);
++            statement.setString(2, password);
++            try (var result = statement.executeQuery()) {
++                result.next();
++                try (var ddl = connection.createStatement()) {
++                    ddl.execute(result.getString(1));
++                }
++            }
++        }
++    }
++
++    private static DataSource source(PostgreSQLContainer<?> postgres, String user, String password) {
++        PGSimpleDataSource dataSource = new PGSimpleDataSource();
++        dataSource.setURL(postgres.getJdbcUrl());
++        dataSource.setUser(user);
++        dataSource.setPassword(password);
++        return dataSource;
++    }
++
++    public record Harness(
++            DataSource dataSource,
++            SqlSessionFactory factory,
++            ObjectMapper json,
++            MyBatisClaimRepository claims,
++            MyBatisAuditRepository audits,
++            MyBatisCommandRepository commands,
++            MyBatisEffectRepository effects,
++            TransactionTemplate transactions) {}
+ }

@@ -1,0 +1,18 @@
+{
+  "status": "FAIL",
+  "startedAtUtc": "2026-10-17T04:58:46.559Z",
+  "error": "Cannot take screenshot with 0 width.",
+  "results": [
+    {
+      "name": "real Chrome opens the claims sign-in UI",
+      "result": "FAIL",
+      "detail": "Cannot take screenshot with 0 width."
+    }
+  ],
+  "network": [],
+  "consoleErrors": [],
+  "chromeStderr": "\nDevTools listening on ws://127.0.0.1:9227/devtools/browser/d9547e5e-f26a-4694-9ba9-bf26a55ee580\nFontconfig error: Cannot load default config file: File not found\n",
+  "redactions": [
+    "No credentials, cookies, CSRF tokens, request authorization headers, or request bodies were captured."
+  ]
+}

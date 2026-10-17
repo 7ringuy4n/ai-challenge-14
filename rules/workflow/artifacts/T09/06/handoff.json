@@ -1,0 +1,16 @@
+{
+  "task": "T09",
+  "attempt": "06",
+  "status": "submitted",
+  "author": "foundation_tests_worker",
+  "summary": "Updated the PostgreSQL outbox integration assertion to compare persisted metadata and parsed JSON content, tolerating JSONB whitespace normalization while retaining the delivered-message exclusion check by ID.",
+  "patch": "rules/workflow/artifacts/T09/06/candidate.patch",
+  "allowed_patch_paths": [
+    "src/test/java/com/papaya/claims/persistence/PersistenceBoundaryIT.java"
+  ],
+  "proposed_checks": [
+    {"status": "NOT_RUN", "command": "mvn -B -Dit.test=PersistenceBoundaryIT verify", "reason": "Worker instructions prohibit running builds and database operations; coordinator owns verification."}
+  ],
+  "findings": [],
+  "known_limits": ["Patch has not been compiled or executed."]
+}

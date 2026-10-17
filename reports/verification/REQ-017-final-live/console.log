@@ -1,0 +1,32 @@
+started_at=2026-10-17T06:39:30Z
+running test case 1/29: unauthenticated claims request is rejected
+running test case 2/29: authenticated session supplies CSRF token
+running test case 3/29: member creates claim
+running test case 4/29: create idempotency replays the original claim
+running test case 5/29: claim owner can read claim
+running test case 6/29: claim owner can read audit
+running test case 7/29: unsafe request without CSRF token is rejected
+running test case 8/29: member cannot edit submitted document roster
+running test case 9/29: document clerk records complete document
+running test case 10/29: document clerk verifies claim
+running test case 11/29: team lead assigns assessor
+running test case 12/29: team lead starts assessment
+running test case 13/29: assigned assessor submits report
+running test case 14/29: assessor approves and persists payment request
+running test case 15/29: finance dispatches payment via outbox
+running test case 16/29: human identity cannot invoke system transition
+running test case 17/29: finance can inspect transition options
+running test case 18/29: finance closes claim after outbox confirmation
+running test case 19/29: member list endpoint returns visible claims
+running test case 20/29: complete lifecycle exposes claim transition audit
+running test case 21/29: closed claim rejects a transition
+running test case 22/29: malformed claim UUID returns stable client error
+running test case 23/29: unknown claim is not found
+running test case 24/29: idempotency key reuse with different payload conflicts
+running test case 25/29: terminal state exposes no available transitions
+running test case 26/29: member cannot invoke protected system endpoint
+running test case 27/29: oversized state value returns validation error
+running test case 28/29: invalid currency returns validation error
+running test case 29/29: stale version cannot mutate closed claim
+Completed 29/29 end-to-end API scenarios.
+finished_at=2026-10-17T06:39:34Z

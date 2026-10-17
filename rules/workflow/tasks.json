@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "Implement Challenge 14 on the existing develop branch; Java 21/Maven 3.9.11 are available in the user-local toolchain; Docker daemon access is denied; no verified main/origin history exists; host-managed raw LLM payloads are unavailable and remain NOT_CAPTURED/PARTIAL.",
+  "scope": "Implement Challenge 14 on develop and apply owner-approved REQ-20261017-020. Source commit 0435e1b passed Java 21/Maven 3.9.11 and PostgreSQL 16/Testcontainers quality verification: 127 unit + 9 integration, 97.0195% line / 90.2326% branch. Current functional, browser, cross-member and Postman evidence passes. Original final-source JMeter stress remains recorded as FAIL (P95 564ms >500ms); do not claim threshold passed. Hardware exception requires evidence-based attribution and explicit production-performance caveat. LLM full raw payload capture is revised to proof-of-work; preserve all accessible transcripts and record unavailable raw payloads NOT_CAPTURED/PARTIAL. Merge develop into existing main only after all revised gates pass; never push.",
   "coordinator_model": "gpt-6.1-sol",
   "worker_model": "gpt-6-luna",
   "reasoning_effort": "medium",
@@ -388,7 +388,7 @@
           "review_packet": "rules/workflow/artifacts/T02/17/REVIEW-PACKET.md"
         }
       ],
-      "notes": "AD-01 clarifies typed ClaimAggregate/ClaimWorkflowData and was independently PASS reviewed in reports/sub-agents/T00/ad-01-rereview-03.md. Attempt 07 remains partial/rejected; attempt 08 is fresh and must include adapters, complete Testcontainers evidence sources, scoped column grants, and REQ-010. Master changelog integration remains coordinator-owned. Attempt 08 returned PARTIAL; handoff records missing persistence layers/tests and its patch is corrupt at line 218 (`git apply --check`). Preserve as evidence; new attempt required. Attempt 09 is PARTIAL but apply-checkable: ports/aggregate and schema/grants only. Independent review-09 will decide whether this foundation is safe to integrate; adapters/XML/IT classes remain explicit blockers. Independent review-09 FAIL: migration duplicates three 001 columns and omits migration-owner grants in addition to missing adapters/XML/ITs. See reports/sub-agents/T02/review-09.md. No candidate changes integrated. Reopened as coordinator implementation work after T01 acceptance; attempt 09 remains rejected and is evidence only. New implementation must repair duplicate columns and complete real persistence adapters/transactions, migration-owner grants and PostgreSQL ITs. Coordinator will create exclusive attempt artifacts and log each host call. Attempt 11 candidate reviewed REWORK; production adapters integrated after coordinator fixed immutable CAS fields and configured the outbox lease. Draft IT excluded because migration SUPERUSER and required coverage missing. Attempt 12 is exclusive persistence-test-source work. Attempt 12 test candidate independently reviewed REWORK because tests used handwritten SQL and did not exercise MyBatis adapters/CAS. Attempt 13 replaces those tests with adapter-facing integration tests. Attempt 14 fixes the migration identity fixture by reconnecting as claims_migration after Liquibase closure; independent rereview pending. Attempt 14 standalone test patch passed independent source review-15 and was integrated; runtime PostgreSQL checks remain blocked/NOT_RUN. Latest current integrated-source suite: 42 tests pass, 0 failures/errors/skips; focused ClaimAuditAspectTest passes 3/3. Independent review-17 closes the proxy advice caveat, with fake-repository and runtime/database limitations retained. Overall coverage is 59.76% line / 45.45% branch, below gates. Task remains running pending scenario, coverage, migration, runtime, and acceptance evidence.",
+      "notes": "AD-01 clarifies typed ClaimAggregate/ClaimWorkflowData and was independently PASS reviewed in reports/sub-agents/T00/ad-01-rereview-03.md. Attempt 07 remains partial/rejected; attempt 08 is fresh and must include adapters, complete Testcontainers evidence sources, scoped column grants, and REQ-010. Master changelog integration remains coordinator-owned. Attempt 08 returned PARTIAL; handoff records missing persistence layers/tests and its patch is corrupt at line 218 (`git apply --check`). Preserve as evidence; new attempt required. Attempt 09 is PARTIAL but apply-checkable: ports/aggregate and schema/grants only. Independent review-09 will decide whether this foundation is safe to integrate; adapters/XML/IT classes remain explicit blockers. Independent review-09 FAIL: migration duplicates three 001 columns and omits migration-owner grants in addition to missing adapters/XML/ITs. See reports/sub-agents/T02/review-09.md. No candidate changes integrated. Reopened as coordinator implementation work after T01 acceptance; attempt 09 remains rejected and is evidence only. New implementation must repair duplicate columns and complete real persistence adapters/transactions, migration-owner grants and PostgreSQL ITs. Coordinator will create exclusive attempt artifacts and log each host call. Attempt 11 candidate reviewed REWORK; production adapters integrated after coordinator fixed immutable CAS fields and configured the outbox lease. Draft IT excluded because migration SUPERUSER and required coverage missing. Attempt 12 is exclusive persistence-test-source work. Attempt 12 test candidate independently reviewed REWORK because tests used handwritten SQL and did not exercise MyBatis adapters/CAS. Attempt 13 replaces those tests with adapter-facing integration tests. Attempt 14 fixes the migration identity fixture by reconnecting as claims_migration after Liquibase closure; independent rereview pending. Attempt 14 standalone test patch passed independent source review-15 and was integrated; runtime PostgreSQL checks remain blocked/NOT_RUN. Latest current integrated-source suite: 42 tests pass, 0 failures/errors/skips; focused ClaimAuditAspectTest passes 3/3. Independent review-17 closes the proxy advice caveat, with fake-repository and runtime/database limitations retained. Overall coverage is 59.76% line / 45.45% branch, below gates. Task remains running pending scenario, coverage, migration, runtime, and acceptance evidence. Final integrated evidence: PostgreSQL 16/Testcontainers integration tests passed 9/9, all five Liquibase changesets applied, and rollback, same-key lock, CAS, audit immutability, outbox/payment and runtime grants were exercised. Task is kept running pending full requirement-matrix acceptance.",
       "contract_version": "CH14-Contracts-v1+AD-01",
       "base_source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
       "current_attempt": "14",
@@ -408,7 +408,7 @@
       "role": "worker",
       "model": "gpt-6-luna",
       "reasoning_effort": "medium",
-      "status": "blocked",
+      "status": "running",
       "depends_on": [
         "T00",
         "T02"
@@ -450,7 +450,7 @@
           "deployment_hash": "05d7701d4c2b3c2289644a7febc45dbced576a41d92ded72d611e6074c10c66f"
         }
       ],
-      "notes": "Consumes CH14-Contracts-v1 and current application.yml read-only. Compose database roles are claims_migration and claims_runtime with separate credentials; runtime checks require Docker daemon access. New attempt starts at 05; prior drafts are unverified. Review confirmed the init-script grant exposure is fixed; application DML permissions depend on T02 changeset 002, which is not yet integrated. Scoped rereview confirms init grant finding P1 addressed; still depends on T02 explicit per-table privileges and migration integration before acceptance.",
+      "notes": "Consumes CH14-Contracts-v1 and current application.yml read-only. Compose database roles are claims_migration and claims_runtime with separate credentials; runtime checks require Docker daemon access. New attempt starts at 05; prior drafts are unverified. Review confirmed the init-script grant exposure is fixed; application DML permissions depend on T02 changeset 002, which is not yet integrated. Scoped rereview confirms init grant finding P1 addressed; still depends on T02 explicit per-table privileges and migration integration before acceptance. Repeat setup passed on existing Compose volume with app and PostgreSQL healthy; user-local runtime secret file remains ignored. Default sandbox blocks socket access; documented setup passed only through authorized escalation. Task remains running pending full task acceptance.",
       "contract_version": "CH14-Contracts-v1",
       "base_source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
       "current_attempt": "05",
@@ -508,7 +508,7 @@
         "After-commit dispatch logs mock effects; retry state observable; tracing context and CSRF contract implemented"
       ],
       "evidence": [],
-      "notes": "Consumes accepted T01 and T02 interfaces. Does not edit frozen ClaimUseCases or shared YAML/POM/application config; system-audit table and mapper implementation are owned by T02."
+      "notes": "Consumes accepted T01 and T02 interfaces. Does not edit frozen ClaimUseCases or shared YAML/POM/application config; system-audit table and mapper implementation are owned by T02. Final clean quality run passed with 120 unit tests and 9 PostgreSQL integration tests; live 20-case workflow reached CLOSED after outbox confirmation. Task remains in progress; overall project/task state is not accepted."
     },
     {
       "id": "T05",
@@ -542,7 +542,7 @@
         "UI consumes state data dynamically and escapes user text; no hardcoded fixed state list"
       ],
       "evidence": [],
-      "notes": "Consumes frozen DTO/OpenAPI/use-case contracts. Uses ClaimUseCases; does not edit claim/api/dto (T00-owned) or application config."
+      "notes": "Consumes frozen DTO/OpenAPI/use-case contracts. Uses ClaimUseCases; does not edit claim/api/dto (T00-owned) or application config. Live authenticated smoke and 20 API workflow checks passed after repeat startup. Full 29-case acceptance matrix is not run as one HTTP suite; task remains in progress."
     },
     {
       "id": "T06",
@@ -550,7 +550,7 @@
       "role": "worker",
       "model": "gpt-6-luna",
       "reasoning_effort": "medium",
-      "status": "planned",
+      "status": "running",
       "depends_on": [
         "T03",
         "T05",
@@ -587,7 +587,7 @@
         "Scenario scripts export actual claim/audit results and config-extension diff; coordinator runs commands"
       ],
       "evidence": [],
-      "notes": "Scenario acceptance tests and runner only. Docs and evidence reports are coordinator-owned; tests use actual PostgreSQL where required."
+      "notes": "Scenario acceptance tests and runner only. Docs and evidence reports are coordinator-owned; tests use actual PostgreSQL where required. Live Python runner passed 20/20 HTTP checks after second setup, and the complete Maven suite passed. This does not constitute a single live run of all 29 C14 cases; keep task in progress."
     },
     {
       "id": "T07",
@@ -595,7 +595,7 @@
       "role": "reviewer",
       "model": "gpt-6-luna",
       "reasoning_effort": "medium",
-      "status": "planned",
+      "status": "running",
       "depends_on": [
         "T06",
         "T11",
@@ -641,7 +641,7 @@
         "Return findings and PASS/FAIL/BLOCKED; coordinator resolves findings and reruns affected checks before acceptance"
       ],
       "evidence": [],
-      "notes": "Independent read-only final reviewer; evidence returned to coordinator in task artifact directory."
+      "notes": "Independent read-only final reviewer; evidence returned to coordinator in task artifact directory. Integrated reviewer found no critical/high issue; one P2 CAS test race was fixed and focused rereview confirmed closure. Advisory-lock negative wait retains a timing sensitivity; review is preserved in reports/sub-agents/T07/final-integrated-review.md. Full 29-case requirement-by-requirement review remains open; task not accepted."
     },
     {
       "id": "T08",
@@ -668,25 +668,84 @@
         "reports/"
       ],
       "verification": [
-        "mvn -B -Pquality clean verify",
+        "env JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Pquality clean verify",
+        "bash scripts/setup.sh",
         "bash scripts/smoke.sh",
-        "bash scripts/run-scenarios.sh",
-        "agent-memory rebuild"
+        "CLAIMS_API_BASE=http://127.0.0.1:8080 CLAIMS_EVIDENCE_DIR=reports/verification/acceptance-matrix python3 scripts/run-scenarios.py",
+        "bash scripts/run-postman.sh",
+        "JMETER_DURATION=5 scripts/performance/run-profile.sh baseline",
+        "python3 scripts/performance/compare-runs.py reports/performance",
+        "python3 scripts/workflow/verify_workflow.py",
+        "agent-memory rebuild",
+        "sha256sum performance/jmeter/profiles/*.jmx performance/jmeter/profiles/*.properties before and after; seven full scripts/performance/run-profile.sh executions on clean reviewed source",
+        "Real-browser Playwright/E2E positive and negative claim workflows with screenshots, console and network evidence",
+        "PostgreSQL-backed two-principal cross-member authorization matrix with database before/after evidence",
+        "python3 scripts/workflow/verify_workflow.py; requirement-by-requirement live/document verification",
+        "Local Codex sessions/archives inventory, actual available transcripts/tool records, per-file SHA256 reconciliation and NOT_CAPTURED audit"
       ],
-      "case_ids": [],
+      "case_ids": [
+        "C14-01",
+        "C14-02",
+        "C14-03",
+        "C14-04",
+        "C14-05",
+        "C14-06",
+        "C14-07",
+        "C14-08",
+        "C14-09",
+        "C14-10",
+        "C14-11",
+        "C14-12",
+        "C14-13",
+        "C14-14",
+        "C14-15",
+        "C14-16",
+        "C14-17",
+        "C14-18",
+        "C14-19",
+        "C14-20",
+        "C14-21",
+        "C14-22",
+        "C14-23",
+        "C14-24",
+        "C14-25",
+        "C14-26",
+        "C14-27",
+        "C14-28",
+        "C14-29"
+      ],
       "acceptance": [
         "Final reports tied to source hashes and actual command exit codes; no fabricated metrics",
         "README, dated technical history, changelog, config-only diff and raw AI conversation ready",
-        "User can review package locally; publish to GitHub only under explicit user authorization"
+        "User can review package locally; publish to GitHub only under explicit user authorization",
+        "Run a single all-29 acceptance suite against the running PostgreSQL-backed API and preserve redacted request/response evidence",
+        "Provide runnable JMeter baseline/normal/peak/stress/spike/soak/concurrent-claims profiles and measured resource/database/outbox metrics",
+        "Configure OpenTelemetry propagation through HTTP and asynchronous outbox; verify exported trace/span evidence and log correlation",
+        "Verify requirement-to-implementation/test/review traceability, Postman collection execution, and editable/rendered architecture/workflow/database/security/deployment diagrams",
+        "Seven JMeter profiles rerun against the exact final source and byte-identical JMX/property artifacts; all user-approved limits pass",
+        "Real browser completes available positive/negative UI workflows and preserves screenshots, console and HTTP evidence",
+        "Two distinct members cannot access or mutate each other claims; live authorization responses and DB state prove isolation",
+        "Every active requirement ID maps to implementation, test, actual execution or justified direct-document evidence and peer review",
+        "All accessible project-relevant Codex session/archive interactions are inventoried, transcripted/redacted and checksummed; host-managed missing payloads stay NOT_CAPTURED; full audit is mandatory and no merge occurs if unresolved"
       ],
       "evidence": [
         {
-          "artifact": "README.md",
-          "result": "DOCUMENTATION_CREATED",
-          "source_hash": "900ac547584e85a54115a7abfcd767cba440d631be0e3c6a56a0aa645045ae32"
+          "artifact": "reports/verification/REQ-015-final.json",
+          "result": "PASS_WITH_OPEN_GATES_NOT_ACCEPTED",
+          "source_hash": "reported in artifact",
+          "unit_tests": 123,
+          "integration_tests": 9,
+          "line_coverage_percent": 97.0464,
+          "branch_coverage_percent": 90.1116,
+          "scenario_cases": 29,
+          "performance_profiles": 7,
+          "postman_assertions": 14,
+          "trace": "HTTP-to-security-to-outbox parent chain verified",
+          "review": "NO_CRITICAL_OR_HIGH",
+          "commit": "PENDING_COORDINATOR_COMMIT"
         }
       ],
-      "notes": "Coordinator-owned final documentation and submission work. OpenAPI remains frozen by T00 unless a reviewed coordinator contract change is required. Includes editable architecture/workflow diagrams plus exports and reproducible 100/500-client JMeter plans. No publishing or push. Root README and final verification status have been written; scenario suite, acceptance gates, independent final integrated review, and runtime checks remain incomplete."
+      "notes": "Current coordinator evidence is reports/verification/REQ-015-final.json. Combined PostgreSQL-backed matrix passed 29/29; clean quality passed 123 unit + 9 integration, six changesets and JaCoCo gates; seven JMeter profiles met user-approved limits; Newman passed; exported HTTP/security/outbox traces were correlated; diagrams and two independent rereviews are recorded. The full JMeter suite predates the final log-only adjustment; a short post-adjustment run validates runner metadata only. Browser UI, live two-member ownership and fully per-bullet live requirement execution remain open. Host-managed model payloads remain NOT_CAPTURED/PARTIAL. Keep status running. Under REQ-017 a local merge is authorized only after every mandatory gate passes; never push. REQ-017 is active. T08 remains running; completion and main merge are prohibited until all gates, including full session/LLM audit, pass. Final-source JMeter execution is complete but stress acceptance failed (P95 564ms vs 500ms); T13 is blocked. T16 is blocked by mandatory inaccessible host-managed raw model payloads. Do not accept or merge."
     },
     {
       "id": "T09",
@@ -811,6 +870,290 @@
       ],
       "evidence": [],
       "notes": "Test-only PostgreSQL decimal round-trip, JSON serialization and near-limit approval regression coverage; implementation remains with T02/T05 owners."
+    },
+    {
+      "id": "T13",
+      "title": "Final-source seven-profile JMeter rerun",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "accepted",
+      "depends_on": [
+        "T08"
+      ],
+      "allowed_paths": [
+        "reports/performance/final-rerun/",
+        "reports/verification/REQ-017-jmeter.json",
+        "reports/verification/REQ-017-jmeter-final/",
+        "reports/verification/REQ-017-jmeter-ab/",
+        "reports/sub-agents/T13/02/"
+      ],
+      "verification": [
+        "JMeter 5.6.3, OpenJDK 21.0.12.1; execute the seven scripts/performance/run-profile.sh profiles on clean source commit 0435e1b; compare-runs.py against user-approved thresholds; verify JMX and .properties hashes before/after"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "All seven approved final-source JMeter profiles are executed, and every result is accurately compared with the unchanged original thresholds; preserve the original stress FAIL at P95 564ms and the instrumented diagnostic FAIL at P95 638ms.",
+        "Under REQ-20261017-020 only, the local performance gate may be accepted as HARDWARE_CONSTRAINED if independent review finds measured shared-host resource limits reasonably support the exception and no material application defect remains; do not claim P95<=500ms passed or production-scale performance verified.",
+        "Retain Hikari queueing and uncaptured cgroup/statement-latency limitations; production-scale performance remains UNVERIFIED."
+      ],
+      "evidence": [
+        "reports/verification/REQ-017-jmeter-rerun/comparison.json",
+        "reports/sub-agents/T13/01/review-01.md",
+        "reports/verification/REQ-017-jmeter-profile-hashes-before.txt",
+        "reports/verification/REQ-017-jmeter-profile-hashes-after.txt",
+        "reports/verification/REQ-017-jmeter-final/comparison.json",
+        "reports/verification/REQ-017-jmeter-final/final-profile-summary.json",
+        "reports/verification/REQ-017-jmeter-final/profile-plan-sha256-before.txt",
+        "reports/verification/REQ-017-jmeter-final/profile-plan-sha256-after.txt",
+        "reports/verification/REQ-017-jmeter-ab/",
+        "reports/sub-agents/T13/02/pool-40-assessment.md",
+        "reports/sub-agents/T13/02/review-02.md",
+        "reports/verification/REQ-020/hardware-assessment.md",
+        "reports/verification/REQ-020/jmeter-stress-instrumented/resource-analysis.json",
+        "reports/sub-agents/T17/review-01.md",
+        {
+          "command": "bash scripts/performance/run-profile.sh stress; python3 reports/verification/REQ-020/performance-monitor.py reports/verification/REQ-020/jmeter-stress-instrumented/resource-metrics.jsonl 150",
+          "exit_code": 0,
+          "source_hash": "4297dd25d1da81e2a125602e0f32a0bcf1a4e5da5fe01c2c5c8892beae7e727c",
+          "artifact": "reports/verification/REQ-020/hardware-assessment.md",
+          "result": "PASS",
+          "qualification": "The instrumented run executed successfully but did not meet P95<=500ms; local exception only. Original JMeter gate result remains FAIL."
+        },
+        {
+          "artifact": "reports/sub-agents/T17/review-01.md",
+          "reviewer_agent": "/root/t17_revised_acceptance_review",
+          "result": "PASS",
+          "source_hash": "4297dd25d1da81e2a125602e0f32a0bcf1a4e5da5fe01c2c5c8892beae7e727c",
+          "qualification": "Reviewer explicitly supports HARDWARE_CONSTRAINED local exception under revised policy; overall review returned REWORK only because T13/T16 task states were not reconciled. Review-01 overall REWORK was solely for unreconciled task states; the response explicitly confirmed this task scope passes."
+        }
+      ],
+      "notes": "Accepted for the revised local-environment performance policy only. Historical target result remains FAIL (original P95 564ms; monitored P95 638ms). No production-scale capacity claim. Owner policy REQ-020 and independent review support the local HARDWARE_CONSTRAINED exception."
+    },
+    {
+      "id": "T14",
+      "title": "Real browser and live cross-member verification",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "running",
+      "depends_on": [
+        "T08"
+      ],
+      "allowed_paths": [
+        "reports/verification/REQ-017-browser/",
+        "reports/verification/REQ-017-cross-member/",
+        "docker/compose.yml",
+        "src/main/java/com/papaya/claims/security/SecurityConfiguration.java",
+        "src/main/resources/application.yml",
+        "src/test/java/com/papaya/claims/security/SecurityConfigurationTest.java",
+        "scripts/browser/",
+        "package.json",
+        "package-lock.json",
+        "src/main/java/com/papaya/claims/claim/service/ClaimServiceImpl.java",
+        "src/main/resources/static/app.js",
+        "src/test/java/com/papaya/claims/claim/service/ClaimServiceTest.java",
+        "src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java"
+      ],
+      "verification": [
+        "node scripts/browser/browser-e2e.mjs (real system Chrome via CDP; not Playwright)",
+        "python3 scripts/browser/verify-cross-member.py (authenticated HTTP plus PostgreSQL snapshots)"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "Browser UI positive/negative journeys have actual screenshot/console/network evidence",
+        "Two isolated member principals prove cross-owner access and mutation denied with no database change",
+        "REQ-018 approved member-usernames configuration is validated, defaults to member-demo, preserves staff/system accounts, and is exercised by two distinct live member principals"
+      ],
+      "evidence": [
+        "reports/verification/REQ-017-browser/run-2026-10-17T050718217Z/browser-e2e.json",
+        "reports/verification/REQ-017-cross-member/run-20261017T050909578984Z/cross-member.json",
+        "reports/verification/REQ-017-postman.log",
+        "reports/verification/REQ-017-smoke.log",
+        "reports/verification/REQ-019-focused-final.log",
+        "reports/verification/REQ-019-quality-final.log",
+        "reports/verification/REQ-019-final-compose-setup.log",
+        "reports/verification/REQ-017-review.json",
+        "reports/sub-agents/T14/02/review-02.md",
+        "reports/verification/REQ-017-member-name-boundary.log",
+        "reports/verification/REQ-017-quality-after-boundary-fix.log",
+        "reports/verification/REQ-017-boundary-compose-default.log",
+        "reports/verification/REQ-017-boundary-postman.log",
+        "reports/verification/REQ-017-final-live/console.log",
+        "reports/verification/REQ-017-final-live/http-exchanges.jsonl",
+        "reports/verification/REQ-017-final-live/trace-context.json"
+      ],
+      "notes": "REQ-20261017-017. Coordinator execution under T08; application source remains coordinator-only and serialized. T14 implementation, boundary review, full quality (127 unit + 9 integration), smoke, 29/29 combined live, 17 Chrome cases, 7 cross-member checks and 34-request Postman collection passed on source 0435e1b. Performance profiles were rerun on the same source; stress acceptance failed P95 564ms against 500ms and remains tracked under blocked T13."
+    },
+    {
+      "id": "T15",
+      "title": "Per-requirement verification and acceptance matrix",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "accepted",
+      "depends_on": [
+        "T08"
+      ],
+      "allowed_paths": [
+        "reports/verification/REQ-017-requirement-matrix.json",
+        "reports/acceptance/FINAL-ACCEPTANCE.md"
+      ],
+      "verification": [
+        "python3 scripts/workflow/verify_workflow.py",
+        "requirement matrix audit"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "Every active requirement ID has actual implementation/test/review and live or direct-document evidence; accurately status PASS/FAIL/BLOCKED/NOT_RUN"
+      ],
+      "evidence": [
+        "docs/testing/traceability-matrix.md",
+        "reports/telemetry/REQ-017-trace-verification.json",
+        "reports/verification/REQ-017-requirement-matrix.json",
+        "reports/acceptance/FINAL-ACCEPTANCE.md",
+        "reports/verification/REQ-017-current.json",
+        "reports/verification/REQ-017-jmeter-final/comparison.json",
+        "reports/verification/REQ-017-llm-audit.json",
+        "reports/verification/REQ-017-final-live/console.log",
+        "reports/verification/REQ-017-final-live/http-exchanges.jsonl",
+        "reports/verification/REQ-017-final-live/trace-context.json",
+        "reports/verification/REQ-017-final-live/application-trace.log",
+        "reports/sub-agents/T15/02/review-02.md",
+        "reports/sub-agents/T15/02/review-04.md",
+        {
+          "artifact": "reports/sub-agents/T15/02/review-04.md",
+          "reviewer_agent": "/root/final_integrated_review",
+          "result": "PASS",
+          "source_hash": "1099179c36eff36189afc3716cdb688a69db3209096cba2bc585f58f1d8a4640"
+        },
+        {
+          "command": "python3 -m json.tool reports/verification/REQ-017-requirement-matrix.json",
+          "exit_code": 0,
+          "source_hash": "1099179c36eff36189afc3716cdb688a69db3209096cba2bc585f58f1d8a4640",
+          "artifact": "reports/verification/REQ-017-requirement-matrix.json",
+          "result": "PASS"
+        },
+        "reports/verification/REQ-017-final-live/sandbox-attempt-blocked.log"
+      ],
+      "notes": "REQ-20261017-017. T15 reporting task accepted after independent read-only review 04: evidence links, same-run 29/29 request/response/trace-context/application log paths, count totals, performance statuses, and NOT_CAPTURED audit limitations verified. Project remains NOT_ACCEPTED: approved stress P95 gate FAIL and mandatory host-managed raw LLM payload capture BLOCKED. No merge or push."
+    },
+    {
+      "id": "T16",
+      "title": "Codex session and LLM audit reconciliation",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "accepted",
+      "depends_on": [
+        "T08"
+      ],
+      "allowed_paths": [
+        "reports/audit/REQ-017-session-inventory.json",
+        "reports/audit/transcripts/",
+        "reports/verification/REQ-017-llm-audit.json"
+      ],
+      "verification": [
+        "Codex session inventory and transcript extraction command",
+        "session/repo checksum reconciliation"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "All locally accessible project-related session and archived-session events are inventoried and hashed; available message/tool events are captured honestly; inaccessible payloads marked NOT_CAPTURED; mandatory full-capture criterion evaluated without waiver"
+      ],
+      "evidence": [
+        "docs/submission/llm-interactions.jsonl",
+        "reports/audit/transcripts/",
+        "reports/sub-agents/T13/01/review-01.md",
+        "reports/audit/REQ-017-session-inventory.json",
+        "reports/verification/REQ-017-llm-audit.json",
+        "reports/sub-agents/T13/02/review-02.md",
+        "reports/audit/REQ-017-session-inventory.json",
+        "reports/verification/REQ-017-llm-audit.json",
+        "reports/sub-agents/T17/review-01.md",
+        {
+          "command": "python3 scripts/audit/export-codex-sessions.py",
+          "exit_code": 0,
+          "source_hash": "4297dd25d1da81e2a125602e0f32a0bcf1a4e5da5fe01c2c5c8892beae7e727c",
+          "artifact": "reports/audit/REQ-017-session-inventory.json",
+          "result": "PASS",
+          "qualification": "Proof-of-work inventory/transcript verification passes. One active coordinator source file changed after export; raw host payload completeness remains PARTIAL/NOT_CAPTURED."
+        },
+        {
+          "artifact": "reports/sub-agents/T17/review-01.md",
+          "reviewer_agent": "/root/t17_revised_acceptance_review",
+          "result": "PASS",
+          "source_hash": "4297dd25d1da81e2a125602e0f32a0bcf1a4e5da5fe01c2c5c8892beae7e727c",
+          "qualification": "Reviewer explicitly confirms proof-of-work passes under revised policy; raw completeness PARTIAL. Overall review returned REWORK only because T13/T16 task states were not reconciled. Review-01 overall REWORK was solely for unreconciled task states; the response explicitly confirmed this task scope passes."
+        }
+      ],
+      "notes": "Accepted for proof-of-work under REQ-020 after independent review 01 verified 65 session IDs/transcripts and 8,758 accessible records. Host-managed raw payload completeness remains PARTIAL/NOT_CAPTURED; historical full-capture BLOCKED is preserved."
+    },
+    {
+      "id": "T17",
+      "title": "Apply revised acceptance policy and final merge decision",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "accepted",
+      "depends_on": [
+        "T13",
+        "T15",
+        "T16"
+      ],
+      "allowed_paths": [
+        "rules/REQUIREMENT.md",
+        "rules/workflow/tasks.json",
+        "reports/verification/",
+        "reports/acceptance/",
+        "reports/audit/",
+        "reports/sub-agents/T17/",
+        "docs/CHANGELOG.md",
+        "docs/HISTORY.md",
+        "history/CHANGELOG.md",
+        "history/task_on_progress.md",
+        ".agent-memory/"
+      ],
+      "verification": [
+        "python3 scripts/workflow/verify_workflow.py",
+        "documented regression command appropriate to final source",
+        "Git merge evidence verification"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "REQ-020 hardware exception supported by measured data without rewriting original failure",
+        "LLM proof-of-work passes while raw-payload completeness remains PARTIAL/NOT_CAPTURED",
+        "all other mandatory gates pass",
+        "independent review approves final decision",
+        "merge develop into existing main only after gates pass; never push"
+      ],
+      "evidence": [
+        "reports/verification/REQ-017-current.json",
+        "reports/verification/REQ-017-requirement-matrix.json",
+        "reports/verification/REQ-017-jmeter-final/",
+        "reports/verification/REQ-020/hardware-assessment.md",
+        "reports/verification/REQ-020/jmeter-stress-instrumented/",
+        "reports/verification/REQ-020/regression.json",
+        "reports/audit/REQ-017-session-inventory.json",
+        "docs/submission/llm-interactions.jsonl",
+        "reports/acceptance/FINAL-ACCEPTANCE.md",
+        "reports/sub-agents/T17/review-packet.md",
+        {
+          "command": "python3 scripts/workflow/verify_workflow.py",
+          "exit_code": 0,
+          "source_hash": "4297dd25d1da81e2a125602e0f32a0bcf1a4e5da5fe01c2c5c8892beae7e727c",
+          "artifact": "reports/verification/REQ-020/workflow-validation.txt",
+          "result": "PASS"
+        },
+        {
+          "artifact": "reports/sub-agents/T17/review-03.md",
+          "reviewer_agent": "/root/t17_revised_acceptance_review",
+          "result": "PASS",
+          "source_hash": "4297dd25d1da81e2a125602e0f32a0bcf1a4e5da5fe01c2c5c8892beae7e727c"
+        },
+        "reports/verification/REQ-020/git-evidence.md"
+      ],
+      "notes": "Accepted by coordinator after independent review-03 PASS. REQ-020 local performance exception and accessible LLM proof-of-work pass; original stress result remains FAIL at P95 564ms, instrumented repeat P95 638ms FAIL, raw host payload completeness PARTIAL/NOT_CAPTURED, production-scale performance UNVERIFIED. Evidence is committed to develop before the authorized local merge; never push."
     }
   ]
 }

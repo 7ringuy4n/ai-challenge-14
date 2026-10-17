@@ -1,0 +1,52 @@
+{
+  "task": "T04",
+  "attempt": "02",
+  "author_role": "implementation_worker",
+  "status": "submitted",
+  "base_contract_sha256": "803c9cd982a7ee393a64b7b6965091cd68dc1bd9573f3a86e9fc5db40c58815f",
+  "packet_sha256": "130498457ac46ab7dbe12cb152888fad128495e636044d119c1d51e6f90c8a3e",
+  "artifact": "rules/workflow/artifacts/T04/02/candidate.patch",
+  "draft_files": [
+    "src/main/java/com/papaya/claims/application/ClaimService.java",
+    "src/main/java/com/papaya/claims/application/EffectDispatcher.java",
+    "src/main/java/com/papaya/claims/application/MockEffectFactory.java",
+    "src/main/java/com/papaya/claims/configuration/WorkflowConfiguration.java",
+    "src/main/java/com/papaya/claims/observability/TraceContextFilter.java",
+    "src/main/java/com/papaya/claims/security/AuthenticatedActors.java",
+    "src/main/java/com/papaya/claims/security/SecurityConfiguration.java",
+    "src/test/java/com/papaya/claims/application/EffectDispatcherTest.java",
+    "src/test/java/com/papaya/claims/application/FactAuthorizationTest.java",
+    "src/test/java/com/papaya/claims/application/FactoryStrategyTest.java",
+    "src/test/java/com/papaya/claims/application/IdempotencyTest.java",
+    "src/test/java/com/papaya/claims/application/InputValidationTest.java",
+    "src/test/java/com/papaya/claims/application/TransitionAtomicityIT.java",
+    "src/test/java/com/papaya/claims/application/TransitionConcurrencyIT.java",
+    "src/test/java/com/papaya/claims/application/TransitionServiceTest.java",
+    "src/test/java/com/papaya/claims/security/RoleAuthorizationTest.java"
+  ],
+  "verification": [
+    {
+      "command": "mvn -B -Dtest=TransitionServiceTest,RoleAuthorizationTest,IdempotencyTest,FactAuthorizationTest,EffectDispatcherTest,FactoryStrategyTest,InputValidationTest test",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol prohibits builds; coordinator must run after serial integration."
+    },
+    {
+      "command": "mvn -B -Dit.test=TransitionAtomicityIT,TransitionConcurrencyIT verify",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol prohibits Docker/database/build operations; coordinator must run against real PostgreSQL after serial integration."
+    }
+  ],
+  "implementation_notes": [
+    "Attempt 02 contains a full candidate patch of new T04 files, based on current root where these application/security/observability/configuration target files are absent; it is not a delta against attempt 01.",
+    "MockEffectFactory strategies now produce serialized payload strings; only create wraps each once in its OutboxMessage.",
+    "TraceContextFilter uses active Micrometer tracing context or creates a real span when absent; it exports trace/span IDs via request attributes and response headers and logs safe method/path/status/duration metadata without query strings or credentials. Security errors read the generated trace attribute.",
+    "Terminal fact mutation denial is based on the configured engine returning no outgoing options. System transition behavior is left to configured engine roles; T05 must protect /api/system/** and block system credentials on public transition routes.",
+    "Fact edit lifecycle policy remains documented in code: clerk SUBMITTED/PENDING_INFO; lead DOCUMENTS_VERIFIED; assessor UNDER_ASSESSMENT; finance PAYMENT_INITIATED with real request/reference; member acknowledgment on own REJECTED claim.",
+    "Clock uses Clock.tick(Clock.systemUTC(), 1 microsecond); retry schedule uses existing claims.outbox-retry-delay-ms property.",
+    "Added regression coverage for strategy payloads, empty fact patches, oversized/NUL inputs, and config-derived terminal behavior."
+  ],
+  "shared_config_requests": [],
+  "known_limits": [
+    "All checks and independent review remain pending; no execution evidence is claimed."
+  ]
+}

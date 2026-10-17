@@ -1,0 +1,22 @@
+{
+  "task": "T06",
+  "attempt": "01",
+  "status": "submitted",
+  "worker": "acceptance_worker",
+  "allowed_paths": [
+    "src/test/java/com/papaya/claims/acceptance/AcceptanceHttpIT.java",
+    "scripts/run-scenarios.sh",
+    "docs/testing/README.md"
+  ],
+  "verification": [
+    {"command": "mvn -B -Pquality verify", "status": "NOT_RUN", "reason": "Coordinator-only builds and verification."},
+    {"command": "docker compose --env-file .env -f docker/compose.yml up -d --build --wait", "status": "NOT_RUN", "reason": "Coordinator-only Docker operations."},
+    {"command": "bash scripts/smoke.sh", "status": "NOT_RUN", "reason": "Coordinator-only integration execution."},
+    {"command": "bash scripts/run-scenarios.sh", "status": "NOT_RUN", "reason": "Coordinator-only integration execution."}
+  ],
+  "notes": [
+    "Candidate adds a random-port Spring Boot/Testcontainers PostgreSQL HTTP persistence test, five named HTTP scenarios with JSON exports, and testing instructions.",
+    "The full acceptance matrix still needs coordinator execution and likely repair; this draft has not been built or run.",
+    "Config-only YAML extension evidence is not included in this attempt."
+  ]
+}

@@ -1,0 +1,900 @@
+{
+  "status": "PASS",
+  "browser": "Google Chrome",
+  "version": "Chrome/155.0.8059.39",
+  "base": "http://127.0.0.1:8080",
+  "startedAtUtc": "2026-10-17T06:03:18.867Z",
+  "results": [
+    {
+      "name": "real Chrome opens the claims sign-in UI",
+      "result": "PASS",
+      "detail": "Claims Workflow"
+    },
+    {
+      "name": "member-alpha signs in through the UI",
+      "result": "PASS",
+      "detail": "Signed in as member-alpha."
+    },
+    {
+      "name": "create form rejects missing required amounts",
+      "result": "PASS",
+      "detail": {
+        "emptyAmountsRejected": true
+      }
+    },
+    {
+      "name": "member-alpha creates a claim from the UI",
+      "result": "PASS",
+      "detail": {
+        "claimId": "0f6b98d0-a6c4-4aca-874b-31b4333f2e83"
+      }
+    },
+    {
+      "name": "clerk signs in and records the document roster",
+      "result": "PASS",
+      "detail": "Claim information saved."
+    },
+    {
+      "name": "clerk transitions the claim to DOCUMENTS_VERIFIED",
+      "result": "PASS",
+      "detail": "DOCUMENTS_VERIFIED"
+    },
+    {
+      "name": "team lead assigns the assessor",
+      "result": "PASS",
+      "detail": "Claim information saved."
+    },
+    {
+      "name": "team lead starts assessment",
+      "result": "PASS",
+      "detail": "UNDER_ASSESSMENT"
+    },
+    {
+      "name": "assessor saves the completed report",
+      "result": "PASS",
+      "detail": "Claim information saved."
+    },
+    {
+      "name": "assessor approves the claim",
+      "result": "PASS",
+      "detail": "APPROVED"
+    },
+    {
+      "name": "finance initiates payment",
+      "result": "PASS",
+      "detail": "PAYMENT_INITIATED"
+    },
+    {
+      "name": "outbox confirmation enables payment closure in the UI",
+      "result": "PASS",
+      "detail": "CLOSED"
+    },
+    {
+      "name": "member-beta cannot see member-alpha claims in the UI",
+      "result": "PASS",
+      "detail": {
+        "isolated": true
+      }
+    },
+    {
+      "name": "member-alpha creates a second claim for rejection flow",
+      "result": "PASS",
+      "detail": {
+        "claimId": "c54bf293-7ba4-41a3-bf54-63706bb53349"
+      }
+    },
+    {
+      "name": "clerk verifies the second claim documents",
+      "result": "PASS",
+      "detail": "DOCUMENTS_VERIFIED"
+    },
+    {
+      "name": "team lead assigns and starts second assessment",
+      "result": "PASS",
+      "detail": "UNDER_ASSESSMENT"
+    },
+    {
+      "name": "assessor rejects and member acknowledges through the UI",
+      "result": "PASS",
+      "detail": "Rejection acknowledged."
+    }
+  ],
+  "screenshots": [
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/01-sign-in.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/02-member-alpha-workspace.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/03-required-amount-validation.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/04-member-claim-created.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/05-documents-verified.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/06-documents-verified-state.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/07-assessor-assigned.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/08-under-assessment.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/09-assessment-complete.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/10-approved.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/11-payment-initiated.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/12-closed.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/13-member-beta-isolated-list.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/14-rejection-claim-created.png",
+    "reports/verification/REQ-017-browser-boundary/run-2026-10-17T060306591Z/15-rejection-acknowledged.png"
+  ],
+  "network": [
+    {
+      "method": "GET",
+      "path": "/api/v1/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/claims",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/facts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/facts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/facts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/0f6b98d0-a6c4-4aca-874b-31b4333f2e83/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/claims",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/facts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/facts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/facts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/session",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/rejection-acknowledgement",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims?page=0&size=20",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/transitions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/claims/c54bf293-7ba4-41a3-bf54-63706bb53349/audit",
+      "status": 200
+    }
+  ],
+  "consoleErrors": [],
+  "redactions": [
+    "Credentials, cookies and CSRF tokens were not recorded; browser network evidence contains method/path/status only."
+  ]
+}

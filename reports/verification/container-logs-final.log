@@ -1,0 +1,114 @@
+database-1  | The files belonging to this database system will be owned by user "postgres".
+database-1  | This user must also own the server process.
+database-1  | 
+database-1  | The database cluster will be initialized with locale "en_US.utf8".
+database-1  | The default database encoding has accordingly been set to "UTF8".
+database-1  | The default text search configuration will be set to "english".
+database-1  | 
+database-1  | Data page checksums are disabled.
+database-1  | 
+database-1  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+database-1  | creating subdirectories ... ok
+database-1  | selecting dynamic shared memory implementation ... posix
+database-1  | selecting default max_connections ... 100
+database-1  | selecting default shared_buffers ... 128MB
+database-1  | selecting default time zone ... Etc/UTC
+database-1  | creating configuration files ... ok
+app-1       | 
+app-1       |   .   ____          _            __ _ _
+app-1       |  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+app-1       | ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+app-1       |  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+app-1       |   '  |____| .__|_| |_|_| |_\__, | / / / /
+app-1       |  =========|_|==============|___/=/_/_/_/
+app-1       | 
+app-1       |  :: Spring Boot ::               (v3.5.16)
+app-1       | 
+app-1       | 2026-10-17T03:13:04.179Z  INFO 1 --- [claims-workflow] [           main] com.papaya.claims.ClaimsApplication      : Starting ClaimsApplication v1.0.0-SNAPSHOT using Java 21.0.12.1 with PID 1 (/app/app.jar started by app in /app)
+database-1  | running bootstrap script ... ok
+database-1  | performing post-bootstrap initialization ... ok
+database-1  | syncing data to disk ... ok
+app-1       | 2026-10-17T03:13:04.182Z  INFO 1 --- [claims-workflow] [           main] com.papaya.claims.ClaimsApplication      : No active profile set, falling back to 1 default profile: "default"
+app-1       | 2026-10-17T03:13:06.380Z  INFO 1 --- [claims-workflow] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+app-1       | 2026-10-17T03:13:06.402Z  INFO 1 --- [claims-workflow] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+app-1       | 2026-10-17T03:13:06.403Z  INFO 1 --- [claims-workflow] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.55]
+app-1       | 2026-10-17T03:13:06.431Z  INFO 1 --- [claims-workflow] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+app-1       | 2026-10-17T03:13:06.432Z  INFO 1 --- [claims-workflow] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2189 ms
+app-1       | 2026-10-17T03:13:07.137Z  INFO 1 --- [claims-workflow] [           main] liquibase.database                       : Set default schema name to public
+app-1       | 2026-10-17T03:13:07.397Z  INFO 1 --- [claims-workflow] [           main] liquibase.changelog                      : Reading from public.databasechangelog
+app-1       | 2026-10-17T03:13:07.456Z  INFO 1 --- [claims-workflow] [           main] liquibase.ui                             : Database is up to date, no changesets to execute
+app-1       | 2026-10-17T03:13:07.458Z  INFO 1 --- [claims-workflow] [           main] liquibase.changelog                      : Reading from public.databasechangelog
+app-1       | 2026-10-17T03:13:07.473Z  INFO 1 --- [claims-workflow] [           main] liquibase.util                           : UPDATE SUMMARY
+app-1       | 2026-10-17T03:13:07.473Z  INFO 1 --- [claims-workflow] [           main] liquibase.util                           : Run:                          0
+app-1       | 2026-10-17T03:13:07.473Z  INFO 1 --- [claims-workflow] [           main] liquibase.util                           : Previously run:               5
+app-1       | 2026-10-17T03:13:07.473Z  INFO 1 --- [claims-workflow] [           main] liquibase.util                           : Filtered out:                 0
+app-1       | 2026-10-17T03:13:07.473Z  INFO 1 --- [claims-workflow] [           main] liquibase.util                           : -------------------------------
+app-1       | 2026-10-17T03:13:07.473Z  INFO 1 --- [claims-workflow] [           main] liquibase.util                           : Total change sets:            5
+app-1       | 2026-10-17T03:13:07.474Z  INFO 1 --- [claims-workflow] [           main] liquibase.util                           : Update summary generated
+app-1       | 2026-10-17T03:13:07.475Z  INFO 1 --- [claims-workflow] [           main] liquibase.command                        : Command execution complete
+app-1       | 2026-10-17T03:13:09.633Z  INFO 1 --- [claims-workflow] [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+app-1       | 2026-10-17T03:13:09.917Z  INFO 1 --- [claims-workflow] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+app-1       | 2026-10-17T03:13:10.349Z  INFO 1 --- [claims-workflow] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name users
+app-1       | 2026-10-17T03:13:10.897Z  INFO 1 --- [claims-workflow] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+app-1       | 2026-10-17T03:13:10.916Z  INFO 1 --- [claims-workflow] [           main] com.papaya.claims.ClaimsApplication      : Started ClaimsApplication in 7.332 seconds (process running for 7.878)
+app-1       | 2026-10-17T03:13:10.933Z  INFO 1 --- [claims-workflow] [   scheduling-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+app-1       | 2026-10-17T03:13:11.015Z  WARN 1 --- [claims-workflow] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+app-1       | 2026-10-17T03:13:11.015Z  WARN 1 --- [claims-workflow] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+app-1       | 2026-10-17T03:13:11.019Z  INFO 1 --- [claims-workflow] [   scheduling-1] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@6347f92c
+app-1       | 2026-10-17T03:13:11.035Z  INFO 1 --- [claims-workflow] [   scheduling-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+app-1       | 2026-10-17T03:13:13.126Z  INFO 1 --- [claims-workflow] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+app-1       | 2026-10-17T03:13:13.127Z  INFO 1 --- [claims-workflow] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+app-1       | 2026-10-17T03:13:13.127Z  INFO 1 --- [claims-workflow] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+app-1       | 2026-10-17T03:13:13.212Z  INFO 1 --- [claims-workflow] [nio-8080-exec-1] c.p.c.common.web.CorrelationIdFilter     : http_request method=GET path=/actuator/health status=200 durationMs=82 correlationId=76742c51-c860-49ad-a617-ed2f643c4765 traceId=null spanId=null
+app-1       | 2026-10-17T03:13:23.247Z  INFO 1 --- [claims-workflow] [nio-8080-exec-2] c.p.c.common.web.CorrelationIdFilter     : http_request method=GET path=/actuator/health status=200 durationMs=3 correlationId=1b5609da-283e-4f72-ae12-1f2841a3d57e traceId=null spanId=null
+app-1       | 2026-10-17T03:13:24.266Z  INFO 1 --- [claims-workflow] [nio-8080-exec-3] c.p.c.common.web.CorrelationIdFilter     : http_request method=GET path=/actuator/health status=200 durationMs=129 correlationId=9aed8a3b-8651-4314-bcaa-5be86b6f5edc traceId=null spanId=null
+app-1       | 2026-10-17T03:13:24.374Z  INFO 1 --- [claims-workflow] [nio-8080-exec-5] c.p.c.common.web.CorrelationIdFilter     : http_request method=GET path=/api/v1/claims status=200 durationMs=101 correlationId=cad80a70-5e6c-44bc-87f1-0f4d45ad67a6 traceId=null spanId=null
+app-1       | 2026-10-17T03:13:26.323Z  INFO 1 --- [claims-workflow] [nio-8080-exec-6] c.p.c.common.web.CorrelationIdFilter     : http_request method=GET path=/api/v1/claims status=401 durationMs=13 correlationId=11e45aa6-09c6-4e17-bb01-5f585082c41e traceId=null spanId=null
+database-1  | 
+database-1  | 
+database-1  | Success. You can now start the database server using:
+database-1  | 
+database-1  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+database-1  | 
+database-1  | initdb: warning: enabling "trust" authentication for local connections
+database-1  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+database-1  | waiting for server to start....2026-10-17 03:06:08.777 UTC [48] LOG:  starting PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+database-1  | 2026-10-17 03:06:08.778 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+database-1  | 2026-10-17 03:06:08.781 UTC [51] LOG:  database system was shut down at 2026-10-17 03:06:08 UTC
+database-1  | 2026-10-17 03:06:08.783 UTC [48] LOG:  database system is ready to accept connections
+database-1  |  done
+database-1  | server started
+database-1  | CREATE DATABASE
+database-1  | 
+database-1  | 
+database-1  | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/10-runtime-role.sh
+database-1  | CREATE ROLE
+database-1  | CREATE ROLE
+database-1  | ALTER DATABASE
+database-1  | ALTER SCHEMA
+database-1  | REVOKE
+database-1  | GRANT
+database-1  | GRANT
+database-1  | 
+database-1  | waiting for server to shut down...2026-10-17 03:06:08.988 UTC [48] LOG:  received fast shutdown request
+database-1  | .2026-10-17 03:06:08.989 UTC [48] LOG:  aborting any active transactions
+database-1  | 2026-10-17 03:06:08.990 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+database-1  | 2026-10-17 03:06:08.990 UTC [49] LOG:  shutting down
+database-1  | 2026-10-17 03:06:08.990 UTC [49] LOG:  checkpoint starting: shutdown immediate
+database-1  | 2026-10-17 03:06:09.012 UTC [49] LOG:  checkpoint complete: wrote 935 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.010 s, sync=0.011 s, total=0.023 s; sync files=308, longest=0.001 s, average=0.001 s; distance=4279 kB, estimate=4279 kB; lsn=0/1920750, redo lsn=0/1920750
+database-1  | 2026-10-17 03:06:09.018 UTC [48] LOG:  database system is shut down
+database-1  |  done
+database-1  | server stopped
+database-1  | 
+database-1  | PostgreSQL init process complete; ready for start up.
+database-1  | 
+database-1  | 2026-10-17 03:06:09.104 UTC [1] LOG:  starting PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+database-1  | 2026-10-17 03:06:09.105 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+database-1  | 2026-10-17 03:06:09.105 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+database-1  | 2026-10-17 03:06:09.106 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+database-1  | 2026-10-17 03:06:09.108 UTC [67] LOG:  database system was shut down at 2026-10-17 03:06:09 UTC
+database-1  | 2026-10-17 03:06:09.112 UTC [1] LOG:  database system is ready to accept connections
+database-1  | 2026-10-17 03:06:17.916 UTC [79] ERROR:  relation "public.databasechangeloglock" does not exist at character 22
+database-1  | 2026-10-17 03:06:17.916 UTC [79] STATEMENT:  SELECT COUNT(*) FROM public.databasechangeloglock
+database-1  | 2026-10-17 03:11:09.208 UTC [65] LOG:  checkpoint starting: time
+database-1  | 2026-10-17 03:11:26.581 UTC [65] LOG:  checkpoint complete: wrote 176 buffers (1.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=17.354 s, sync=0.011 s, total=17.374 s; sync files=96, longest=0.007 s, average=0.001 s; distance=733 kB, estimate=733 kB; lsn=0/19D7E20, redo lsn=0/19D7DE8

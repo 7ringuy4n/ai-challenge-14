@@ -1,0 +1,59 @@
+{
+  "samples": 93559,
+  "errors": 0,
+  "error_rate": 0.0,
+  "duration_seconds": 59.986,
+  "rps": 1559.6805921381656,
+  "throughput_requests_per_second": 1559.6805921381656,
+  "latency_ms": {
+    "p50": 15,
+    "p95": 90,
+    "p99": 160
+  },
+  "by_sampler": {
+    "Get session and CSRF token": {
+      "samples": 46562,
+      "errors": 0
+    },
+    "Create claim": {
+      "samples": 50,
+      "errors": 0
+    },
+    "Record required invoice": {
+      "samples": 50,
+      "errors": 0
+    },
+    "Clerk verifies documents": {
+      "samples": 50,
+      "errors": 0
+    },
+    "Lead assigns assessor": {
+      "samples": 50,
+      "errors": 0
+    },
+    "Lead starts assessment": {
+      "samples": 50,
+      "errors": 0
+    },
+    "Assessor records report": {
+      "samples": 50,
+      "errors": 0
+    },
+    "Assessor approves": {
+      "samples": 50,
+      "errors": 0
+    },
+    "Finance initiates payment": {
+      "samples": 50,
+      "errors": 0
+    },
+    "Concurrent complete claims workflow": {
+      "samples": 50,
+      "errors": 0
+    },
+    "Authenticated list claims": {
+      "samples": 46547,
+      "errors": 0
+    }
+  }
+}

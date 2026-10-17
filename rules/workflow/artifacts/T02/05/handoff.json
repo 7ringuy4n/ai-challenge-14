@@ -1,0 +1,13 @@
+{
+  "task": "T02",
+  "attempt": "05",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    "src/test/java/com/papaya/claims/persistence/ClaimPersistenceIT.java"
+  ],
+  "change": "Added a PostgreSQL-backed round-trip assertion for both non-null claim timers using nanosecond inputs and checking the contract-normalized microsecond values after readback.",
+  "evidence": "NOT_RUN by worker; root reported prior PostgreSQL integration suite 7/7 passing. Coordinator should rerun ClaimPersistenceIT after applying this delta.",
+  "assumptions": [
+    "The ClaimSnapshot contract truncates persisted instants to microsecond precision before persistence."
+  ]
+}

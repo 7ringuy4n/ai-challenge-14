@@ -1,0 +1,28 @@
+diff --git a/src/test/java/com/papaya/claims/application/EffectDispatcherTest.java b/src/test/java/com/papaya/claims/application/EffectDispatcherTest.java
+--- a/src/test/java/com/papaya/claims/application/EffectDispatcherTest.java
++++ b/src/test/java/com/papaya/claims/application/EffectDispatcherTest.java
+@@ -25,7 +25,7 @@
+     }
+     @Test void committedPendingEffectIsDeliveredAndMarked() {
+         EffectRepository repository = mock(EffectRepository.class);
+-        MockEffectFactory factory = new MockEffectFactory(JsonMapper.builder().findAndAddModules().build());
++        MockEffectFactory factory = spy(new MockEffectFactory(JsonMapper.builder().findAndAddModules().build()));
+         OutboxMessage message = message(); when(repository.pending()).thenReturn(List.of(message));
+         dispatcher(repository, factory).retryPending();
+         verify(factory).deliver(message); verify(repository).markDelivered(message.id());
+diff --git a/src/test/java/com/papaya/claims/application/FactAuthorizationTest.java b/src/test/java/com/papaya/claims/application/FactAuthorizationTest.java
+--- a/src/test/java/com/papaya/claims/application/FactAuthorizationTest.java
++++ b/src/test/java/com/papaya/claims/application/FactAuthorizationTest.java
+@@ -16,7 +16,11 @@
+         ClaimService service = TransitionServiceTest.service(claims, mock(CommandRepository.class), mock(AuditRepository.class), mock(EffectRepository.class));
+         assertThatThrownBy(() -> service.patchFacts(new Actor("assessor", "assessor"), claim.id(), 1, Map.of("assessmentAmount", BigDecimal.ONE)))
+                 .isInstanceOf(BusinessException.class).hasMessageContaining("current claim state");
+-        assertThatThrownBy(() -> service.patchFacts(new Actor("assessor", "assessor"), claim.id(), 1, Map.of("paymentRequestCreated", true)))
++        ClaimSnapshot activeAssessment = new ClaimSnapshot(UUID.randomUUID(), "member-001", "UNDER_ASSESSMENT",
++                BigDecimal.TEN, "USD", Map.of(), 0, 1, null, null);
++        when(claims.findForUpdate(activeAssessment.id())).thenReturn(Optional.of(activeAssessment));
++        assertThatThrownBy(() -> service.patchFacts(new Actor("assessor", "assessor"), activeAssessment.id(), 1,
++                Map.of("paymentRequestCreated", true)))
+                 .isInstanceOf(BusinessException.class).hasMessageContaining("not writable");
+         verify(claims, never()).compareAndSet(any(), anyLong());
+     }

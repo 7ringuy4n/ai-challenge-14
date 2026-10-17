@@ -1,0 +1,690 @@
+diff --git a/src/main/java/com/papaya/claims/web/ClaimController.java b/src/main/java/com/papaya/claims/web/ClaimController.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/web/ClaimController.java
+@@ -0,0 +1,71 @@
++package com.papaya.claims.web;
++
++import com.papaya.claims.contract.ClaimOperations;
++import com.papaya.claims.contract.Model.*;
++import com.papaya.claims.security.AuthenticatedActors;
++import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
++import jakarta.servlet.http.HttpServletRequest;
++import jakarta.validation.Valid;
++import jakarta.validation.constraints.*;
++import java.math.BigDecimal;
++import java.util.List;
++import java.util.Map;
++import java.util.UUID;
++import org.springframework.http.HttpStatus;
++import org.springframework.security.core.Authentication;
++import org.springframework.security.web.csrf.CsrfToken;
++import org.springframework.web.bind.annotation.*;
++
++@RestController
++@RequestMapping("/api")
++public class ClaimController {
++    private final ClaimOperations operations;
++    public ClaimController(ClaimOperations operations) { this.operations = operations; }
++
++    @GetMapping("/session")
++    public Session session(Authentication authentication, HttpServletRequest request) {
++        Actor actor = AuthenticatedActors.from(authentication);
++        Object token = request.getAttribute(CsrfToken.class.getName());
++        if (!(token instanceof CsrfToken csrf)) throw new IllegalStateException("CSRF token is unavailable");
++        return new Session(actor.userId(), actor.role(), csrf.getToken(), csrf.getHeaderName());
++    }
++
++    @PostMapping("/claims")
++    @ResponseStatus(HttpStatus.CREATED)
++    public ClaimSnapshot create(Authentication authentication, @Valid @RequestBody CreateClaim body) {
++        return operations.create(actor(authentication), body.memberId(), body.policyLimit(), body.currency(), body.requiredDocuments());
++    }
++    @GetMapping("/claims") public List<ClaimSnapshot> list(Authentication authentication) { return operations.list(actor(authentication)); }
++    @GetMapping("/claims/{id}") public ClaimSnapshot get(Authentication authentication, @PathVariable UUID id) { return operations.get(actor(authentication), id); }
++    @PatchMapping("/claims/{id}/facts") public ClaimSnapshot patchFacts(Authentication authentication, @PathVariable UUID id, @Valid @RequestBody FactsUpdate body) {
++        return operations.patchFacts(actor(authentication), id, body.expectedVersion(), body.updates());
++    }
++    @GetMapping("/claims/{id}/transitions") public List<TransitionOption> options(Authentication authentication, @PathVariable UUID id) { return operations.options(actor(authentication), id); }
++    @PostMapping("/claims/{id}/transitions") public ClaimSnapshot transition(Authentication authentication, @PathVariable UUID id, @Valid @RequestBody Transition body) {
++        return operations.transition(actor(authentication), id, body.command());
++    }
++    @GetMapping("/claims/{id}/audit") public List<AuditEntry> audit(Authentication authentication, @PathVariable UUID id) { return operations.audit(actor(authentication), id); }
++    @PostMapping("/system/claims/{id}/transitions") public ClaimSnapshot systemTransition(Authentication authentication, @PathVariable UUID id, @Valid @RequestBody Transition body) {
++        return operations.systemTransition(actor(authentication), id, body.command());
++    }
++    @PostMapping("/system/claims/{id}/close") public ClaimSnapshot close(Authentication authentication, @PathVariable UUID id, @Valid @RequestBody Close body) {
++        return operations.systemTransition(actor(authentication), id, new TransitionCommand("CLOSED", body.expectedVersion(), body.idempotencyKey(), body.notes()));
++    }
++    private static Actor actor(Authentication authentication) { return AuthenticatedActors.from(authentication); }
++
++    public record Session(String userId, String role, String csrfToken, String csrfHeader) {}
++    @JsonIgnoreProperties(ignoreUnknown = false)
++    public record CreateClaim(@NotBlank @Size(max=120) String memberId,
++            @NotNull @DecimalMin("0.00") @Digits(integer=16, fraction=2) BigDecimal policyLimit,
++            @NotBlank @Pattern(regexp="[A-Z]{3}") String currency,
++            @NotEmpty @Size(max=30) List<@NotBlank @Size(max=80) String> requiredDocuments) {}
++    @JsonIgnoreProperties(ignoreUnknown = false)
++    public record FactsUpdate(@NotNull @PositiveOrZero Long expectedVersion, @NotEmpty Map<String,Object> updates) {}
++    @JsonIgnoreProperties(ignoreUnknown = false)
++    public record Transition(@NotBlank @Size(max=80) String target, @NotNull @PositiveOrZero Long expectedVersion,
++            @NotBlank @Size(max=120) String idempotencyKey, @Size(max=2000) String notes) {
++        TransitionCommand command() { return new TransitionCommand(target, expectedVersion, idempotencyKey, notes); }
++    }
++    @JsonIgnoreProperties(ignoreUnknown = false)
++    public record Close(@NotNull @PositiveOrZero Long expectedVersion, @NotBlank @Size(max=120) String idempotencyKey, @Size(max=2000) String notes) {}
++}
+diff --git a/src/main/java/com/papaya/claims/web/ErrorEnvelope.java b/src/main/java/com/papaya/claims/web/ErrorEnvelope.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/web/ErrorEnvelope.java
+@@ -0,0 +1,7 @@
++package com.papaya.claims.web;
++
++import java.util.Map;
++
++public record ErrorEnvelope(String code, String message, String traceId, Map<String,Object> details) {
++    public ErrorEnvelope { details = details == null ? Map.of() : Map.copyOf(details); }
++}
+diff --git a/src/main/java/com/papaya/claims/web/GlobalExceptionHandler.java b/src/main/java/com/papaya/claims/web/GlobalExceptionHandler.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/web/GlobalExceptionHandler.java
+@@ -0,0 +1,40 @@
++package com.papaya.claims.web;
++
++import com.papaya.claims.contract.BusinessException;
++import com.papaya.claims.observability.TraceContextFilter;
++import jakarta.servlet.http.HttpServletRequest;
++import java.util.Map;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.converter.HttpMessageNotReadableException;
++import org.springframework.validation.FieldError;
++import org.springframework.web.bind.MethodArgumentNotValidException;
++import org.springframework.web.bind.annotation.ExceptionHandler;
++import org.springframework.web.bind.annotation.RestControllerAdvice;
++import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
++import org.springframework.web.servlet.NoHandlerFoundException;
++
++@RestControllerAdvice
++public class GlobalExceptionHandler {
++    @ExceptionHandler(BusinessException.class)
++    public org.springframework.http.ResponseEntity<ErrorEnvelope> business(BusinessException error, HttpServletRequest request) {
++        return response(error.status(), error.code(), error.getMessage(), request);
++    }
++    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class, MethodArgumentNotValidException.class})
++    public org.springframework.http.ResponseEntity<ErrorEnvelope> badRequest(Exception error, HttpServletRequest request) {
++        String message = "Request body or path parameter is invalid";
++        if (error instanceof MethodArgumentNotValidException invalid) {
++            FieldError field = invalid.getBindingResult().getFieldErrors().stream().findFirst().orElse(null);
++            if (field != null) message = "Invalid value for " + field.getField();
++        }
++        return response(400, "INVALID_REQUEST", message, request);
++    }
++    @ExceptionHandler(Exception.class)
++    public org.springframework.http.ResponseEntity<ErrorEnvelope> unexpected(Exception error, HttpServletRequest request) {
++        return response(500, "INTERNAL_ERROR", "The request could not be completed", request);
++    }
++    public static org.springframework.http.ResponseEntity<ErrorEnvelope> response(int status, String code, String message, HttpServletRequest request) {
++        Object trace = request.getAttribute(TraceContextFilter.TRACE_ID_ATTRIBUTE);
++        return org.springframework.http.ResponseEntity.status(status).body(new ErrorEnvelope(code, message,
++                trace instanceof String value ? value : "unavailable", Map.of()));
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/web/JsonRequestSizeFilter.java b/src/main/java/com/papaya/claims/web/JsonRequestSizeFilter.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/web/JsonRequestSizeFilter.java
+@@ -0,0 +1,56 @@
++package com.papaya.claims.web;
++
++import jakarta.servlet.FilterChain;
++import jakarta.servlet.ServletException;
++import jakarta.servlet.http.HttpServletRequest;
++import jakarta.servlet.http.HttpServletRequestWrapper;
++import jakarta.servlet.http.HttpServletResponse;
++import java.io.ByteArrayInputStream;
++import java.io.IOException;
++import java.util.Locale;
++import org.springframework.core.Ordered;
++import org.springframework.core.annotation.Order;
++import org.springframework.http.MediaType;
++import org.springframework.stereotype.Component;
++import org.springframework.web.filter.OncePerRequestFilter;
++
++/** Buffers only API JSON bodies and enforces the same limit for fixed and chunked requests. */
++@Component
++@Order(Ordered.HIGHEST_PRECEDENCE + 30)
++public final class JsonRequestSizeFilter extends OncePerRequestFilter {
++    public static final int MAX_BYTES = 64 * 1024;
++    @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
++        String contentType = request.getContentType();
++        if (!request.getRequestURI().startsWith("/api/") || contentType == null || !contentType.toLowerCase(Locale.ROOT).startsWith(MediaType.APPLICATION_JSON_VALUE)) {
++            chain.doFilter(request, response); return;
++        }
++        byte[] body = request.getInputStream().readNBytes(MAX_BYTES + 1);
++        if (body.length > MAX_BYTES) {
++            response.setStatus(400); response.setContentType(MediaType.APPLICATION_JSON_VALUE);
++            new com.fasterxml.jackson.databind.ObjectMapper().writeValue(response.getOutputStream(),
++                    new ErrorEnvelope("REQUEST_TOO_LARGE", "JSON request body exceeds 64 KiB", trace(request), java.util.Map.of()));
++            return;
++        }
++        chain.doFilter(new BufferedRequest(request, body), response);
++    }
++    private static String trace(HttpServletRequest request) {
++        Object value = request.getAttribute(com.papaya.claims.observability.TraceContextFilter.TRACE_ID_ATTRIBUTE);
++        return value instanceof String text ? text : "unavailable";
++    }
++    private static final class BufferedRequest extends HttpServletRequestWrapper {
++        private final byte[] body;
++        BufferedRequest(HttpServletRequest request, byte[] body) { super(request); this.body = body; }
++        @Override public int getContentLength() { return body.length; }
++        @Override public long getContentLengthLong() { return body.length; }
++        @Override public jakarta.servlet.ServletInputStream getInputStream() {
++            ByteArrayInputStream input = new ByteArrayInputStream(body);
++            return new jakarta.servlet.ServletInputStream() {
++                @Override public int read() { return input.read(); }
++                @Override public boolean isFinished() { return input.available() == 0; }
++                @Override public boolean isReady() { return true; }
++                @Override public void setReadListener(jakarta.servlet.ReadListener listener) { throw new UnsupportedOperationException(); }
++            };
++        }
++        @Override public java.io.BufferedReader getReader() { return new java.io.BufferedReader(new java.io.InputStreamReader(getInputStream(), getCharacterEncoding() == null ? java.nio.charset.StandardCharsets.UTF_8 : java.nio.charset.Charset.forName(getCharacterEncoding()))); }
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/web/StrictJsonConfiguration.java b/src/main/java/com/papaya/claims/web/StrictJsonConfiguration.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/web/StrictJsonConfiguration.java
+@@ -0,0 +1,13 @@
++package com.papaya.claims.web;
++
++import com.fasterxml.jackson.databind.DeserializationFeature;
++import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++
++@Configuration
++public class StrictJsonConfiguration {
++    @Bean Jackson2ObjectMapperBuilderCustomizer rejectUnknownJsonProperties() {
++        return builder -> builder.featuresToEnable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
++    }
++}
+diff --git a/src/main/resources/static/app.js b/src/main/resources/static/app.js
+new file mode 100644
+--- /dev/null
++++ b/src/main/resources/static/app.js
+@@ -0,0 +1,208 @@
++(() => {
++  const $ = (selector, root = document) => root.querySelector(selector);
++  const els = { login: $('#login-panel'), loginForm: $('#login-form'), workspace: $('#workspace'), account: $('#account'), list: $('#claim-list'), empty: $('#claims-empty'), detail: $('#claim-detail'), notice: $('#notice'), create: $('#create-panel'), createForm: $('#create-form') };
++  const state = { credentials: null, session: null, claims: [], selected: null, commandKeys: new Map(), busy: false };
++  const knownHumanRoles = ['document_clerk', 'team_lead', 'assessor', 'finance', 'member'];
++
++  function notify(message, error = false) {
++    els.notice.textContent = message;
++    els.notice.classList.toggle('error', error);
++    els.notice.hidden = false;
++    window.clearTimeout(notify.timer);
++    notify.timer = window.setTimeout(() => { els.notice.hidden = true; }, 6500);
++  }
++  function basicHeader() { return `Basic ${state.credentials}`; }
++  async function request(path, options = {}) {
++    const headers = new Headers(options.headers || {});
++    headers.set('Authorization', basicHeader());
++    if (options.body !== undefined) headers.set('Content-Type', 'application/json');
++    if (options.mutate && state.session) headers.set(state.session.csrfHeader, state.session.csrfToken);
++    const response = await fetch(path, { ...options, headers, credentials: 'same-origin' });
++    if (response.status === 401) throw new Error('Sign-in expired. Please sign in again.');
++    const contentType = response.headers.get('content-type') || '';
++    const body = contentType.includes('application/json') ? await response.json() : null;
++    if (!response.ok) {
++      const suffix = body && body.traceId ? ` (trace ${body.traceId})` : '';
++      throw new Error((body && body.message ? body.message : `Request failed with status ${response.status}`) + suffix);
++    }
++    return body;
++  }
++  async function signedIn(username, password) {
++    state.credentials = btoa(`${username}:${password}`);
++    try {
++      state.session = await request('/api/session');
++      $('#password').value = '';
++      els.login.hidden = true; els.workspace.hidden = false;
++      els.account.hidden = false;
++      $('#account-name').textContent = `${state.session.userId} · ${state.session.role.replaceAll('_', ' ')}`;
++      await loadClaims();
++    } catch (error) {
++      state.credentials = null; state.session = null; $('#password').value = '';
++      notify(error.message, true);
++    }
++  }
++  function signOut() {
++    state.credentials = null; state.session = null; state.claims = []; state.selected = null; state.commandKeys.clear();
++    els.workspace.hidden = true; els.login.hidden = false; els.account.hidden = true; els.loginForm.reset(); els.list.replaceChildren(); els.detail.replaceChildren();
++    $('#username').focus();
++  }
++  function element(tag, text, className) {
++    const node = document.createElement(tag);
++    if (text !== undefined && text !== null) node.textContent = String(text);
++    if (className) node.className = className;
++    return node;
++  }
++  function renderClaims() {
++    els.list.replaceChildren();
++    els.empty.hidden = state.claims.length > 0;
++    for (const claim of state.claims) {
++      const button = element('button', undefined, 'claim-item'); button.type = 'button';
++      button.setAttribute('aria-current', String(state.selected?.id === claim.id));
++      button.append(element('span', claim.id, 'claim-id'), element('span', claim.state, 'claim-state'), element('span', `${claim.currency} ${claim.policyLimit} · v${claim.version}`, 'claim-meta'));
++      button.addEventListener('click', () => selectClaim(claim.id));
++      els.list.append(button);
++    }
++  }
++  async function loadClaims() {
++    els.list.replaceChildren(element('p', 'Loading claims…', 'loading'));
++    try {
++      state.claims = await request('/api/claims');
++      renderClaims();
++      if (state.selected && state.claims.some(item => item.id === state.selected.id)) await selectClaim(state.selected.id, false);
++      else if (state.claims.length) await selectClaim(state.claims[0].id, false);
++      else renderEmptyDetail();
++    } catch (error) { notify(error.message, true); }
++  }
++  function renderEmptyDetail() {
++    const wrap = element('div', undefined, 'empty-state'); wrap.append(element('span', '↗', 'empty-symbol'), element('h2', 'Choose a claim'), element('p', 'Claim status, workflow actions, and audit history will appear here.'));
++    els.detail.replaceChildren(wrap);
++  }
++  async function selectClaim(id, reload = true) {
++    els.detail.setAttribute('aria-busy', 'true'); els.detail.replaceChildren(element('p', 'Loading claim…', 'loading'));
++    try {
++      const [claim, options, audit] = await Promise.all([request(`/api/claims/${encodeURIComponent(id)}`), request(`/api/claims/${encodeURIComponent(id)}/transitions`), request(`/api/claims/${encodeURIComponent(id)}/audit`)]);
++      state.selected = claim;
++      renderClaims(); renderDetail(claim, options, audit);
++    } catch (error) { notify(error.message, true); }
++    finally { els.detail.removeAttribute('aria-busy'); }
++  }
++  function metric(label, value) { const item = element('div', undefined, 'metric'); item.append(element('span', label), element('strong', value ?? '—')); return item; }
++  function section(title) { const part = element('section', undefined, 'subsection'); part.append(element('h3', title)); return part; }
++  function renderDetail(claim, options, audit) {
++    const fragment = document.createDocumentFragment();
++    const header = element('div', undefined, 'claim-title');
++    const titleBlock = element('div'); titleBlock.append(element('div', 'Claim details', 'eyebrow'), element('h2', `Claim ${claim.id.slice(0, 8)}`), element('span', `Member ${claim.memberId}`, 'claim-meta'));
++    header.append(titleBlock, element('span', claim.state, 'pill')); fragment.append(header);
++    const facts = element('div', undefined, 'facts-grid');
++    facts.append(metric('Current state', claim.state), metric('Version', claim.version), metric('Policy limit', `${claim.currency} ${claim.policyLimit}`), metric('Information requests', claim.informationRequests), metric('Assessment started', claim.assessmentStartedAt || 'Not started'), metric('Last request', claim.lastInformationRequestedAt || '—'));
++    fragment.append(facts);
++    fragment.append(buildFactSection(claim));
++    const available = section('Configured actions');
++    if (!options.length) available.append(element('p', 'No transitions are configured for this state.', 'empty'));
++    const cards = element('div', undefined, 'transition-list');
++    for (const option of options) {
++      const card = element('article', undefined, 'transition-card');
++      card.append(element('strong', option.target), element('p', `Required role: ${option.role.replaceAll('_', ' ')}`));
++      if (option.blockers.length) card.append(element('p', option.blockers.join(' · ')));
++      const button = element('button', option.allowed ? `Move to ${option.target}` : 'Unavailable', 'button primary'); button.type = 'button'; button.disabled = !option.allowed || state.busy;
++      button.addEventListener('click', () => executeTransition(option.target)); card.append(button); cards.append(card);
++    }
++    available.append(cards); fragment.append(available);
++    const history = section('Audit timeline');
++    if (!audit.length) history.append(element('p', 'No transitions have been recorded yet.', 'empty'));
++    const timeline = element('div', undefined, 'audit-list');
++    for (const entry of [...audit].reverse()) {
++      const row = element('div', undefined, 'audit-row'); const time = element('time', new Date(entry.timestamp).toLocaleString(), 'audit-time'); time.dateTime = entry.timestamp;
++      const detail = element('div', undefined, 'audit-detail'); detail.append(element('strong', `${entry.fromState} → ${entry.toState}`), element('span', `${entry.userId} · ${entry.role.replaceAll('_', ' ')} · ${entry.configVersion}`));
++      if (entry.notes) detail.append(element('span', entry.notes));
++      row.append(time, detail); timeline.append(row);
++    }
++    history.append(timeline); fragment.append(history);
++    els.detail.replaceChildren(fragment);
++  }
++  function inputFor(name, value) {
++    const input = document.createElement('input'); input.className = 'fact-control'; input.name = name;
++    if (['reportComplete', 'paymentConfirmed', 'memberAcknowledged'].includes(name)) { input.type = 'checkbox'; input.checked = value === true; }
++    else if (name === 'assessmentAmount') { input.type = 'number'; input.step = '0.01'; input.min = '0'; input.value = value ?? ''; }
++    else { input.type = 'text'; input.maxLength = name === 'assessorId' ? 120 : 2000; input.value = value ?? ''; }
++    return input;
++  }
++  function buildFactSection(claim) {
++    const area = section('Role-specific information');
++    const role = state.session.role; const form = element('form', undefined, 'fact-form form-grid');
++    const add = (label, name, value, type) => {
++      const wrapper = element('label', label); let control;
++      if (type === 'documents') {
++        const current = claim.facts.documents || {};
++        for (const doc of claim.facts.requiredDocuments || []) {
++          const documentLabel = element('label', doc); const select = document.createElement('select'); select.name = `document:${doc}`; select.className = 'fact-control';
++          for (const [text, val] of [['Needs review', 'false'], ['Accepted', 'true']]) { const option = document.createElement('option'); option.textContent = text; option.value = val; select.append(option); }
++          select.value = current[doc] === true ? 'true' : 'false'; documentLabel.append(select); form.append(documentLabel);
++        }
++        return;
++      } else if (type === 'select') {
++        control = document.createElement('select'); control.name = name; control.className = 'fact-control';
++        for (const [text, val] of [['Not complete','false'],['Complete','true']]) { const option = document.createElement('option'); option.textContent = text; option.value = val; control.append(option); }
++        control.value = value === true ? 'true' : 'false';
++      } else control = inputFor(name, value);
++      wrapper.append(control); form.append(wrapper);
++    };
++    let fields = [];
++    if (role === 'document_clerk' && ['SUBMITTED','PENDING_INFO'].includes(claim.state)) fields = [['Documents', 'documents', claim.facts.documents, 'documents'], ['New information', 'newInformation', '', 'text']];
++    if (role === 'team_lead' && claim.state === 'DOCUMENTS_VERIFIED') fields = [['Assessor ID', 'assessorId', claim.facts.assessorId, 'text']];
++    if (role === 'assessor' && claim.state === 'UNDER_ASSESSMENT') fields = [['Report status', 'reportComplete', claim.facts.reportComplete, 'select'], ['Assessment amount', 'assessmentAmount', claim.facts.assessmentAmount, 'text'], ['Assessment currency', 'assessmentCurrency', claim.facts.assessmentCurrency || claim.currency, 'text'], ['Rejection reason', 'rejectionReason', claim.facts.rejectionReason, 'text'], ['Missing information', 'missingInfoDescription', claim.facts.missingInfoDescription, 'text']];
++    if (role === 'finance' && claim.state === 'PAYMENT_INITIATED') fields = [['Payment confirmed', 'paymentConfirmed', claim.facts.paymentConfirmed, 'select'], ['Payment reference', 'paymentReference', claim.facts.paymentReference, 'text']];
++    if (role === 'member' && claim.state === 'REJECTED' && claim.memberId === state.session.userId) fields = [['Acknowledgment', 'memberAcknowledged', claim.facts.memberAcknowledged, 'select']];
++    for (const [label, name, value, type] of fields) add(label, name, value, type);
++    if (!fields.length) { area.append(element('p', 'No editable facts for this role in the current state.', 'empty')); return area; }
++    const version = document.createElement('input'); version.type = 'hidden'; version.name = 'expectedVersion'; version.value = claim.version; form.append(version);
++    const actions = element('div', undefined, 'form-actions'); const save = element('button', 'Save information', 'button secondary'); save.type = 'submit'; actions.append(save); form.append(actions);
++    form.addEventListener('submit', event => { event.preventDefault(); saveFacts(form); });
++    area.append(form); return area;
++  }
++  async function saveFacts(form) {
++    const formData = new FormData(form); const updates = {};
++    for (const [key, raw] of formData.entries()) {
++      if (key === 'expectedVersion') continue;
++      if (key.startsWith('document:')) { updates.documents ||= {}; updates.documents[key.slice(9)] = raw === 'true'; continue; }
++      if (['reportComplete','paymentConfirmed','memberAcknowledged'].includes(key)) updates[key] = raw === 'true';
++      else if (key === 'assessmentAmount') updates[key] = Number(raw);
++      else updates[key] = raw;
++    }
++    if (!Object.keys(updates).length) return;
++    await withBusy(async () => { await request(`/api/claims/${state.selected.id}/facts`, { method: 'PATCH', mutate: true, body: JSON.stringify({ expectedVersion: Number(formData.get('expectedVersion')), updates }) }); notify('Information saved.'); await loadClaims(); });
++  }
++  async function executeTransition(target) {
++    const selected = state.selected; if (!selected) return;
++    const keyId = `${selected.id}:${selected.version}:${target}`;
++    let idempotencyKey = state.commandKeys.get(keyId);
++    if (!idempotencyKey) { idempotencyKey = crypto.randomUUID(); state.commandKeys.set(keyId, idempotencyKey); }
++    await withBusy(async () => {
++      const path = state.session.role === 'system' ? `/api/system/claims/${selected.id}/transitions` : `/api/claims/${selected.id}/transitions`;
++      await request(path, { method: 'POST', mutate: true, body: JSON.stringify({ target, expectedVersion: selected.version, idempotencyKey, notes: '' }) });
++      state.commandKeys.delete(keyId); notify(`Claim moved to ${target}.`); await loadClaims();
++    });
++  }
++  async function withBusy(action) {
++    if (state.busy) return;
++    state.busy = true;
++    try { await action(); } catch (error) { notify(error.message, true); }
++    finally { state.busy = false; if (state.selected) await selectClaim(state.selected.id); }
++  }
++  function showCreate(show) { els.create.hidden = !show; if (show) $('input[name="memberId"]', els.create).focus(); }
++  els.loginForm.addEventListener('submit', event => { event.preventDefault(); const data = new FormData(els.loginForm); signedIn(String(data.get('username')).trim(), String(data.get('password'))); });
++  $('#new-claim-toggle').addEventListener('click', () => showCreate(els.create.hidden));
++  $('#cancel-create').addEventListener('click', () => showCreate(false));
++  $('#refresh').addEventListener('click', loadClaims);
++  els.createForm.addEventListener('submit', async event => {
++    event.preventDefault(); const form = new FormData(els.createForm);
++    const payload = { memberId: String(form.get('memberId')).trim(), policyLimit: Number(form.get('policyLimit')), currency: String(form.get('currency')).trim().toUpperCase(), requiredDocuments: String(form.get('requiredDocuments')).split(',').map(item => item.trim()).filter(Boolean) };
++    await withBusy(async () => { const claim = await request('/api/claims', { method: 'POST', mutate: true, body: JSON.stringify(payload) }); state.selected = claim; showCreate(false); els.createForm.reset(); notify('Claim created.'); await loadClaims(); });
++  });
++  window.addEventListener('pagehide', () => { state.credentials = null; state.session = null; });
++  // The sign-out control is created only after login and contains no credential data.
++  const account = els.account; const accountName = element('span', undefined); accountName.id = 'account-name'; account.append(accountName); const signOutButton = element('button', 'Sign out', 'button secondary'); signOutButton.type = 'button'; signOutButton.addEventListener('click', signOutHandler);
++  function signOutHandler() { signOut(); }
++  // Keep the account action accessible while rendering the principal as plain text.
++  account.append(signOutButton);
++})();
+diff --git a/src/main/resources/static/index.html b/src/main/resources/static/index.html
+new file mode 100644
+--- /dev/null
++++ b/src/main/resources/static/index.html
+@@ -0,0 +1,38 @@
++<!doctype html>
++<html lang="en">
++<head>
++  <meta charset="utf-8">
++  <meta name="viewport" content="width=device-width, initial-scale=1">
++  <meta name="theme-color" content="#123b36">
++  <title>Claims workspace</title>
++  <link rel="stylesheet" href="/styles.css">
++  <script src="/app.js" defer></script>
++</head>
++<body>
++  <header class="topbar"><a class="brand" href="/" aria-label="Claims workspace home"><span class="brand-mark" aria-hidden="true">C</span><span>Claims<span class="brand-light"> / workspace</span></span></a><div id="account" class="account" hidden></div></header>
++  <main class="shell">
++    <section id="login-panel" class="login-panel card" aria-labelledby="welcome-title">
++      <div class="eyebrow">Claims operations</div><h1 id="welcome-title">Move every claim forward.</h1>
++      <p class="lede">Sign in with a human demo account to review documents, assess a claim, or update its payment.</p>
++      <form id="login-form" class="stack">
++        <label for="username">Account</label><input id="username" name="username" autocomplete="username" required placeholder="clerk, lead, assessor, finance, or member-001">
++        <label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required>
++        <button class="button primary" type="submit">Sign in</button>
++      </form>
++      <p class="hint">Use the demo password configured by your administrator. System accounts are reserved for automated operations.</p>
++    </section>
++    <section id="workspace" hidden>
++      <div class="page-heading"><div><div class="eyebrow">Operations overview</div><h1>Your claims</h1><p class="lede">Select a claim to review its status, update role-specific facts, and take an available action.</p></div><button id="new-claim-toggle" class="button secondary" type="button">Create claim</button></div>
++      <div id="create-panel" class="card create-panel" hidden><div class="section-heading"><h2>New claim</h2><button class="icon-button" id="cancel-create" type="button" aria-label="Close new claim form">×</button></div>
++        <form id="create-form" class="form-grid"><label>Member ID<input name="memberId" required maxlength="120" value="member-001"></label><label>Policy limit<input name="policyLimit" type="number" min="0" step="0.01" required></label><label>Currency<input name="currency" maxlength="3" pattern="[A-Z]{3}" value="USD" required></label><label>Required documents<input name="requiredDocuments" required placeholder="receipt, incident-report"></label><div class="form-actions"><button class="button primary" type="submit">Create claim</button></div></form>
++      </div>
++      <div class="layout">
++        <aside class="card claim-list-panel"><div class="section-heading"><h2>Claim queue</h2><button id="refresh" class="icon-button" type="button" aria-label="Refresh claims">↻</button></div><div id="claim-list" class="claim-list" aria-label="Claims"></div><p id="claims-empty" class="empty" hidden>No claims yet. Create one to begin.</p></aside>
++        <section id="claim-detail" class="card detail-panel" aria-live="polite"><div class="empty-state"><span class="empty-symbol" aria-hidden="true">↗</span><h2>Choose a claim</h2><p>Claim status, workflow actions, and audit history will appear here.</p></div></section>
++      </div>
++    </section>
++    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
++  </main>
++  <footer>Claims workspace <span>·</span> Secure, role-based workflow</footer>
++</body>
++</html>
+diff --git a/src/main/resources/static/styles.css b/src/main/resources/static/styles.css
+new file mode 100644
+--- /dev/null
++++ b/src/main/resources/static/styles.css
+@@ -0,0 +1 @@
++:root{color-scheme:light;--ink:#172b28;--muted:#61736e;--line:#dce7e2;--paper:#f5f8f6;--white:#fff;--green:#176b54;--green-dark:#123b36;--mint:#e7f3ed;--amber:#865a16;--amber-bg:#fff6df;--red:#a73e3e;--shadow:0 14px 40px rgba(22,58,48,.07);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5}.topbar{height:68px;background:var(--green-dark);color:white;display:flex;align-items:center;justify-content:space-between;padding:0 max(24px,calc((100vw - 1200px)/2));box-shadow:0 2px 8px #123b3624}.brand{display:flex;align-items:center;gap:11px;color:white;text-decoration:none;font-weight:700;letter-spacing:-.02em}.brand-mark{display:grid;place-items:center;width:34px;height:34px;border:1px solid #ffffff72;border-radius:11px;background:#ffffff14;color:#b8e0cb}.brand-light{font-weight:400;color:#c5d9d2}.account{font-size:13px;color:#d6e7df}.shell{max-width:1200px;margin:42px auto 80px;padding:0 24px}.card{background:var(--white);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.login-panel{max-width:520px;margin:8vh auto;padding:40px}.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);font-weight:750}.login-panel h1,.page-heading h1{font-size:clamp(30px,4vw,44px);line-height:1.12;letter-spacing:-.045em;margin:10px 0 12px}.lede{color:var(--muted);max-width:620px;margin:0 0 26px}.stack{display:grid;gap:10px}.stack label,.form-grid label,.field-label{font-size:13px;font-weight:650}.stack input,.form-grid input,.form-grid select,.form-grid textarea,.fact-control{width:100%;border:1px solid #cbd9d3;border-radius:9px;background:white;padding:11px 12px;color:var(--ink);font:inherit;min-height:44px}.stack input:focus,.form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus,.fact-control:focus{outline:3px solid #176b542b;border-color:var(--green)}.button{border:0;border-radius:9px;padding:11px 16px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;min-height:42px;transition:transform .12s ease,background .12s ease}.button:hover{transform:translateY(-1px)}.button:focus-visible,.icon-button:focus-visible{outline:3px solid #176b5466;outline-offset:2px}.primary{background:var(--green);color:white}.primary:hover{background:#105640}.secondary{background:#e5f0eb;color:var(--green-dark)}.hint{margin:17px 0 0;color:var(--muted);font-size:12px}.page-heading{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:26px}.page-heading .lede{margin-bottom:0}.layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:20px;align-items:start}.claim-list-panel,.detail-panel{padding:22px}.claim-list-panel{position:sticky;top:20px}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.section-heading h2{font-size:16px;letter-spacing:-.02em;margin:0}.icon-button{border:1px solid var(--line);background:white;color:var(--muted);border-radius:8px;width:34px;height:34px;font-size:18px;cursor:pointer}.claim-list{display:grid;gap:8px;margin-top:17px}.claim-item{border:1px solid transparent;background:#f7faf8;border-radius:11px;padding:13px;text-align:left;color:inherit;cursor:pointer}.claim-item:hover,.claim-item[aria-current=true]{border-color:#9bcab3;background:#eff8f2}.claim-id{display:block;font-size:11px;color:var(--muted);font-family:ui-monospace,monospace}.claim-state{display:block;font-weight:700;margin-top:4px}.claim-meta{display:block;color:var(--muted);font-size:12px;margin-top:2px}.empty{color:var(--muted);font-size:13px}.empty-state{text-align:center;padding:55px 18px;color:var(--muted)}.empty-state h2{color:var(--ink);font-size:20px}.empty-symbol{display:inline-grid;place-items:center;width:48px;height:48px;border-radius:15px;background:var(--mint);color:var(--green);font-size:25px}.claim-title{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding-bottom:20px;border-bottom:1px solid var(--line)}.claim-title h2{font-size:23px;letter-spacing:-.035em;margin:3px 0}.pill{display:inline-flex;align-items:center;border-radius:99px;padding:5px 10px;background:var(--mint);color:var(--green-dark);font-weight:700;font-size:11px;white-space:nowrap}.facts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}.metric{padding:12px 13px;background:#f7faf8;border-radius:10px}.metric span{display:block;color:var(--muted);font-size:11px}.metric strong{display:block;margin-top:4px;font-size:15px;overflow-wrap:anywhere}.subsection{border-top:1px solid var(--line);padding:18px 0}.subsection h3{font-size:14px;margin:0 0 12px}.transition-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.transition-card{border:1px solid var(--line);border-radius:11px;padding:12px}.transition-card strong{display:block;font-size:13px}.transition-card p{font-size:11px;color:var(--muted);margin:3px 0 10px}.transition-card .button{width:100%}.transition-card button:disabled{cursor:not-allowed;opacity:.52;transform:none}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.form-grid label{display:grid;gap:6px}.form-grid textarea{min-height:85px;resize:vertical}.form-actions{display:flex;align-items:end}.fact-form{background:#f8fbf9;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:8px}.audit-list{display:grid;gap:0}.audit-row{padding:11px 0;border-bottom:1px solid #edf1ef;display:grid;grid-template-columns:140px 1fr;gap:12px;font-size:12px}.audit-row:last-child{border:0}.audit-time{color:var(--muted)}.audit-detail strong{font-size:12px}.audit-detail span{display:block;color:var(--muted)}.create-panel{padding:22px;margin-bottom:20px}.create-panel .form-grid{margin-top:16px}.notice{position:fixed;right:24px;bottom:24px;max-width:min(420px,calc(100vw - 48px));background:var(--green-dark);color:white;padding:14px 17px;border-radius:12px;box-shadow:var(--shadow);font-size:13px}.notice.error{background:#762e2e}.loading{color:var(--muted);padding:16px 0}footer{text-align:center;color:#82908b;font-size:11px;padding:24px}footer span{padding:0 6px;color:#b0c2ba}@media(max-width:760px){.shell{margin:25px auto 55px;padding:0 15px}.topbar{padding:0 16px}.login-panel{padding:26px 22px;margin-top:5vh}.page-heading{align-items:flex-start;flex-direction:column}.layout{grid-template-columns:1fr}.claim-list-panel{position:static}.facts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.transition-list{grid-template-columns:1fr}.detail-panel,.claim-list-panel{padding:17px}.audit-row{grid-template-columns:1fr;gap:2px}.form-grid{grid-template-columns:1fr}.account{font-size:11px}}[hidden]{display:none!important}
+diff --git a/src/test/java/com/papaya/claims/web/ClaimControllerTest.java b/src/test/java/com/papaya/claims/web/ClaimControllerTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/web/ClaimControllerTest.java
+@@ -0,0 +1,79 @@
++package com.papaya.claims.web;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.ArgumentMatchers.*;
++import static org.mockito.Mockito.*;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.fasterxml.jackson.databind.DeserializationFeature;
++import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
++import com.papaya.claims.contract.ClaimOperations;
++import com.papaya.claims.contract.Model.*;
++import java.math.BigDecimal;
++import java.util.*;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.springframework.http.MediaType;
++import org.springframework.mock.web.MockHttpServletRequest;
++import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
++import org.springframework.security.core.authority.SimpleGrantedAuthority;
++import org.springframework.security.web.csrf.DefaultCsrfToken;
++import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.test.web.servlet.setup.MockMvcBuilders;
++import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
++
++class ClaimControllerTest {
++    private ClaimOperations operations;
++    private MockMvc mvc;
++    private ObjectMapper json;
++    private final UUID id = UUID.randomUUID();
++    private UsernamePasswordAuthenticationToken clerk;
++    @BeforeEach void setup() {
++        operations = mock(ClaimOperations.class); json = new ObjectMapper();
++        var validator = new LocalValidatorFactoryBean(); validator.afterPropertiesSet();
++        mvc = MockMvcBuilders.standaloneSetup(new ClaimController(operations)).setControllerAdvice(new GlobalExceptionHandler()).setValidator(validator)
++                .setMessageConverters(new MappingJackson2HttpMessageConverter(json.copy().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES))).build();
++        clerk = new UsernamePasswordAuthenticationToken("clerk", "n/a", List.of(new SimpleGrantedAuthority("ROLE_DOCUMENT_CLERK")));
++    }
++    @Test void createReturns201AndActorComesFromPrincipalRatherThanBody() throws Exception {
++        ClaimSnapshot claim = new ClaimSnapshot(id, "member-001", "SUBMITTED", new BigDecimal("10.00"), "USD", Map.of(), 0, 0, null, null);
++        when(operations.create(any(), anyString(), any(), anyString(), anyList())).thenReturn(claim);
++        mvc.perform(post("/api/claims").principal(clerk).contentType(MediaType.APPLICATION_JSON)
++                .content("{\"memberId\":\"member-001\",\"policyLimit\":10,\"currency\":\"USD\",\"requiredDocuments\":[\"receipt\"],\"actor\":\"system\"}"))
++                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
++        verifyNoInteractions(operations);
++        mvc.perform(post("/api/claims").principal(clerk).contentType(MediaType.APPLICATION_JSON)
++                .content("{\"memberId\":\"member-001\",\"policyLimit\":10,\"currency\":\"USD\",\"requiredDocuments\":[\"receipt\"]}"))
++                .andExpect(status().isCreated()).andExpect(jsonPath("$.state").value("SUBMITTED"));
++        verify(operations).create(argThat(a -> a.userId().equals("clerk") && a.role().equals("document_clerk")), eq("member-001"), any(), eq("USD"), anyList());
++    }
++    @Test void malformedUuidUnknownJsonAndBeanValidationReturnSafe400() throws Exception {
++        mvc.perform(get("/api/claims/not-a-uuid").principal(clerk)).andExpect(status().isBadRequest()).andExpect(jsonPath("$.traceId").exists());
++        mvc.perform(post("/api/claims").principal(clerk).contentType(MediaType.APPLICATION_JSON).content("{broken"))
++                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").value("Request body or path parameter is invalid"));
++        mvc.perform(post("/api/claims").principal(clerk).contentType(MediaType.APPLICATION_JSON)
++                .content("{\"memberId\":\"m\",\"policyLimit\":1,\"currency\":\"USD\",\"requiredDocuments\":[\"r\"],\"extra\":true}"))
++                .andExpect(status().isBadRequest());
++        mvc.perform(post("/api/claims").principal(clerk).contentType(MediaType.APPLICATION_JSON)
++                .content("{\"memberId\":\"m\",\"policyLimit\":-1,\"currency\":\"usd\",\"requiredDocuments\":[]}"))
++                .andExpect(status().isBadRequest());
++        verifyNoInteractions(operations);
++    }
++    @Test void humanAndProtectedSystemRoutesCallTheirDistinctOperations() throws Exception {
++        var system = new UsernamePasswordAuthenticationToken("system", "n/a", List.of(new SimpleGrantedAuthority("ROLE_SYSTEM")));
++        when(operations.transition(any(), eq(id), any())).thenReturn(new ClaimSnapshot(id, "m", "REVIEW", BigDecimal.ONE, "USD", Map.of(), 0, 1, null, null));
++        when(operations.systemTransition(any(), eq(id), any())).thenReturn(new ClaimSnapshot(id, "m", "CLOSED", BigDecimal.ONE, "USD", Map.of(), 0, 1, null, null));
++        String command = "{\"target\":\"REVIEW\",\"expectedVersion\":0,\"idempotencyKey\":\"k\",\"notes\":\"\"}";
++        mvc.perform(post("/api/claims/{id}/transitions", id).principal(clerk).contentType(MediaType.APPLICATION_JSON).content(command)).andExpect(status().isOk());
++        mvc.perform(post("/api/system/claims/{id}/transitions", id).principal(system).contentType(MediaType.APPLICATION_JSON).content(command)).andExpect(status().isOk());
++        verify(operations).transition(argThat(a -> a.role().equals("document_clerk")), eq(id), any());
++        verify(operations).systemTransition(argThat(a -> a.role().equals("system")), eq(id), any());
++    }
++    @Test void sessionReturnsAuthenticatedIdentityAndCsrfHeaderName() throws Exception {
++        mvc = MockMvcBuilders.standaloneSetup(new ClaimController(operations)).setControllerAdvice(new GlobalExceptionHandler()).build();
++        var csrf = new DefaultCsrfToken("X-CSRF-TOKEN", "_csrf", "token-123");
++        mvc.perform(get("/api/session").principal(clerk).requestAttr(org.springframework.security.web.csrf.CsrfToken.class.getName(), csrf))
++                .andExpect(status().isOk()).andExpect(jsonPath("$.userId").value("clerk"));
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/web/GlobalExceptionHandlerTest.java b/src/test/java/com/papaya/claims/web/GlobalExceptionHandlerTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/web/GlobalExceptionHandlerTest.java
+@@ -0,0 +1,23 @@
++package com.papaya.claims.web;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import com.papaya.claims.contract.BusinessException;
++import com.papaya.claims.observability.TraceContextFilter;
++import org.junit.jupiter.api.Test;
++import org.springframework.mock.web.MockHttpServletRequest;
++
++class GlobalExceptionHandlerTest {
++    @Test void businessErrorPreservesStableStatusAndSafeDomainMessageWithTrace() {
++        var request = new MockHttpServletRequest(); request.setAttribute(TraceContextFilter.TRACE_ID_ATTRIBUTE, "trace-abc");
++        var response = new GlobalExceptionHandler().business(new BusinessException("CONFLICT", 409, "Claim version is stale"), request);
++        assertThat(response.getStatusCode().value()).isEqualTo(409);
++        assertThat(response.getBody()).isEqualTo(new ErrorEnvelope("CONFLICT", "Claim version is stale", "trace-abc", java.util.Map.of()));
++    }
++    @Test void unexpectedErrorDoesNotExposeExceptionOrInputDetails() {
++        var request = new MockHttpServletRequest();
++        var response = new GlobalExceptionHandler().unexpected(new IllegalStateException("password=secret SQL SELECT"), request);
++        assertThat(response.getStatusCode().value()).isEqualTo(500);
++        assertThat(response.getBody().message()).isEqualTo("The request could not be completed");
++        assertThat(response.getBody().toString()).doesNotContain("secret", "SELECT", "IllegalStateException");
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/web/JsonRequestSizeFilterTest.java b/src/test/java/com/papaya/claims/web/JsonRequestSizeFilterTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/web/JsonRequestSizeFilterTest.java
+@@ -0,0 +1,21 @@
++package com.papaya.claims.web;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import jakarta.servlet.FilterChain;
++import java.nio.charset.StandardCharsets;
++import org.junit.jupiter.api.Test;
++import org.springframework.http.MediaType;
++import org.springframework.mock.web.MockHttpServletRequest;
++import org.springframework.mock.web.MockHttpServletResponse;
++
++class JsonRequestSizeFilterTest {
++    @Test void rejectsOversizedJsonEvenWhenLengthWasNotDeclared() throws Exception {
++        var request = new MockHttpServletRequest("POST", "/api/claims"); request.setContentType(MediaType.APPLICATION_JSON_VALUE);
++        request.setContent(new byte[JsonRequestSizeFilter.MAX_BYTES + 1]);
++        var response = new MockHttpServletResponse();
++        FilterChain chain = (req, res) -> { throw new AssertionError("Oversized JSON must not reach the controller"); };
++        new JsonRequestSizeFilter().doFilter(request, response, chain);
++        assertThat(response.getStatus()).isEqualTo(400);
++        assertThat(response.getContentAsString(StandardCharsets.UTF_8)).contains("REQUEST_TOO_LARGE").contains("64 KiB");
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/web/WebInterfaceTest.java b/src/test/java/com/papaya/claims/web/WebInterfaceTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/web/WebInterfaceTest.java
+@@ -0,0 +1,22 @@
++package com.papaya.claims.web;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import java.nio.charset.StandardCharsets;
++import org.junit.jupiter.api.Test;
++
++class WebInterfaceTest {
++    @Test void staticWorkspaceAssetsProvideAccessibleResponsiveAndCredentialSafeInterface() throws Exception {
++        String html = resource("static/index.html"); String js = resource("static/app.js"); String css = resource("static/styles.css");
++        assertThat(html).contains("lang=\"en\"", "aria-live=\"polite\"", "id=\"login-form\"", "id=\"claim-detail\"");
++        assertThat(html).doesNotContain("http://", "https://", "system password", "<script src=\"https://");
++        assertThat(js).contains("textContent", "csrfHeader", "crypto.randomUUID", "credentials: 'same-origin'", "state.credentials = null");
++        assertThat(js).doesNotContain("innerHTML", "password123", "demo-password", "system:");
++        assertThat(css).contains("@media(max-width:760px)", ":focus-visible", "[hidden]");
++    }
++    private static String resource(String path) throws Exception {
++        try (var stream = WebInterfaceTest.class.getClassLoader().getResourceAsStream(path)) {
++            assertThat(stream).as("classpath asset " + path).isNotNull();
++            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
++        }
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/web/WebSecurityTest.java b/src/test/java/com/papaya/claims/web/WebSecurityTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/web/WebSecurityTest.java
+@@ -0,0 +1,46 @@
++package com.papaya.claims.web;
++
++import static org.mockito.ArgumentMatchers.*;
++import static org.mockito.Mockito.*;
++import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
++import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
++import com.papaya.claims.contract.ClaimOperations;
++import com.papaya.claims.contract.Model.ClaimSnapshot;
++import java.math.BigDecimal;
++import java.util.List;
++import java.util.Map;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
++import org.springframework.context.annotation.Import;
++import org.springframework.context.annotation.FilterType;
++import org.springframework.context.annotation.ComponentScan;
++import com.papaya.claims.observability.TraceContextFilter;
++import org.springframework.http.MediaType;
++import org.springframework.test.context.TestPropertySource;
++import org.springframework.test.context.bean.override.mockito.MockitoBean;
++import org.springframework.test.web.servlet.MockMvc;
++import com.papaya.claims.security.SecurityConfiguration;
++
++@WebMvcTest(controllers = ClaimController.class, excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = TraceContextFilter.class))
++@AutoConfigureMockMvc
++@Import({SecurityConfiguration.class, StrictJsonConfiguration.class})
++@TestPropertySource(properties = {"claims.demo-password=temporary-test-human", "claims.system-password=temporary-test-system"})
++class WebSecurityTest {
++    @Autowired MockMvc mvc;
++    @MockitoBean ClaimOperations operations;
++
++    @Test void apiRequiresAuthenticationAndMutationsRequireCsrf() throws Exception {
++        mvc.perform(get("/api/claims")).andExpect(status().isUnauthorized()).andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
++        when(operations.create(any(), anyString(), any(), anyString(), anyList())).thenReturn(new ClaimSnapshot(UUID.randomUUID(), "member-001", "SUBMITTED", BigDecimal.ONE, "USD", Map.of(), 0, 0, null, null));
++        String payload = "{\"memberId\":\"member-001\",\"policyLimit\":1,\"currency\":\"USD\",\"requiredDocuments\":[\"receipt\"]}";
++        mvc.perform(post("/api/claims").with(httpBasic("clerk", "temporary-test-human")).contentType(MediaType.APPLICATION_JSON).content(payload))
++                .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("FORBIDDEN"));
++        mvc.perform(post("/api/claims").with(httpBasic("clerk", "temporary-test-human")).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(payload))
++                .andExpect(status().isCreated());
++    }
++}

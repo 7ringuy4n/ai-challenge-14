@@ -1,0 +1,53 @@
+{
+  "task": "T05",
+  "attempt": "01",
+  "author_role": "implementation_worker",
+  "status": "submitted",
+  "base_contract_sha256": "f1a01d813b660dd5fb65f31ce481fbc8254343eaa406bdc94d4d51bfd7c26185",
+  "contract_sha256": "71ac00a58ca165a0126de13bee19e3c19c403c55c7e96ef74d61370e6967a9eb",
+  "packet_sha256": "27866c3141b2a1795cada27a1eb0101879f223801ebe6b7f3a9cd05a29edbd15",
+  "patch_sha256": "65207f442c8e1696e158b4c0cb2b63678b9386b73eadcf5ebfd2531cfb8f198a",
+  "artifact": "rules/workflow/artifacts/T05/01/candidate.patch",
+  "draft_files": [
+    "src/main/java/com/papaya/claims/web/ClaimController.java",
+    "src/main/java/com/papaya/claims/web/ErrorEnvelope.java",
+    "src/main/java/com/papaya/claims/web/GlobalExceptionHandler.java",
+    "src/main/java/com/papaya/claims/web/JsonRequestSizeFilter.java",
+    "src/main/java/com/papaya/claims/web/StrictJsonConfiguration.java",
+    "src/main/resources/static/app.js",
+    "src/main/resources/static/index.html",
+    "src/main/resources/static/styles.css",
+    "src/test/java/com/papaya/claims/web/ClaimControllerTest.java",
+    "src/test/java/com/papaya/claims/web/GlobalExceptionHandlerTest.java",
+    "src/test/java/com/papaya/claims/web/JsonRequestSizeFilterTest.java",
+    "src/test/java/com/papaya/claims/web/WebInterfaceTest.java",
+    "src/test/java/com/papaya/claims/web/WebSecurityTest.java"
+  ],
+  "verification": [
+    {
+      "command": "mvn -B -Dtest=ClaimControllerTest,GlobalExceptionHandlerTest,WebInterfaceTest,WebSecurityTest,JsonRequestSizeFilterTest test",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol prohibits builds; coordinator must run after serial integration."
+    },
+    {
+      "command": "python3 workflow/verify_workflow.py --patch T05 rules/workflow/artifacts/T05/01/candidate.patch",
+      "status": "NOT_RUN",
+      "reason": "Coordinator owns patch validation and source integration."
+    },
+    {
+      "command": "git apply --check rules/workflow/artifacts/T05/01/candidate.patch",
+      "status": "NOT_RUN",
+      "reason": "Coordinator owns patch validation and source integration."
+    }
+  ],
+  "implementation_notes": [
+    "Draft adds REST routes for all frozen API paths. Human routes use ClaimOperations.transition; /api/system/** routes use systemTransition, and actor identity comes only from AuthenticatedActors.from(Authentication).",
+    "Request records use bean validation, strict unknown-property handling is enabled for JSON, and API JSON bodies are capped at 64 KiB by a bounded byte read that handles unknown content length. Errors use {code,message,traceId,details}; domain errors preserve status, malformed/validation/conversion errors return 400, unexpected errors return a generic 500.",
+    "Static workspace uses same-origin fetch and in-memory Basic credentials, clears password field after sign-in, fetches CSRF token/header from /api/session, escapes dynamic text through textContent, offers role-specific fact forms and dynamically rendered configured transitions/audit.",
+    "Tests drafted for controller transport and actor spoof rejection, malformed UUID/JSON/unknown fields/validation, system vs human operation routing, session CSRF fields, security authentication/CSRF, safe errors, oversized request rejection, and static asset accessibility/security assumptions."
+  ],
+  "known_limits": [
+    "Checks and independent review remain pending; no execution evidence is claimed.",
+    "No patch validation, Maven build, Docker, database, or source integration was performed by the worker."
+  ]
+}

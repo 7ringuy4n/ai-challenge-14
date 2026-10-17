@@ -1,0 +1,82 @@
+{
+  "requirement": "REQ-20261017-020",
+  "generated_at_utc": "2026-10-17T06:58:20Z",
+  "source_commit": "0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2",
+  "worktree": "clean detached source worktree",
+  "original_accepted_profile": "reports/verification/REQ-017-jmeter-final/stress-20261017T061310Z",
+  "original_failure_preserved": true,
+  "instrumented_run": {
+    "command": "bash scripts/performance/run-profile.sh stress",
+    "monitor_command": "python3 reports/verification/REQ-020/performance-monitor.py reports/verification/REQ-020/jmeter-stress-instrumented/resource-metrics.jsonl 150",
+    "started_utc": "2026-10-17T06:55:44Z",
+    "finished_utc": "2026-10-17T06:56:47Z",
+    "threads": 500,
+    "ramp_seconds": 60,
+    "duration_seconds": 60,
+    "samples": 76251,
+    "rps": 1244.9143,
+    "p50_ms": 139,
+    "p95_ms": 638,
+    "p99_ms": 879,
+    "errors": 0,
+    "error_rate": 0.0,
+    "status_against_original_threshold": "FAIL",
+    "evidence_directory": "reports/verification/REQ-020/jmeter-stress-instrumented"
+  },
+  "hardware": {
+    "os": "Linux Mint 22.3",
+    "cpu_model": "11th Gen Intel Core i5-11320H",
+    "physical_cores": 4,
+    "logical_cpus": 8,
+    "host_cpu_busy_during_run_percent": {
+      "max": 99.84,
+      "p95": 99.82,
+      "samples": 7,
+      "at_or_above_95_percent": 6
+    },
+    "load_average_1m_max": 28.47,
+    "jmeter_process_cpu_percent_max": 276.0,
+    "jmeter_process_rss_mib_max": 997.7,
+    "app_container_cpu_percent_max": 282.5,
+    "database_container_cpu_percent_max": 217.18,
+    "max_co_sampled_cpu_percent_sum_app_db_jmeter": 629.7,
+    "max_co_sampled_at_utc": "2026-10-17T06:55:48.570912+00:00",
+    "cpu_thermal_throttle_counter_deltas": {},
+    "thermal_throttling_observed_during_run": false,
+    "host_available_ram_mib_min": 12729,
+    "host_swap_used_mib_max": 809,
+    "swap_in_pages_delta": 27,
+    "swap_out_pages_delta": 0,
+    "docker_cpu_quota": "NOT_CAPTURED; Compose declares no explicit CPU quota/resource limits",
+    "same_host_competition_confirmed": true
+  },
+  "application": {
+    "system_cpu_usage_metric_max": 0.9982,
+    "process_cpu_usage_metric_max": 0.3443,
+    "hikari_active_max": 20.0,
+    "hikari_pending_max": 178.0,
+    "hikari_max_connections": 20.0,
+    "hikari_timeout_total_delta": 0,
+    "jvm_gc_pause_count_delta": 30,
+    "jvm_gc_pause_seconds_delta": 0.557,
+    "jvm_gc_metrics_source": "Spring Actuator Prometheus scrape"
+  },
+  "database": {
+    "active_connections_max": 21,
+    "lock_waiters_max": 0,
+    "deadlocks_delta": 0,
+    "max_query_age_seconds": 0.271,
+    "max_transaction_age_seconds": 0.271,
+    "outbox_pending_max": 0,
+    "outbox_failed_max": 0,
+    "statement_latency_histogram": "NOT_CAPTURED; pg_stat_statements was not enabled"
+  },
+  "assessment": {
+    "status": "HARDWARE_CONSTRAINED_SUPPORTED_FOR_LOCAL_POLICY",
+    "basis": "Measured host CPU saturation coincided with the JMeter JVM and app/PostgreSQL containers sharing an 8-logical-CPU laptop. This establishes that the local load-generator/server environment was CPU-constrained during stress. Ample available RAM, no swap paging during the measured window, no thermal-throttle counter increments, modest GC pause time, and no DB lock waits/deadlocks/timeouts/outbox backlog narrow the cause to CPU/resource contention rather than memory, thermal throttling, or a DB locking failure. Hikari pending reached 178 against a 20-connection pool, so the local queueing is retained as evidence; with no errors/lock waits and saturated colocated CPU, it is treated as environment capacity pressure, not proof of production capacity.",
+    "production_scale_performance": "UNVERIFIED",
+    "original_p95_threshold_passed": false,
+    "material_functional_defect_found": false,
+    "limitation": "CPU quota counters and per-statement DB latency histograms were not captured; compose has no explicit CPU limit. The instrumented run is a diagnostic repeat on an evolving persistent database, not a controlled same-data A/B."
+  }
+}

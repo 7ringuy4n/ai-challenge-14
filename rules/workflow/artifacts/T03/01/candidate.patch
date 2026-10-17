@@ -1,0 +1,267 @@
+--- /dev/null
++++ b/.env.example
+@@ -0,0 +1,7 @@
++# Local demonstration values only. Replace with fresh values using bash scripts/setup.sh.
++# Do not use these dummy values outside local configuration validation.
++HOST_PORT=18080
++DB_PASSWORD=CHANGEME_dummy_runtime_password
++DB_MIGRATION_PASSWORD=CHANGEME_dummy_owner_password
++DEMO_PASSWORD=CHANGEME_dummy_demo_password
++SYSTEM_PASSWORD=CHANGEME_dummy_system_password
+--- /dev/null
++++ b/docker/Dockerfile
+@@ -0,0 +1,25 @@
++# Build the executable jar with the pinned Java 21/Maven toolchain. Setup builds
++# the image but does not execute the test suite; tests remain an explicit gate.
++FROM maven:3.9.11-eclipse-temurin-21 AS build
++WORKDIR /workspace
++COPY pom.xml ./
++COPY src/ src/
++COPY sql/ sql/
++COPY config/ config/
++RUN mvn -B -DskipTests package
++
++# Keep the runtime image small and run the application without root privileges.
++FROM eclipse-temurin:21-jre-jammy AS runtime
++RUN apt-get update \
++    && apt-get install -y --no-install-recommends curl \
++    && rm -rf /var/lib/apt/lists/* \
++    && groupadd --system --gid 10001 claims \
++    && useradd --system --uid 10001 --gid claims --home-dir /app --shell /usr/sbin/nologin claims
++WORKDIR /app
++COPY --from=build --chown=claims:claims /workspace/target/claims-workflow.jar /app/claims-workflow.jar
++COPY --from=build --chown=claims:claims /workspace/config/workflow.yml /app/config/workflow.yml
++USER 10001:10001
++EXPOSE 8080
++HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=6 \
++  CMD curl --fail --silent --show-error http://127.0.0.1:8080/actuator/health || exit 1
++ENTRYPOINT ["java", "-jar", "/app/claims-workflow.jar"]
+--- /dev/null
++++ b/docker/compose.yml
+@@ -0,0 +1,52 @@
++name: claims-challenge14
++
++services:
++  db:
++    image: postgres:16-alpine
++    environment:
++      POSTGRES_DB: claims
++      POSTGRES_USER: claims_owner
++      POSTGRES_PASSWORD: ${DB_MIGRATION_PASSWORD:?Set DB_MIGRATION_PASSWORD in .env}
++      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
++    volumes:
++      - claims_challenge14_postgres_data:/var/lib/postgresql/data
++      - ./initdb/10-create-runtime-role.sh:/docker-entrypoint-initdb.d/10-create-runtime-role.sh:ro
++    healthcheck:
++      test: ["CMD-SHELL", "pg_isready -U claims_owner -d claims"]
++      interval: 5s
++      timeout: 3s
++      retries: 12
++      start_period: 5s
++    restart: unless-stopped
++
++  app:
++    build:
++      context: ..
++      dockerfile: docker/Dockerfile
++    environment:
++      DB_URL: jdbc:postgresql://db:5432/claims
++      DB_USER: claims_app
++      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
++      DB_MIGRATION_USER: claims_owner
++      DB_MIGRATION_PASSWORD: ${DB_MIGRATION_PASSWORD:?Set DB_MIGRATION_PASSWORD in .env}
++      DEMO_PASSWORD: ${DEMO_PASSWORD:?Set DEMO_PASSWORD in .env}
++      SYSTEM_PASSWORD: ${SYSTEM_PASSWORD:?Set SYSTEM_PASSWORD in .env}
++      SERVER_PORT: 8080
++      WORKFLOW_CONFIG_PATH: config/workflow.yml
++    ports:
++      - "127.0.0.1:${HOST_PORT:-18080}:8080"
++    depends_on:
++      db:
++        condition: service_healthy
++    healthcheck:
++      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
++      interval: 10s
++      timeout: 4s
++      retries: 12
++      start_period: 40s
++    restart: unless-stopped
++
++volumes:
++  # Named volume survives container recreation and repeated setup runs.
++  claims_challenge14_postgres_data:
++    name: claims_challenge14_postgres_data
+--- /dev/null
++++ b/docker/initdb/10-create-runtime-role.sh
+@@ -0,0 +1,13 @@
++#!/bin/sh
++set -eu
++
++: "${DB_PASSWORD:?DB_PASSWORD must be provided by Compose}"
++
++# Pass the secret as a psql variable; never interpolate it into SQL or log it.
++psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
++  --set=runtime_password="$DB_PASSWORD" \
++  --set=ON_ERROR_STOP=1 <<'SQL'
++SELECT format('CREATE ROLE claims_app LOGIN PASSWORD %L', :'runtime_password')
++WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'claims_app')
++\gexec
++SQL
+--- /dev/null
++++ b/scripts/setup.sh
+@@ -0,0 +1,79 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
++cd "$ROOT_DIR"
++ENV_FILE="$ROOT_DIR/.env"
++EXAMPLE_FILE="$ROOT_DIR/.env.example"
++
++if [[ ! -f "$ENV_FILE" ]]; then
++  if [[ ! -f "$EXAMPLE_FILE" ]]; then
++    printf 'Missing .env.example; cannot initialize local configuration.\n' >&2
++    exit 1
++  fi
++  cp "$EXAMPLE_FILE" "$ENV_FILE"
++  chmod 600 "$ENV_FILE"
++fi
++
++# Fill absent/sample local secrets without sourcing .env as executable shell code.
++# Existing non-placeholder values are preserved. Generated hex is safe in Compose dotenv.
++python3 - "$ENV_FILE" <<'PY'
++import os
++import re
++import secrets
++import sys
++from pathlib import Path
++
++path = Path(sys.argv[1])
++lines = path.read_text(encoding="utf-8").splitlines()
++values = {}
++for line in lines:
++    stripped = line.strip()
++    if not stripped or stripped.startswith("#"):
++        continue
++    key, separator, value = stripped.partition("=")
++    if separator:
++        values[key.strip()] = value.strip()
++
++required = ("DB_PASSWORD", "DB_MIGRATION_PASSWORD", "DEMO_PASSWORD", "SYSTEM_PASSWORD")
++replacements = {}
++for key in required:
++    value = values.get(key, "")
++    if not value or "CHANGEME" in value or value.startswith("dummy_"):
++        replacements[key] = secrets.token_hex(24)
++    elif len(value) < 16 or not re.fullmatch(r"[A-Za-z0-9_.-]+", value):
++        raise SystemExit(f"{key} must be at least 16 characters using letters, digits, dot, underscore, or hyphen")
++
++if len({replacements.get(key, values.get(key, "")) for key in required}) != len(required):
++    raise SystemExit("DB_PASSWORD, DB_MIGRATION_PASSWORD, DEMO_PASSWORD, and SYSTEM_PASSWORD must be distinct")
++
++if not values.get("HOST_PORT"):
++    replacements["HOST_PORT"] = "18080"
++port = replacements.get("HOST_PORT", values.get("HOST_PORT", ""))
++if not port.isdecimal() or not 1 <= int(port) <= 65535:
++    raise SystemExit("HOST_PORT must be an integer between 1 and 65535")
++
++seen = set()
++output = []
++for line in lines:
++    stripped = line.strip()
++    if stripped and not stripped.startswith("#"):
++        key, separator, _ = stripped.partition("=")
++        key = key.strip()
++        if separator and key in replacements:
++            output.append(f"{key}={replacements[key]}")
++            seen.add(key)
++            continue
++    output.append(line)
++for key, value in replacements.items():
++    if key not in seen and key not in values:
++        output.append(f"{key}={value}")
++path.write_text("\n".join(output) + "\n", encoding="utf-8")
++os.chmod(path, 0o600)
++PY
++
++# Validate interpolation before building. This is a local provisioning command;
++# it intentionally does not run Maven tests or scenario checks.
++docker compose --env-file .env -f docker/compose.yml config --quiet
++docker compose --env-file .env -f docker/compose.yml up -d --build --wait
++printf 'Local claims services are healthy. Run bash scripts/smoke.sh for the HTTP smoke check.\n'
+--- /dev/null
++++ b/scripts/smoke.sh
+@@ -0,0 +1,73 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
++cd "$ROOT_DIR"
++if [[ ! -f .env ]]; then
++  printf 'Missing .env. Run bash scripts/setup.sh first.\n' >&2
++  exit 1
++fi
++
++python3 - .env <<'PY'
++import base64
++import json
++import sys
++import urllib.error
++import urllib.request
++from pathlib import Path
++
++values = {}
++for line in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
++    stripped = line.strip()
++    if not stripped or stripped.startswith("#"):
++        continue
++    key, separator, value = stripped.partition("=")
++    if separator:
++        values[key.strip()] = value.strip()
++
++port = values.get("HOST_PORT", "18080")
++if not port.isdecimal() or not 1 <= int(port) <= 65535:
++    raise SystemExit("Smoke check failed: HOST_PORT is invalid")
++base = f"http://127.0.0.1:{port}"
++
++
++def get(path, authorization=None):
++    headers = {"Accept": "application/json"}
++    if authorization:
++        token = base64.b64encode(authorization.encode("utf-8")).decode("ascii")
++        headers["Authorization"] = f"Basic {token}"
++    request = urllib.request.Request(base + path, headers=headers)
++    try:
++        with urllib.request.urlopen(request, timeout=8) as response:
++            return response.status, response.read()
++    except urllib.error.HTTPError as error:
++        raise RuntimeError(f"HTTP status {error.code} for {path}") from None
++    except (urllib.error.URLError, TimeoutError) as error:
++        raise RuntimeError(f"request failed for {path}: {error.reason if isinstance(error, urllib.error.URLError) else 'timeout'}") from None
++
++
++try:
++    status, body = get("/actuator/health")
++    if status != 200 or json.loads(body).get("status") != "UP":
++        raise RuntimeError("health endpoint did not report UP")
++    print("PASS health endpoint")
++
++    status, _ = get("/")
++    if status != 200:
++        raise RuntimeError("home page did not return HTTP 200")
++    print("PASS home page")
++
++    password = values.get("DEMO_PASSWORD", "")
++    if not password or "CHANGEME" in password:
++        raise RuntimeError("DEMO_PASSWORD is missing or still a placeholder")
++    status, body = get("/api/session", f"clerk:{password}")
++    if status != 200:
++        raise RuntimeError("authenticated session request did not return HTTP 200")
++    session = json.loads(body)
++    if not isinstance(session, dict) or not session.get("userId") or not session.get("role"):
++        raise RuntimeError("authenticated session response is missing userId or role")
++    print("PASS authenticated session")
++except (RuntimeError, ValueError, json.JSONDecodeError) as error:
++    print(f"FAIL smoke check: {error}", file=sys.stderr)
++    raise SystemExit(1)
++PY

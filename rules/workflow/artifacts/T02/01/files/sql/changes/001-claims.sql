@@ -1,0 +1,14 @@
+CREATE TABLE claims (id uuid PRIMARY KEY, member_id varchar(120) NOT NULL, state varchar(80) NOT NULL, policy_limit numeric(18,2) NOT NULL CHECK(policy_limit >= 0), currency char(3) NOT NULL, facts jsonb NOT NULL DEFAULT '{}'::jsonb CHECK(jsonb_typeof(facts)='object'), information_requests integer NOT NULL DEFAULT 0 CHECK(information_requests >= 0), version bigint NOT NULL DEFAULT 0 CHECK(version >= 0), assessment_started_at timestamptz, last_information_requested_at timestamptz, created_at timestamptz NOT NULL DEFAULT clock_timestamp(), updated_at timestamptz NOT NULL DEFAULT clock_timestamp());
+CREATE TABLE claim_audit (audit_id uuid PRIMARY KEY, claim_id uuid NOT NULL REFERENCES claims(id) ON DELETE RESTRICT, sequence bigint NOT NULL CHECK(sequence >= 0), occurred_at timestamptz NOT NULL, from_state varchar(80), to_state varchar(80) NOT NULL, user_id varchar(120) NOT NULL, role varchar(80) NOT NULL, notes varchar(2000) NOT NULL DEFAULT '', config_version varchar(120) NOT NULL, trace_id varchar(120) NOT NULL, UNIQUE(claim_id,sequence));
+CREATE TABLE command_receipts (claim_id uuid NOT NULL REFERENCES claims(id) ON DELETE RESTRICT, user_id varchar(120) NOT NULL, idempotency_key varchar(120) NOT NULL, request_hash varchar(128) NOT NULL, result jsonb NOT NULL CHECK(jsonb_typeof(result)='object'), created_at timestamptz NOT NULL DEFAULT clock_timestamp(), PRIMARY KEY(claim_id,user_id,idempotency_key));
+CREATE TABLE effect_outbox (id uuid PRIMARY KEY, claim_id uuid NOT NULL REFERENCES claims(id) ON DELETE RESTRICT, effect varchar(120) NOT NULL, payload jsonb NOT NULL CHECK(jsonb_typeof(payload) IN ('object','array','string','number','boolean','null')), attempts integer NOT NULL DEFAULT 0 CHECK(attempts >= 0), status varchar(16) NOT NULL CHECK(status IN ('pending','delivered','failed')), next_attempt_at timestamptz NOT NULL, delivered_at timestamptz, last_error varchar(2000), created_at timestamptz NOT NULL DEFAULT clock_timestamp());
+CREATE INDEX effect_outbox_ready_idx ON effect_outbox(status,next_attempt_at,created_at);
+CREATE TABLE payment_requests (claim_id uuid PRIMARY KEY REFERENCES claims(id) ON DELETE RESTRICT, request_id uuid NOT NULL UNIQUE, created_at timestamptz NOT NULL DEFAULT clock_timestamp());
+CREATE FUNCTION reject_claim_audit_mutation() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'claim audit is immutable' USING ERRCODE='55000'; END $$;
+CREATE TRIGGER claim_audit_immutable BEFORE UPDATE OR DELETE ON claim_audit FOR EACH ROW EXECUTE FUNCTION reject_claim_audit_mutation();
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC;
+GRANT USAGE ON SCHEMA public TO claims_app;
+GRANT SELECT,INSERT,UPDATE ON claims,command_receipts,effect_outbox,payment_requests TO claims_app;
+GRANT SELECT,INSERT ON claim_audit TO claims_app;
+GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO claims_app;

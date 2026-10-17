@@ -1,0 +1,133 @@
+(node:285619) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+newman
+
+Claims Workflow Local End-to-End
+
+→ Bootstrap session and CSRF
+  GET http://127.0.0.1:8080/api/v1/session [200 OK, 637B, 132ms]
+  ✓  session bootstraps
+
+→ Create claim
+  POST http://127.0.0.1:8080/api/v1/claims [201 Created, 689B, 10ms]
+  ✓  claim created
+
+→ Read claim
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a [200 OK, 624B, 7ms]
+  ✓  owner reads claim
+
+→ Record required invoice
+  PUT http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/facts [200 OK, 694B, 100ms]
+  ✓  documents recorded
+
+→ Verify documents
+  POST http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 1.02kB, 102ms]
+  ✓  documents verified
+
+→ Assign assessor
+  PUT http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/facts [200 OK, 727B, 97ms]
+  ✓  assessor assigned
+
+→ Start assessment
+  POST http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 1.03kB, 103ms]
+  ✓  assessment started
+
+→ Submit assessment report
+  PUT http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/facts [200 OK, 762B, 98ms]
+  ✓  report saved
+
+→ Approve claim
+  POST http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 1.06kB, 104ms]
+  ✓  claim approved
+
+→ Initiate payment
+  POST http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 1.06kB, 94ms]
+  ✓  payment queued
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 595B, 90ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 595B, 90ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 595B, 94ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 595B, 93ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 595B, 96ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 595B, 100ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 595B, 100ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 595B, 98ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 595B, 98ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 595B, 95ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 595B, 96ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 575B, 94ms]
+  ✓  outbox confirmed
+
+→ Close paid claim
+  POST http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/transitions [200 OK, 1.06kB, 109ms]
+  ✓  claim closed
+  ✓  terminal state
+
+→ Read final audit
+  GET http://127.0.0.1:8080/api/v1/claims/3ea8c5e9-be16-4f6f-a072-b8df92dcdc3a/audit [200 OK, 1.81kB, 6ms]
+  ✓  audit has five workflow transitions
+
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │                24 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │                24 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │                 0 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │                14 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 2.5s                                       │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 8.79kB (approx)                           │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 87ms [min: 6ms, max: 132ms, s.d.: 31ms] │
+└────────────────────────────────────────────────────────────────┘

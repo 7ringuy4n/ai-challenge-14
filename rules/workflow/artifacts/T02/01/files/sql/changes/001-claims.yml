@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-claims-persistence
+      author: claims-workflow
+      changes:
+        - sqlFile:
+            path: 001-claims.sql
+            relativeToChangelogFile: true
+            splitStatements: true

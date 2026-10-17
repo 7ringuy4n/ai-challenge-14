@@ -1,0 +1,9 @@
+Execution date: 2026-10-17 UTC (2026-10-17 ICT)
+Host: Linux Mint 22.3, 8 visible CPUs. JMeter ran on the same host as Docker app/PostgreSQL/OTel containers and desktop/container workloads; there was no separate load-generator host.
+Application: Docker Compose app/PostgreSQL/OTel stack; application served at 127.0.0.1:8080; PostgreSQL 16; default app configuration.
+Source: 0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2, clean checkout for each profile.
+Runtime: OpenJDK 21.0.12.1; Apache JMeter 5.6.3.
+Approved thresholds: P95 <= 500 ms; P99 <= 1000 ms; HTTP error rate <= 1%.
+The .env file is private and was not copied into evidence. Test credential values are not logged.
+The database volume was persistent and not reset between profiles. Per-profile claims created by the plans remained in the database. Sequential order and evolving data are limitations for diagnosing variability.
+Docker daemon/socket permissions and runtime permissions were not changed.

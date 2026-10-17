@@ -1,0 +1,14 @@
+--- a/src/test/java/com/papaya/claims/persistence/PostgresPersistenceSupport.java
++++ b/src/test/java/com/papaya/claims/persistence/PostgresPersistenceSupport.java
+@@ -5,10 +5,9 @@
+ import java.sql.Connection;
+ import java.sql.DriverManager;
+ import java.sql.SQLException;
+-import java.util.List;
+ import javax.sql.DataSource;
+ import liquibase.Contexts;
+-import liquibase.DatabaseFactory;
++import liquibase.database.DatabaseFactory;
+ import liquibase.LabelExpression;
+ import liquibase.Liquibase;
+ import liquibase.database.Database;

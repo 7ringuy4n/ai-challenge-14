@@ -1,0 +1,59 @@
+diff --git a/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java b/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java
+--- a/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java
++++ b/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java
+@@ -64,11 +64,24 @@ class ModelBoundaryTest {
+ 
+         Map<?, ?> frozenNested = (Map<?, ?>) snapshot.facts().get("nested");
+         List<?> frozenValues = (List<?>) frozenNested.get("values");
+-        assertThat(frozenValues).containsExactly(new BigInteger("9000000000000000000"), new BigDecimal("1.2300"));
++        assertThat(frozenValues).isEqualTo(List.of(
++                new BigInteger("9000000000000000000"), new BigDecimal("1.2300")));
+         assertThat(frozenNested).doesNotContainKey("later");
+         assertThat(snapshot.facts()).doesNotContainKey("new");
+-        assertThatThrownBy(() -> frozenNested.put("x", true)).isInstanceOf(UnsupportedOperationException.class);
+-        assertThatThrownBy(() -> ((List<Object>) frozenValues).add(false)).isInstanceOf(UnsupportedOperationException.class);
++        assertMapRejectsMutation(frozenNested);
++        assertListRejectsMutation(frozenValues);
++    }
++
++    @SuppressWarnings("unchecked")
++    private static void assertMapRejectsMutation(Map<?, ?> value) {
++        assertThatThrownBy(() -> ((Map<Object, Object>) value).put("x", true))
++                .isInstanceOf(UnsupportedOperationException.class);
++    }
++
++    @SuppressWarnings("unchecked")
++    private static void assertListRejectsMutation(List<?> value) {
++        assertThatThrownBy(() -> ((List<Object>) value).add(false))
++                .isInstanceOf(UnsupportedOperationException.class);
+     }
+ 
+     @Test
+diff --git a/src/test/java/com/papaya/claims/engine/DefinitionImmutabilityTest.java b/src/test/java/com/papaya/claims/engine/DefinitionImmutabilityTest.java
+--- a/src/test/java/com/papaya/claims/engine/DefinitionImmutabilityTest.java
++++ b/src/test/java/com/papaya/claims/engine/DefinitionImmutabilityTest.java
+@@ -48,14 +48,17 @@ class DefinitionImmutabilityTest {
+         assertThat(transition.guards()).hasSize(1);
+         assertThat(transition.effects()).containsExactly("notify_assessors");
+         assertThat(transition.clearFacts()).containsExactly("reportComplete");
+         assertThat((List<?>) ((Map<?, ?>) ((List<?>) guard.value()).get(0)).get("required"))
+-                .containsExactly("invoice");
++                .isEqualTo(List.of("invoice"));
+         assertThat(guard.guards()).hasSize(1);
+-        assertThatThrownBy(() -> ((List<Object>) ((Map<?, ?>) ((List<?>) guard.value()).get(0)).get("required")).add("x"))
+-                .isInstanceOf(UnsupportedOperationException.class);
+-        assertThatThrownBy(() -> ((List<Object>) guard.value()).add("x"))
+-                .isInstanceOf(UnsupportedOperationException.class);
+-        assertThatThrownBy(() -> ((List<WorkflowDefinition.Guard>) transition.guards()).clear())
+-                .isInstanceOf(UnsupportedOperationException.class);
++        assertListRejectsMutation((List<?>) ((Map<?, ?>) ((List<?>) guard.value()).get(0)).get("required"));
++        assertListRejectsMutation((List<?>) guard.value());
++        assertListRejectsMutation(transition.guards());
++    }
++
++    @SuppressWarnings("unchecked")
++    private static void assertListRejectsMutation(List<?> value) {
++        assertThatThrownBy(() -> ((List<Object>) value).add("mutation"))
++                .isInstanceOf(UnsupportedOperationException.class);
+     }
+ }

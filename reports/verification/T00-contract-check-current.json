@@ -1,0 +1,25 @@
+{
+  "task_id": "T00",
+  "attempt": "coordinator-06",
+  "status": "PASS_PENDING_REVIEW",
+  "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+  "exit_code": 0,
+  "source_hash": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+  "test_count": 11,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "coverage": "NOT_RUN (full coverage gate not run)",
+  "progress": "Observed live running test case 1/11 through 11/11 in Maven output",
+  "artifacts": [
+    "reports/verification/T00-review04-full-tests.log",
+    "reports/verification/T00-review04-focused-tests.log",
+    "reports/verification/T00-review04-listener-failure.log"
+  ],
+  "environment": {
+    "java": "21.0.12.1 Eclipse Temurin",
+    "maven": "3.9.11",
+    "repo": "/tmp/claims-m2",
+    "docker": "BLOCKED: permission denied on /var/run/docker.sock"
+  }
+}

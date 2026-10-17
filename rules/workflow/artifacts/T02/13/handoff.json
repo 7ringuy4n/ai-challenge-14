@@ -1,0 +1,45 @@
+{
+  "task": "T02",
+  "attempt": "13",
+  "requirements": ["REQ-20261017-006", "REQ-20261017-007", "REQ-20261017-008", "REQ-20261017-009", "REQ-20261017-010"],
+  "contract": "CH14-Contracts-v1+AD-01",
+  "base_persistence_source_sha256": "8be87c69eeed929fbbc2245ebad7a803f433718af5b846399567d1b0808e59f7",
+  "status": "PARTIAL",
+  "candidate_patch": "rules/workflow/artifacts/T02/13/candidate.patch",
+  "patch_paths": [
+    "src/test/java/com/papaya/claims/claim/domain/persistence/AuditImmutabilityIT.java",
+    "src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java",
+    "src/test/java/com/papaya/claims/claim/domain/persistence/IdempotencyIT.java",
+    "src/test/java/com/papaya/claims/claim/domain/persistence/PaymentOutboxIT.java",
+    "src/test/java/com/papaya/claims/claim/domain/persistence/PersistenceITSupport.java"
+  ],
+  "coverage": {
+    "fixture": "A Testcontainers PostgreSQL bootstrap login provisions restricted claims_migration and claims_runtime roles. Liquibase runs on a migration connection; fixture checks current_user and public schema owner. MyBatis loads the production claim, audit, receipt, and effects mapper XML against a claims_runtime DataSource, and adapters are invoked through mapper interfaces.",
+    "claim": "Calls ClaimRepository insert, find, listVisible, and compareAndSet. Verifies exact nested BigDecimal mapping and that an attempted CAS with changed memberId, policyLimit, and currency cannot overwrite persisted immutable values.",
+    "audit": "Calls ClaimAuditRepository append/read, then raw JDBC UPDATE and DELETE attempts are denied for both claim_audit and system_operation_audit and rows remain present.",
+    "idempotency": "Calls IdempotencyRepository insert/find and verifies the unique actor/scope/key conflict leaves the original receipt. Does not claim service fingerprint comparison, replay policy, or race recovery.",
+    "payment_outbox": "Calls PaymentRepository create/exists/confirm/read and OutboxRepository enqueue/claimDue/markFailed/retry/markDelivered. Outbox adapter is constructed with an explicit 5000ms configured lease duration and assertion checks its persisted lease window.",
+    "least_privilege": "Checks both roles have no superuser/createdb/createrole attributes, checks claims_runtime has schema USAGE but no CREATE, and verifies runtime CREATE TABLE fails."
+  },
+  "verification": {
+    "patch_inspection": "PASS: manually inspected patch headers and content; all paths are limited to src/test/java/com/papaya/claims/claim/domain/persistence/.",
+    "git_apply_check": {
+      "status": "NOT_RUN",
+      "command": "git apply --check rules/workflow/artifacts/T02/13/candidate.patch",
+      "reason": "Worker task packet permits git apply --check but forbids Git operations; coordinator performs patch validation and application."
+    },
+    "maven_testcontainers": {
+      "status": "NOT_RUN",
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dit.test=ClaimPersistenceIT,AuditImmutabilityIT,IdempotencyIT,PaymentOutboxIT verify",
+      "reason": "Task packet prohibits builds/tests and Docker/database operations; coordinator must execute after serial source integration."
+    },
+    "runtime": {"status": "NOT_RUN", "reason": "Worker did not run PostgreSQL/Testcontainers or database checks."}
+  },
+  "limitations": [
+    "Compilation and PostgreSQL runtime behavior are unverified.",
+    "Raw JDBC is used only to seed a system_operation_audit row for privilege-trigger checks; required claim audit, claims, receipt, payment, and outbox operations use production adapters.",
+    "Lease behavior is tested by passing 5000ms to the production adapter constructor; application configuration binding itself is outside this repository integration fixture.",
+    "Host-managed request and response payloads are unavailable to this worker and are NOT_CAPTURED."
+  ],
+  "audit": {"host_managed_payloads": "NOT_CAPTURED", "trace_status": "PARTIAL"}
+}

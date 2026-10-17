@@ -1,0 +1,36 @@
+{
+  "approval_trace_id": "c523f305744941f9a559a149b627fa24",
+  "approval_remote_parent_span_id": "69ace3b43c7a4cae",
+  "approval_correlation_id": "accept-945c1c3db4124e7ea53a06e9",
+  "application_http_log_matches_inbound_context": true,
+  "collector_http_server_span": {
+    "trace": "c523f305744941f9a559a149b627fa24",
+    "parent": "69ace3b43c7a4cae",
+    "id": "4db0633920ad0a96",
+    "name": "http post /api/v1/claims/{claimId}/transitions"
+  },
+  "collector_server_parent_matches_inbound": true,
+  "collector_security_child_span": {
+    "trace": "c523f305744941f9a559a149b627fa24",
+    "parent": "4db0633920ad0a96",
+    "id": "adbe7ce948ac1c02",
+    "name": "secured request"
+  },
+  "collector_security_child_matches_server": true,
+  "collector_outbox_delivery_span": {
+    "trace": "c523f305744941f9a559a149b627fa24",
+    "parent": "adbe7ce948ac1c02",
+    "id": "50c80b74f4aef447",
+    "name": "claims.outbox.delivery"
+  },
+  "outbox_child_matches_security_span": true,
+  "application_outbox_log_matches_exported_span": true,
+  "session_server_span_matches_inbound": true,
+  "recent_collector_span_count": 225,
+  "evidence_files": [
+    "reports/verification/acceptance-matrix/http-exchanges.jsonl",
+    "reports/verification/acceptance-matrix/trace-context.json",
+    "reports/telemetry/application.log",
+    "reports/telemetry/otel-collector-recent.log.gz"
+  ]
+}

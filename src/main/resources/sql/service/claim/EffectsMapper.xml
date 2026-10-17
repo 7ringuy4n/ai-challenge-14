@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.papaya.claims.claim.domain.mapper.EffectsMapper">
+  <resultMap id="outboxRow" type="com.papaya.claims.claim.domain.persistence.OutboxRow">
+    <id property="id" column="id" javaType="java.util.UUID" typeHandler="com.papaya.claims.claim.domain.persistence.UuidTypeHandler"/><result property="claimId" column="claim_id" javaType="java.util.UUID" typeHandler="com.papaya.claims.claim.domain.persistence.UuidTypeHandler"/><result property="effect" column="effect"/>
+    <result property="payloadJson" column="payload_json"/><result property="attempts" column="attempts"/>
+    <result property="availableAt" column="available_at"/><result property="traceparent" column="traceparent"/>
+  </resultMap>
+  <resultMap id="paymentRow" type="com.papaya.claims.claim.domain.persistence.PaymentRow">
+    <id property="claimId" column="claim_id" javaType="java.util.UUID" typeHandler="com.papaya.claims.claim.domain.persistence.UuidTypeHandler"/><result property="reference" column="reference"/><result property="confirmedAt" column="confirmed_at"/>
+  </resultMap>
+  <insert id="enqueue" parameterType="com.papaya.claims.claim.domain.persistence.OutboxRow">
+    INSERT INTO local_outbox(id,claim_id,effect,payload,attempts,available_at,traceparent)
+    VALUES(#{id},#{claimId},#{effect},CAST(#{payloadJson} AS jsonb),#{attempts},#{availableAt},#{traceparent})
+  </insert>
+  <select id="claimDue" resultMap="outboxRow">
+    WITH due AS (SELECT id FROM local_outbox WHERE delivered_at IS NULL AND available_at &lt;= #{now}
+      ORDER BY available_at,id FOR UPDATE SKIP LOCKED LIMIT #{limit})
+    UPDATE local_outbox o SET attempts=o.attempts+1,available_at=CAST(#{now} AS timestamptz) + (CAST(#{leaseMillis} AS bigint) * interval '1 millisecond')
+      FROM due WHERE o.id=due.id
+    RETURNING o.id,o.claim_id,o.effect,o.payload::text AS payload_json,o.attempts,o.available_at,o.traceparent
+  </select>
+  <update id="delivered">UPDATE local_outbox SET delivered_at=#{at} WHERE id=#{id} AND delivered_at IS NULL</update>
+  <update id="failed">UPDATE local_outbox SET last_error=left(#{error},240),available_at=#{retry} WHERE id=#{id} AND delivered_at IS NULL</update>
+  <insert id="createPayment" parameterType="com.papaya.claims.claim.domain.persistence.PaymentRow">
+    INSERT INTO payment_requests(id,claim_id,request_id,currency,amount) VALUES(gen_random_uuid(),#{claimId},#{requestId},#{currency},#{amount})
+  </insert>
+  <update id="confirmPayment">UPDATE payment_requests SET status='CONFIRMED',reference=#{reference},confirmed_at=clock_timestamp()
+    WHERE claim_id=#{claimId} AND status='REQUESTED'</update>
+  <select id="paymentExists" resultType="boolean">SELECT EXISTS(SELECT 1 FROM payment_requests WHERE claim_id=#{claimId})</select>
+  <select id="paymentConfirmation" resultMap="paymentRow">SELECT claim_id,reference,confirmed_at FROM payment_requests
+    WHERE claim_id=#{claimId} AND status='CONFIRMED'</select>
+</mapper>

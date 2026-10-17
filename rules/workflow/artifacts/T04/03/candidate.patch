@@ -1,0 +1,992 @@
+diff --git a/src/main/java/com/papaya/claims/application/ClaimService.java b/src/main/java/com/papaya/claims/application/ClaimService.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/application/ClaimService.java
+@@ -0,0 +1,232 @@
++package com.papaya.claims.application;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.papaya.claims.contract.*;
++import com.papaya.claims.contract.Model.*;
++import java.math.BigDecimal;
++import java.nio.charset.StandardCharsets;
++import java.security.MessageDigest;
++import java.time.Clock;
++import java.time.Instant;
++import java.time.temporal.ChronoUnit;
++import java.util.*;
++import org.slf4j.MDC;
++import org.springframework.transaction.support.TransactionTemplate;
++
++/** Coordinates domain decisions and all durable effects in a single database transaction. */
++public final class ClaimService implements ClaimOperations {
++    private static final Set<String> STAFF = Set.of("document_clerk", "team_lead", "assessor", "finance");
++    private final ClaimRepository claims;
++    private final AuditRepository audits;
++    private final CommandRepository commands;
++    private final EffectRepository effects;
++    private final WorkflowEngine engine;
++    private final TransactionTemplate transactions;
++    private final Clock clock;
++    private final MockEffectFactory effectFactory;
++    private final ObjectMapper json;
++
++    public ClaimService(ClaimRepository claims, AuditRepository audits, CommandRepository commands,
++                        EffectRepository effects, WorkflowEngine engine, TransactionTemplate transactions,
++                        Clock clock, MockEffectFactory effectFactory, ObjectMapper json) {
++        this.claims = claims; this.audits = audits; this.commands = commands; this.effects = effects;
++        this.engine = engine; this.transactions = transactions; this.clock = clock;
++        this.effectFactory = effectFactory; this.json = json;
++    }
++
++    @Override public ClaimSnapshot create(Actor actor, String memberId, BigDecimal limit, String currency,
++                                           List<String> requiredDocuments) {
++        Objects.requireNonNull(actor); requireAny(actor, Set.of("document_clerk", "team_lead", "member"));
++        if ("member".equals(actor.role()) && !actor.userId().equals(memberId)) forbidden();
++        Model.requireText(memberId, "memberId");
++        if (memberId.length() > 120 || memberId.indexOf(0) >= 0) invalid("memberId exceeds 120 characters or contains a null character");
++        if (limit == null || limit.signum() < 0 || limit.scale() > 2 || limit.precision() > 18 || limit.precision() - limit.scale() > 16) invalid("Policy limit must be nonnegative with at most two decimal places");
++        validateCurrency(currency);
++        if (requiredDocuments == null || requiredDocuments.isEmpty() || requiredDocuments.size() > 30) invalid("requiredDocuments must contain 1 to 30 document keys");
++        var docs = new LinkedHashSet<String>();
++        for (String doc : requiredDocuments) {
++            Model.requireText(doc, "document key");
++            if (doc.length() > 80 || doc.indexOf(0) >= 0 || !docs.add(doc)) invalid("Document keys must be unique, at most 80 characters, and contain no null character");
++        }
++        UUID id = UUID.randomUUID();
++        ClaimSnapshot claim = new ClaimSnapshot(id, memberId, engine.initialState(), limit, currency,
++                Map.of("requiredDocuments", List.copyOf(docs), "documents", Map.of()), 0, 0, null, null);
++        return transactions.execute(status -> { claims.insert(claim); return claim; });
++    }
++
++    @Override public List<ClaimSnapshot> list(Actor actor) {
++        requireReadable(actor);
++        return claims.list().stream().filter(c -> canRead(actor, c)).toList();
++    }
++    @Override public ClaimSnapshot get(Actor actor, UUID id) {
++        ClaimSnapshot claim = claims.find(Objects.requireNonNull(id)).orElseThrow(ClaimService::notFound);
++        requireRead(actor, claim); return claim;
++    }
++
++    @Override public ClaimSnapshot patchFacts(Actor actor, UUID id, long expectedVersion, Map<String,Object> updates) {
++        Objects.requireNonNull(actor); Objects.requireNonNull(updates);
++        ClaimSnapshot result = transactions.execute(status -> {
++            ClaimSnapshot current = locked(id);
++            requireRead(actor, current);
++            if (engine.options(current, actor, now()).isEmpty()) conflict("Terminal claims cannot be changed");
++            if (current.version() != expectedVersion) conflict("Claim version is stale");
++            Map<String,Object> accepted = validateUpdates(actor, current, updates);
++            var merged = new LinkedHashMap<>(current.facts()); merged.putAll(accepted);
++            ClaimSnapshot next = current.updateFacts(merged);
++            if (!claims.compareAndSet(next, current.version())) conflict("Claim version is stale");
++            return next;
++        });
++        return result;
++    }
++
++    @Override public ClaimSnapshot transition(Actor actor, UUID id, TransitionCommand command) {
++        Objects.requireNonNull(actor); Objects.requireNonNull(command);
++        ClaimSnapshot outcome = transactions.execute(status -> {
++            ClaimSnapshot current = locked(id); requireRead(actor, current);
++            String hash = hash(command, actor.role());
++            Optional<CommandReceipt> prior = commands.find(id, actor.userId(), command.idempotencyKey());
++            if (prior.isPresent()) {
++                if (!MessageDigest.isEqual(prior.get().requestHash().getBytes(StandardCharsets.US_ASCII), hash.getBytes(StandardCharsets.US_ASCII)))
++                    conflict("Idempotency key was already used with a different command");
++                return prior.get().result();
++            }
++            if (command.expectedVersion() != current.version()) conflict("Claim version is stale");
++            Instant now = now();
++            Decision decision = engine.evaluate(current, actor, command, now);
++            boolean paymentEffect = decision.effects().contains("create_payment_request");
++            if (paymentEffect) effects.createPaymentRequest(id, UUID.randomUUID());
++            ClaimSnapshot transitioned = current.transition(decision);
++            var finalFacts = new LinkedHashMap<>(transitioned.facts());
++            // Transition clearing rules take precedence; only server-generated facts are added here.
++            if (paymentEffect) finalFacts.put("paymentRequestCreated", true);
++            if ("REJECTED".equals(decision.toState())) finalFacts.put("appealDeadline", now.plus(7, ChronoUnit.DAYS).toString());
++            ClaimSnapshot next = new ClaimSnapshot(transitioned.id(), transitioned.memberId(), transitioned.state(),
++                    transitioned.policyLimit(), transitioned.currency(), finalFacts, transitioned.informationRequests(),
++                    transitioned.version(), transitioned.assessmentStartedAt(), transitioned.lastInformationRequestedAt());
++            if (!claims.compareAndSet(next, current.version())) conflict("Claim version is stale");
++            String trace = Optional.ofNullable(MDC.get("traceId")).orElse("unavailable");
++            audits.append(new AuditEntry(UUID.randomUUID(), id, next.version(), now, current.state(), next.state(),
++                    actor.userId(), actor.role(), command.notes(), engine.configVersion(), trace));
++            List<OutboxMessage> messages = new ArrayList<>();
++            for (String effect : decision.effects()) {
++                if (!effectFactory.supports(effect)) throw new IllegalStateException("Unsupported configured effect: " + effect);
++                if (!"create_payment_request".equals(effect))
++                    messages.add(effectFactory.create(effect, next, actor, command.notes()));
++            }
++            effects.enqueue(messages);
++            CommandReceipt receipt = new CommandReceipt(hash, next);
++            commands.insert(id, actor.userId(), command.idempotencyKey(), receipt);
++            return next;
++        });
++        // A scheduled dispatcher observes only committed outbox rows; service calls never deliver effects.
++        return Objects.requireNonNull(outcome);
++    }
++
++    @Override public List<TransitionOption> options(Actor actor, UUID id) {
++        ClaimSnapshot claim = get(actor, id);
++        return engine.options(claim, actor, now());
++    }
++    @Override public List<AuditEntry> audit(Actor actor, UUID id) {
++        ClaimSnapshot claim = get(actor, id); return audits.findByClaimId(claim.id());
++    }
++
++    private Map<String,Object> validateUpdates(Actor actor, ClaimSnapshot claim, Map<String,Object> updates) {
++        Set<String> allowed = switch (actor.role()) {
++            case "document_clerk" -> Set.of("documents", "newInformation");
++            case "team_lead" -> Set.of("assessorId");
++            case "assessor" -> Set.of("reportComplete", "assessmentAmount", "assessmentCurrency", "rejectionReason", "missingInfoDescription");
++            case "finance" -> Set.of("paymentConfirmed", "paymentReference");
++            case "member" -> Set.of("memberAcknowledged");
++            default -> Set.of();
++        };
++        if (allowed.isEmpty()) forbidden();
++        boolean phaseAllowed = switch (actor.role()) {
++            case "document_clerk" -> Set.of("SUBMITTED", "PENDING_INFO").contains(claim.state());
++            case "team_lead" -> "DOCUMENTS_VERIFIED".equals(claim.state());
++            case "assessor" -> "UNDER_ASSESSMENT".equals(claim.state());
++            case "finance" -> "PAYMENT_INITIATED".equals(claim.state());
++            case "member" -> "REJECTED".equals(claim.state());
++            default -> false;
++        };
++        if (!phaseAllowed) conflict("Facts cannot be changed in the current claim state");
++        for (String key : updates.keySet()) {
++            if (key == null || key.indexOf(0) >= 0) invalid("Fact names must not contain null characters");
++            if (!allowed.contains(key)) invalid("Fact is not writable by this role: " + key);
++        }
++        if (updates.isEmpty()) invalid("At least one fact update is required");
++        if (updates.size() > 12) invalid("Too many fact updates");
++        var accepted = new LinkedHashMap<String,Object>();
++        for (var entry : updates.entrySet()) {
++            String key = entry.getKey(); Object value = entry.getValue();
++            switch (key) {
++                case "documents" -> accepted.put(key, validateDocuments(claim, value));
++                case "newInformation" -> {
++                    String text = boundedText(value, 2000, key); accepted.put(key, text);
++                    accepted.put("informationReceivedAt", now().toString());
++                }
++                case "assessorId" -> accepted.put(key, boundedText(value, 120, key));
++                case "reportComplete", "memberAcknowledged", "paymentConfirmed" -> {
++                    if (!(value instanceof Boolean)) invalid(key + " must be a boolean"); accepted.put(key, value);
++                }
++                case "assessmentAmount" -> accepted.put(key, validateAmount(value));
++                case "assessmentCurrency" -> { if (!(value instanceof String s)) invalid(key + " must be text"); validateCurrency((String)value); accepted.put(key, value); }
++                case "rejectionReason", "missingInfoDescription" -> accepted.put(key, boundedText(value, 2000, key));
++                case "paymentReference" -> accepted.put(key, boundedText(value, 160, key));
++                default -> invalid("Unsupported fact");
++            }
++        }
++        if ("finance".equals(actor.role()) && (updates.containsKey("paymentConfirmed") || updates.containsKey("paymentReference"))) {
++            if (!effects.paymentRequestExists(claim.id())) conflict("A payment request must exist before confirmation");
++            Object reference = updates.getOrDefault("paymentReference", claim.facts().get("paymentReference"));
++            if (!(reference instanceof String text) || text.isBlank()) invalid("Payment reference is required for confirmation");
++        }
++        return accepted;
++    }
++    private Map<String,Object> validateDocuments(ClaimSnapshot claim, Object value) {
++        if (!(value instanceof Map<?,?> supplied) || supplied.size() > 30) invalid("documents must be a map");
++        Object requiredValue = claim.facts().get("requiredDocuments");
++        Set<String> required = requiredValue instanceof List<?> list ? new HashSet<>(list.stream().map(String::valueOf).toList()) : Set.of();
++        var docs = new LinkedHashMap<String,Object>();
++        for (var e : ((Map<?,?>)value).entrySet()) {
++            if (!(e.getKey() instanceof String key) || !required.contains(key) || !(e.getValue() instanceof Boolean)) invalid("Document results must match required keys and be booleans");
++            docs.put((String)e.getKey(), e.getValue());
++        }
++        return Collections.unmodifiableMap(docs);
++    }
++    private static BigDecimal validateAmount(Object value) {
++        BigDecimal amount;
++        try { amount = value instanceof BigDecimal b ? b : new BigDecimal(String.valueOf(value)); }
++        catch (RuntimeException error) { throw new BusinessException("INVALID_AMOUNT", 400, "Assessment amount must be a decimal number"); }
++        if (amount.signum() < 0 || amount.scale() > 2 || amount.precision() > 18 || amount.precision() - amount.scale() > 16) invalid("Assessment amount must be nonnegative with at most two decimals");
++        return amount;
++    }
++    private static String boundedText(Object value, int max, String field) {
++        if (!(value instanceof String)) invalid(field + " must be nonblank text of at most " + max + " characters");
++        String text = (String) value;
++        if (text.isBlank() || text.length() > max || text.indexOf(0) >= 0)
++            invalid(field + " must be nonblank text of at most " + max + " characters and contain no null character");
++        return text;
++    }
++    private static void validateCurrency(String currency) {
++        try { if (currency == null || !currency.equals(currency.toUpperCase(Locale.ROOT)) || currency.length() != 3) throw new IllegalArgumentException(); Currency.getInstance(currency); }
++        catch (IllegalArgumentException error) { throw new BusinessException("INVALID_CURRENCY", 400, "A valid uppercase ISO currency is required"); }
++    }
++    private ClaimSnapshot locked(UUID id) { return claims.findForUpdate(Objects.requireNonNull(id)).orElseThrow(ClaimService::notFound); }
++    private Instant now() { return clock.instant().truncatedTo(ChronoUnit.MICROS); }
++    private static String hash(TransitionCommand command, String actorRole) {
++        if (command.target().indexOf(0) >= 0 || command.idempotencyKey().indexOf(0) >= 0 || command.notes().indexOf(0) >= 0 || actorRole.indexOf(0) >= 0)
++            invalid("Command strings must not contain null characters");
++        try {
++            String stable = command.target() + "\u0000" + command.expectedVersion() + "\u0000" + command.notes() + "\u0000" + actorRole;
++            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(stable.getBytes(StandardCharsets.UTF_8)));
++        } catch (Exception e) { throw new IllegalStateException(e); }
++    }
++    private boolean canRead(Actor actor, ClaimSnapshot claim) { return "member".equals(actor.role()) ? actor.userId().equals(claim.memberId()) : STAFF.contains(actor.role()) || "system".equals(actor.role()); }
++    private void requireReadable(Actor actor) { if (actor == null || !(STAFF.contains(actor.role()) || "member".equals(actor.role()) || "system".equals(actor.role()))) forbidden(); }
++    private void requireRead(Actor actor, ClaimSnapshot claim) { requireReadable(actor); if (!canRead(actor, claim)) forbidden(); }
++    private static void requireAny(Actor actor, Set<String> roles) { if (!roles.contains(actor.role())) forbidden(); }
++    private static void invalid(String message) { throw new BusinessException("INVALID_INPUT", 400, message); }
++    private static void forbidden() { throw new BusinessException("FORBIDDEN_ROLE", 403, "The authenticated actor cannot perform this operation"); }
++    private static void conflict(String message) { throw new BusinessException("CONFLICT", 409, message); }
++    private static BusinessException notFound() { return new BusinessException("NOT_FOUND", 404, "Claim was not found"); }
++}
+diff --git a/src/main/java/com/papaya/claims/application/EffectDispatcher.java b/src/main/java/com/papaya/claims/application/EffectDispatcher.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/application/EffectDispatcher.java
+@@ -0,0 +1,59 @@
++package com.papaya.claims.application;
++
++import com.papaya.claims.contract.EffectRepository;
++import com.papaya.claims.contract.Model.OutboxMessage;
++import java.time.Clock;
++import java.time.Duration;
++import java.util.List;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.scheduling.annotation.Scheduled;
++import org.springframework.stereotype.Component;
++import org.springframework.transaction.PlatformTransactionManager;
++import org.springframework.transaction.TransactionDefinition;
++import org.springframework.transaction.support.TransactionSynchronizationManager;
++import org.springframework.transaction.support.TransactionTemplate;
++
++/** Polls committed outbox rows and retries console effects with at-least-once delivery semantics. */
++@Component
++public final class EffectDispatcher {
++    private static final Logger LOG = LoggerFactory.getLogger(EffectDispatcher.class);
++    private final EffectRepository repository;
++    private final MockEffectFactory factory;
++    private final Clock clock;
++    private final TransactionTemplate freshTransactions;
++
++    public EffectDispatcher(EffectRepository repository, MockEffectFactory factory, Clock clock,
++                            PlatformTransactionManager transactionManager) {
++        this.repository = repository;
++        this.factory = factory;
++        this.clock = clock;
++        this.freshTransactions = new TransactionTemplate(transactionManager);
++        this.freshTransactions.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
++    }
++
++    @Scheduled(fixedDelayString = "${claims.outbox-retry-delay-ms:5000}")
++    public void retryPending() {
++        if (TransactionSynchronizationManager.isActualTransactionActive())
++            throw new IllegalStateException("Outbox polling cannot run inside an ambient transaction");
++        List<OutboxMessage> ready = freshTransactions.execute(status -> repository.pending());
++        if (ready != null) ready.forEach(this::deliver);
++    }
++
++    private void deliver(OutboxMessage message) {
++        try {
++            // Delivery happens outside every database transaction and only after polling committed rows.
++            factory.deliver(message);
++            freshTransactions.executeWithoutResult(status -> repository.markDelivered(message.id()));
++        } catch (RuntimeException failure) {
++            int seconds = (int) Math.min(3600, 1L << Math.min(message.attempts(), 10));
++            try {
++                freshTransactions.executeWithoutResult(status -> repository.markFailed(message.id(),
++                        failure.getClass().getSimpleName(), clock.instant().plus(Duration.ofSeconds(seconds))));
++            } catch (RuntimeException persistenceFailure) {
++                LOG.error("Unable to persist outbox retry state id={}", message.id(), persistenceFailure);
++            }
++            LOG.warn("Mock effect delivery failed id={} attempt={}", message.id(), message.attempts() + 1);
++        }
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/application/MockEffectFactory.java b/src/main/java/com/papaya/claims/application/MockEffectFactory.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/application/MockEffectFactory.java
+@@ -0,0 +1,56 @@
++package com.papaya.claims.application;
++
++import com.fasterxml.jackson.core.JsonProcessingException;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.papaya.claims.contract.BusinessException;
++import com.papaya.claims.contract.Model.*;
++import com.papaya.claims.engine.EffectRegistry;
++import java.util.*;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.stereotype.Component;
++
++/** Factory selecting a payload strategy for each configured effect ID. */
++@Component
++public final class MockEffectFactory {
++    private static final Logger LOG = LoggerFactory.getLogger(MockEffectFactory.class);
++    private final ObjectMapper json;
++    private final Map<String, EffectHandler> handlers;
++    public MockEffectFactory(ObjectMapper json) {
++        this.json = json;
++        var map = new LinkedHashMap<String, EffectHandler>();
++        map.put("notify_assessors", (c,a,n) -> payload("assessor_queue", c, Map.of("recipientRole", "assessor")));
++        map.put("assessment_started", (c,a,n) -> payload("assessment_started", c, Map.of("recipientRole", "assessor", "assessorId", safe(c.facts().get("assessorId")))));
++        map.put("notify_approval", (c,a,n) -> payload("approval_notice", c, Map.of("recipientRole", "member", "memberId", c.memberId(), "paymentReference", "pending:" + c.id())));
++        map.put("notify_rejection", (c,a,n) -> payload("rejection_notice", c, Map.of("recipientRole", "member", "memberId", c.memberId(), "reason", safe(c.facts().get("rejectionReason")), "appealInstructions", "Contact the claims team before the appeal deadline.")));
++        map.put("request_information", (c,a,n) -> payload("information_request", c, Map.of("recipientRole", "member", "memberId", c.memberId(), "description", safe(c.facts().get("missingInfoDescription")))));
++        map.put("assessment_timer_reset", (c,a,n) -> payload("assessment_timer_reset", c, Map.of("recipientRole", "assessor")));
++        map.put("trigger_payment", (c,a,n) -> payload("payment_trigger", c, Map.of("recipientRole", "finance", "paymentReference", safe(c.facts().get("paymentReference")))));
++        map.put("notify_payment", (c,a,n) -> payload("payment_notice", c, Map.of("recipientRole", "member", "memberId", c.memberId(), "paymentReference", safe(c.facts().get("paymentReference")))));
++        map.put("archive_claim", (c,a,n) -> payload("claim_archive", c, Map.of("recipientRole", "records")));
++        handlers = Collections.unmodifiableMap(map);
++        if (!handlers.keySet().equals(EffectRegistry.effectIds().stream().filter(id -> !id.equals("create_payment_request")).collect(java.util.stream.Collectors.toSet())))
++            throw new IllegalStateException("Mock effect strategies do not match the engine registry");
++    }
++    public boolean supports(String id) { return "create_payment_request".equals(id) || handlers.containsKey(id); }
++    public EffectHandler strategy(String id) {
++        EffectHandler handler = handlers.get(id);
++        if (handler == null) throw new BusinessException("UNKNOWN_EFFECT", 500, "No asynchronous strategy is registered for effect " + id);
++        return handler;
++    }
++    public OutboxMessage create(String id, ClaimSnapshot claim, Actor actor, String notes) {
++        return new OutboxMessage(UUID.randomUUID(), claim.id(), id, strategy(id).payload(claim, actor, notes), 0);
++    }
++    public void deliver(OutboxMessage message) {
++        if (!supports(message.effect()) || "create_payment_request".equals(message.effect())) throw new IllegalArgumentException("Unsupported asynchronous effect");
++        // Payload is intentionally not logged: it can contain member-facing claim details.
++        LOG.info("mock_effect effect={} claimId={} messageId={}", message.effect(), message.claimId(), message.id());
++    }
++    private String payload(String kind, ClaimSnapshot claim, Map<String,Object> data) {
++        var safe = new LinkedHashMap<String,Object>(); safe.put("kind", kind); safe.put("claimId", claim.id()); safe.putAll(data);
++        try { return json.writeValueAsString(safe); }
++        catch (JsonProcessingException e) { throw new IllegalStateException("Unable to encode effect payload", e); }
++    }
++    private static Object safe(Object value) { return value instanceof String s && s.length() <= 2000 ? s : "unavailable"; }
++    @FunctionalInterface public interface EffectHandler { String payload(ClaimSnapshot claim, Actor actor, String notes); }
++}
+diff --git a/src/main/java/com/papaya/claims/configuration/WorkflowConfiguration.java b/src/main/java/com/papaya/claims/configuration/WorkflowConfiguration.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/configuration/WorkflowConfiguration.java
+@@ -0,0 +1,30 @@
++package com.papaya.claims.configuration;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.papaya.claims.contract.*;
++import com.papaya.claims.application.*;
++import com.papaya.claims.engine.ConfiguredWorkflowEngine;
++import com.papaya.claims.engine.WorkflowLoader;
++import java.nio.file.Path;
++import java.time.Clock;
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.scheduling.annotation.EnableScheduling;
++import org.springframework.transaction.support.TransactionTemplate;
++
++@Configuration
++@EnableScheduling
++public class WorkflowConfiguration {
++    @Bean Clock workflowClock() {
++        return Clock.tick(Clock.systemUTC(), java.time.Duration.ofNanos(1_000));
++    }
++    @Bean WorkflowEngine workflowEngine(@Value("${claims.workflow-path:config/workflow.yml}") String path) {
++        return new ConfiguredWorkflowEngine(WorkflowLoader.load(Path.of(path)));
++    }
++    @Bean ClaimOperations claimOperations(ClaimRepository claims, AuditRepository audits, CommandRepository commands,
++            EffectRepository effects, WorkflowEngine engine, TransactionTemplate transactions, Clock clock,
++            MockEffectFactory factory, ObjectMapper json) {
++        return new ClaimService(claims, audits, commands, effects, engine, transactions, clock, factory, json);
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/observability/TraceContextFilter.java b/src/main/java/com/papaya/claims/observability/TraceContextFilter.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/observability/TraceContextFilter.java
+@@ -0,0 +1,60 @@
++package com.papaya.claims.observability;
++
++import io.micrometer.tracing.Span;
++import io.micrometer.tracing.Tracer;
++import jakarta.servlet.FilterChain;
++import jakarta.servlet.ServletException;
++import jakarta.servlet.http.HttpServletRequest;
++import jakarta.servlet.http.HttpServletResponse;
++import java.io.IOException;
++import java.util.concurrent.TimeUnit;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.slf4j.MDC;
++import org.springframework.core.Ordered;
++import org.springframework.core.annotation.Order;
++import org.springframework.stereotype.Component;
++import org.springframework.web.filter.OncePerRequestFilter;
++
++/** Exposes the active Micrometer trace/span context to audits, responses, and structured logs. */
++@Component
++@Order(Ordered.HIGHEST_PRECEDENCE + 20)
++public final class TraceContextFilter extends OncePerRequestFilter {
++    public static final String TRACE_ID_ATTRIBUTE = TraceContextFilter.class.getName() + ".traceId";
++    public static final String SPAN_ID_ATTRIBUTE = TraceContextFilter.class.getName() + ".spanId";
++    private static final Logger LOG = LoggerFactory.getLogger(TraceContextFilter.class);
++    private final Tracer tracer;
++
++    public TraceContextFilter(Tracer tracer) { this.tracer = tracer; }
++
++    @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
++            throws ServletException, IOException {
++        Span span = tracer.currentSpan();
++        boolean created = span == null;
++        Tracer.SpanInScope scope = null;
++        if (created) {
++            span = tracer.nextSpan().name("claims.http").start();
++            scope = tracer.withSpan(span);
++        }
++        String traceId = span.context().traceId();
++        String spanId = span.context().spanId();
++        request.setAttribute(TRACE_ID_ATTRIBUTE, traceId);
++        request.setAttribute(SPAN_ID_ATTRIBUTE, spanId);
++        response.setHeader("X-Trace-Id", traceId);
++        response.setHeader("X-Span-Id", spanId);
++        MDC.put("traceId", traceId);
++        MDC.put("spanId", spanId);
++        long started = System.nanoTime();
++        try {
++            chain.doFilter(request, response);
++        } finally {
++            long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
++            LOG.info("http_request method={} path={} status={} durationMs={} traceId={} spanId={}",
++                    request.getMethod(), request.getRequestURI(), response.getStatus(), elapsedMs, traceId, spanId);
++            MDC.remove("traceId");
++            MDC.remove("spanId");
++            if (scope != null) scope.close();
++            if (created) span.end();
++        }
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/security/AuthenticatedActors.java b/src/main/java/com/papaya/claims/security/AuthenticatedActors.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/security/AuthenticatedActors.java
+@@ -0,0 +1,18 @@
++package com.papaya.claims.security;
++
++import com.papaya.claims.contract.Model.Actor;
++import org.springframework.security.core.Authentication;
++import org.springframework.security.core.GrantedAuthority;
++
++/** Converts only an authenticated Spring principal into the domain actor contract. */
++public final class AuthenticatedActors {
++    private AuthenticatedActors() {}
++    public static Actor from(Authentication authentication) {
++        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal()))
++            throw new IllegalArgumentException("An authenticated principal is required");
++        String role = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
++                .filter(value -> value.startsWith("ROLE_")).map(value -> value.substring(5).toLowerCase(java.util.Locale.ROOT))
++                .findFirst().orElseThrow(() -> new IllegalArgumentException("Authenticated principal has no workflow role"));
++        return new Actor(authentication.getName(), role);
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/security/SecurityConfiguration.java b/src/main/java/com/papaya/claims/security/SecurityConfiguration.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/security/SecurityConfiguration.java
+@@ -0,0 +1,58 @@
++package com.papaya.claims.security;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import java.util.Map;
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.http.MediaType;
++import org.springframework.security.config.Customizer;
++import org.springframework.security.config.annotation.web.builders.HttpSecurity;
++import org.springframework.security.config.http.SessionCreationPolicy;
++import org.springframework.security.core.userdetails.User;
++import org.springframework.security.core.userdetails.UserDetailsService;
++import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
++import org.springframework.security.crypto.password.PasswordEncoder;
++import org.springframework.security.provisioning.InMemoryUserDetailsManager;
++import org.springframework.security.web.SecurityFilterChain;
++import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
++
++@Configuration
++public class SecurityConfiguration {
++    @Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
++    @Bean UserDetailsService userDetailsService(PasswordEncoder encoder,
++            @Value("${claims.demo-password}") String humanPassword,
++            @Value("${claims.system-password}") String systemPassword) {
++        if (humanPassword == null || humanPassword.isBlank() || systemPassword == null || systemPassword.isBlank() || humanPassword.equals(systemPassword))
++            throw new IllegalStateException("Separate nonempty DEMO_PASSWORD and SYSTEM_PASSWORD values are required");
++        return new InMemoryUserDetailsManager(
++                User.withUsername("clerk").password(encoder.encode(humanPassword)).roles("DOCUMENT_CLERK").build(),
++                User.withUsername("lead").password(encoder.encode(humanPassword)).roles("TEAM_LEAD").build(),
++                User.withUsername("assessor").password(encoder.encode(humanPassword)).roles("ASSESSOR").build(),
++                User.withUsername("finance").password(encoder.encode(humanPassword)).roles("FINANCE").build(),
++                User.withUsername("member-001").password(encoder.encode(humanPassword)).roles("MEMBER").build(),
++                User.withUsername("system").password(encoder.encode(systemPassword)).roles("SYSTEM").build());
++    }
++    @Bean SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper json) throws Exception {
++        CookieCsrfTokenRepository csrf = CookieCsrfTokenRepository.withHttpOnlyFalse();
++        http.csrf(c -> c.csrfTokenRepository(csrf))
++                .httpBasic(Customizer.withDefaults())
++                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
++                .authorizeHttpRequests(a -> a.requestMatchers("/", "/index.html", "/static/**", "/app.js", "/styles.css", "/favicon.ico", "/actuator/health", "/error").permitAll()
++                        .requestMatchers("/api/system/**").hasRole("SYSTEM")
++                        .requestMatchers("/api/**").authenticated()
++                        .requestMatchers("/actuator/**").authenticated().anyRequest().denyAll())
++                .exceptionHandling(e -> e.authenticationEntryPoint((request, response, exception) -> {
++                    response.setStatus(401); response.setContentType(MediaType.APPLICATION_JSON_VALUE);
++                    json.writeValue(response.getOutputStream(), Map.of("code", "UNAUTHENTICATED", "message", "Authentication is required", "traceId", trace(request), "details", Map.of()));
++                }).accessDeniedHandler((request, response, exception) -> {
++                    response.setStatus(403); response.setContentType(MediaType.APPLICATION_JSON_VALUE);
++                    json.writeValue(response.getOutputStream(), Map.of("code", "FORBIDDEN", "message", "Access is denied", "traceId", trace(request), "details", Map.of()));
++                }));
++        return http.build();
++    }
++    private static String trace(jakarta.servlet.http.HttpServletRequest request) {
++        Object value = request.getAttribute(com.papaya.claims.observability.TraceContextFilter.TRACE_ID_ATTRIBUTE);
++        return value instanceof String traceId ? traceId : "unavailable";
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/application/EffectDispatcherTest.java b/src/test/java/com/papaya/claims/application/EffectDispatcherTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/application/EffectDispatcherTest.java
+@@ -0,0 +1,44 @@
++package com.papaya.claims.application;
++
++import static org.mockito.Mockito.*;
++import com.fasterxml.jackson.databind.json.JsonMapper;
++import com.papaya.claims.contract.EffectRepository;
++import com.papaya.claims.contract.Model.OutboxMessage;
++import java.time.Clock;
++import java.util.List;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++import org.springframework.transaction.PlatformTransactionManager;
++import org.springframework.transaction.TransactionDefinition;
++import org.springframework.transaction.support.AbstractPlatformTransactionManager;
++import org.springframework.transaction.support.DefaultTransactionStatus;
++
++class EffectDispatcherTest {
++    @Test void failedDeliveryIsMarkedRetryableNotDelivered() {
++        EffectRepository repository = mock(EffectRepository.class);
++        MockEffectFactory factory = mock(MockEffectFactory.class);
++        OutboxMessage message = message(); when(repository.pending()).thenReturn(List.of(message));
++        doThrow(new IllegalStateException("simulated console failure")).when(factory).deliver(message);
++        dispatcher(repository, factory).retryPending();
++        verify(repository, never()).markDelivered(message.id());
++        verify(repository).markFailed(eq(message.id()), eq("IllegalStateException"), any());
++    }
++    @Test void committedPendingEffectIsDeliveredAndMarked() {
++        EffectRepository repository = mock(EffectRepository.class);
++        MockEffectFactory factory = new MockEffectFactory(JsonMapper.builder().findAndAddModules().build());
++        OutboxMessage message = message(); when(repository.pending()).thenReturn(List.of(message));
++        dispatcher(repository, factory).retryPending();
++        verify(factory).deliver(message); verify(repository).markDelivered(message.id());
++        verify(repository, never()).markFailed(eq(message.id()), anyString(), any());
++    }
++    private static OutboxMessage message() { return new OutboxMessage(UUID.randomUUID(), UUID.randomUUID(), "notify_assessors", "{}", 0); }
++    private static EffectDispatcher dispatcher(EffectRepository repository, MockEffectFactory factory) {
++        PlatformTransactionManager manager = new AbstractPlatformTransactionManager() {
++            @Override protected Object doGetTransaction() { return new Object(); }
++            @Override protected void doBegin(Object transaction, TransactionDefinition definition) {}
++            @Override protected void doCommit(DefaultTransactionStatus status) {}
++            @Override protected void doRollback(DefaultTransactionStatus status) {}
++        };
++        return new EffectDispatcher(repository, factory, Clock.systemUTC(), manager);
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/application/FactAuthorizationTest.java b/src/test/java/com/papaya/claims/application/FactAuthorizationTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/application/FactAuthorizationTest.java
+@@ -0,0 +1,52 @@
++package com.papaya.claims.application;
++
++import static org.assertj.core.api.Assertions.*;
++import static org.mockito.Mockito.*;
++import com.papaya.claims.contract.*;
++import com.papaya.claims.contract.Model.*;
++import java.math.BigDecimal;
++import java.util.*;
++import org.junit.jupiter.api.Test;
++
++class FactAuthorizationTest {
++    @Test void rejectsClientOwnedServerFactsAndAssessmentEditsAfterApproval() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimSnapshot claim = new ClaimSnapshot(UUID.randomUUID(), "member-001", "APPROVED", BigDecimal.TEN, "USD", Map.of(), 0, 1, null, null);
++        when(claims.findForUpdate(claim.id())).thenReturn(Optional.of(claim));
++        ClaimService service = TransitionServiceTest.service(claims, mock(CommandRepository.class), mock(AuditRepository.class), mock(EffectRepository.class));
++        assertThatThrownBy(() -> service.patchFacts(new Actor("assessor", "assessor"), claim.id(), 1, Map.of("assessmentAmount", BigDecimal.ONE)))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("current claim state");
++        assertThatThrownBy(() -> service.patchFacts(new Actor("assessor", "assessor"), claim.id(), 1, Map.of("paymentRequestCreated", true)))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("not writable");
++        verify(claims, never()).compareAndSet(any(), anyLong());
++    }
++    @Test void memberCanAcknowledgeOnlyOwnRejectedClaim() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimSnapshot rejected = new ClaimSnapshot(UUID.randomUUID(), "member-001", "REJECTED", BigDecimal.TEN, "USD", Map.of(), 0, 2, null, null);
++        when(claims.findForUpdate(rejected.id())).thenReturn(Optional.of(rejected));
++        ClaimService service = TransitionServiceTest.service(claims, mock(CommandRepository.class), mock(AuditRepository.class), mock(EffectRepository.class));
++        when(claims.compareAndSet(any(), eq(2L))).thenReturn(true);
++        assertThat(service.patchFacts(new Actor("member-001", "member"), rejected.id(), 2, Map.of("memberAcknowledged", true)).facts()).containsEntry("memberAcknowledged", true);
++        assertThatThrownBy(() -> service.patchFacts(new Actor("member-002", "member"), rejected.id(), 2, Map.of("memberAcknowledged", true)))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("cannot perform");
++    }
++    @Test void configuredStateWithoutOutgoingEdgesIsTerminalForFactMutation() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimSnapshot closed = new ClaimSnapshot(UUID.randomUUID(), "member-001", "CLOSED", BigDecimal.TEN, "USD", Map.of(), 0, 7, null, null);
++        when(claims.findForUpdate(closed.id())).thenReturn(Optional.of(closed));
++        ClaimService service = TransitionServiceTest.service(claims, mock(CommandRepository.class), mock(AuditRepository.class), mock(EffectRepository.class));
++        assertThatThrownBy(() -> service.patchFacts(new Actor("member-001", "member"), closed.id(), 7, Map.of("memberAcknowledged", true)))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("Terminal claims");
++        verify(claims, never()).compareAndSet(any(), anyLong());
++    }
++
++    @Test void memberOptionsExposeConfiguredEdgesAsBlocked() {
++        ClaimRepository claims = mock(ClaimRepository.class);
++        ClaimSnapshot own = new ClaimSnapshot(UUID.randomUUID(), "member-001", "UNDER_ASSESSMENT", BigDecimal.TEN, "USD", Map.of(), 0, 1, null, null);
++        when(claims.find(own.id())).thenReturn(Optional.of(own));
++        ClaimService service = TransitionServiceTest.service(claims, mock(CommandRepository.class), mock(AuditRepository.class), mock(EffectRepository.class));
++        var options = service.options(new Actor("member-001", "member"), own.id());
++        assertThat(options).isNotEmpty().allSatisfy(option -> assertThat(option.allowed()).isFalse());
++    }
++
++}
+diff --git a/src/test/java/com/papaya/claims/application/FactoryStrategyTest.java b/src/test/java/com/papaya/claims/application/FactoryStrategyTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/application/FactoryStrategyTest.java
+@@ -0,0 +1,22 @@
++package com.papaya.claims.application;
++
++import static org.assertj.core.api.Assertions.*;
++import com.fasterxml.jackson.databind.json.JsonMapper;
++import com.papaya.claims.contract.Model.*;
++import java.math.BigDecimal;
++import java.util.*;
++import org.junit.jupiter.api.Test;
++
++class FactoryStrategyTest {
++    @Test void rejectionAndInformationStrategiesCreateDifferentRecipientPayloads() throws Exception {
++        var factory = new MockEffectFactory(JsonMapper.builder().findAndAddModules().build());
++        ClaimSnapshot rejected = new ClaimSnapshot(UUID.randomUUID(), "member-001", "UNDER_ASSESSMENT", BigDecimal.TEN, "USD",
++                Map.of("rejectionReason", "duplicate", "missingInfoDescription", "upload invoice"), 0, 1, null, null);
++        String rejection = factory.create("notify_rejection", rejected, new Actor("assessor", "assessor"), "").payload();
++        String info = factory.create("request_information", rejected, new Actor("assessor", "assessor"), "").payload();
++        assertThat(rejection).contains("duplicate", "appealInstructions", "recipientRole");
++        assertThat(info).contains("upload invoice", "information_request");
++        assertThat(factory.supports("create_payment_request")).isTrue();
++        assertThatThrownBy(() -> factory.strategy("unknown")).hasMessageContaining("No asynchronous strategy");
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/application/IdempotencyTest.java b/src/test/java/com/papaya/claims/application/IdempotencyTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/application/IdempotencyTest.java
+@@ -0,0 +1,36 @@
++package com.papaya.claims.application;
++
++import static org.assertj.core.api.Assertions.*;
++import static org.mockito.Mockito.*;
++import com.papaya.claims.contract.*;
++import com.papaya.claims.contract.Model.*;
++import java.math.BigDecimal;
++import java.util.*;
++import org.junit.jupiter.api.Test;
++
++class IdempotencyTest {
++    @Test void changedPayloadForPreviouslyRecordedKeyIsConflict() {
++        CommandRepository commands = mock(CommandRepository.class);
++        ClaimSnapshot claim = new ClaimSnapshot(UUID.randomUUID(), "member-001", "APPROVED", BigDecimal.TEN, "USD", Map.of(), 0, 5, null, null);
++        when(commands.find(claim.id(), "finance", "same-key")).thenReturn(Optional.of(new CommandReceipt(hash("CLOSED", 3, "same payload", "finance"), claim)));
++        ClaimRepository claims = mock(ClaimRepository.class); when(claims.findForUpdate(claim.id())).thenReturn(Optional.of(claim));
++        ClaimService service = TransitionServiceTest.service(claims, commands, mock(AuditRepository.class), mock(EffectRepository.class));
++        assertThatThrownBy(() -> service.transition(new Actor("finance", "finance"), claim.id(), new TransitionCommand("CLOSED", 3, "same-key", "new payload")))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("different command");
++    }
++    @Test void changedRoleForSameUserCannotReplayReceipt() {
++        CommandRepository commands = mock(CommandRepository.class);
++        ClaimSnapshot claim = new ClaimSnapshot(UUID.randomUUID(), "member-001", "APPROVED", BigDecimal.TEN, "USD", Map.of(), 0, 5, null, null);
++        when(commands.find(claim.id(), "finance", "same-key")).thenReturn(Optional.of(new CommandReceipt(hash("CLOSED", 3, "note", "finance"), claim)));
++        ClaimRepository claims = mock(ClaimRepository.class); when(claims.findForUpdate(claim.id())).thenReturn(Optional.of(claim));
++        ClaimService service = TransitionServiceTest.service(claims, commands, mock(AuditRepository.class), mock(EffectRepository.class));
++        assertThatThrownBy(() -> service.transition(new Actor("finance", "assessor"), claim.id(), new TransitionCommand("CLOSED", 3, "same-key", "note")))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("different command");
++    }
++
++    private static String hash(String target, long version, String notes, String role) {
++        try { return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
++                .digest((target + "\u0000" + version + "\u0000" + notes + "\u0000" + role).getBytes(java.nio.charset.StandardCharsets.UTF_8))); }
++        catch (Exception error) { throw new IllegalStateException(error); }
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/application/InputValidationTest.java b/src/test/java/com/papaya/claims/application/InputValidationTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/application/InputValidationTest.java
+@@ -0,0 +1,29 @@
++package com.papaya.claims.application;
++
++import static org.assertj.core.api.Assertions.*;
++import static org.mockito.Mockito.*;
++import com.papaya.claims.contract.*;
++import com.papaya.claims.contract.Model.*;
++import java.math.BigDecimal;
++import java.util.List;
++import org.junit.jupiter.api.Test;
++
++class InputValidationTest {
++    @Test void rejectsOversizedDatabaseAmountAndNullCharacterBeforeInsert() {
++        var claims = mock(ClaimRepository.class);
++        var service = TransitionServiceTest.service(claims, mock(CommandRepository.class), mock(AuditRepository.class), mock(EffectRepository.class));
++        assertThatThrownBy(() -> service.create(new Actor("clerk", "document_clerk"), "member-001", new BigDecimal("1E+20"), "USD", List.of("receipt")))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("Policy limit");
++        assertThatThrownBy(() -> service.create(new Actor("clerk", "document_clerk"), "member" + (char) 0 + "1", BigDecimal.ONE, "USD", List.of("receipt")))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("memberId");
++        verify(claims, never()).insert(any());
++    }
++    @Test void emptyFactPatchIsRejected() {
++        var claims = mock(ClaimRepository.class);
++        var claim = new ClaimSnapshot(java.util.UUID.randomUUID(), "member-001", "UNDER_ASSESSMENT", BigDecimal.TEN, "USD", java.util.Map.of(), 0, 1, null, null);
++        when(claims.findForUpdate(claim.id())).thenReturn(java.util.Optional.of(claim));
++        var service = TransitionServiceTest.service(claims, mock(CommandRepository.class), mock(AuditRepository.class), mock(EffectRepository.class));
++        assertThatThrownBy(() -> service.patchFacts(new Actor("assessor", "assessor"), claim.id(), 1, java.util.Map.of()))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("At least one");
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/application/TransitionAtomicityIT.java b/src/test/java/com/papaya/claims/application/TransitionAtomicityIT.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/application/TransitionAtomicityIT.java
+@@ -0,0 +1,96 @@
++package com.papaya.claims.application;
++
++import static org.assertj.core.api.Assertions.*;
++import static org.mockito.Mockito.*;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.papaya.claims.contract.*;
++import com.papaya.claims.contract.Model.*;
++import com.papaya.claims.engine.*;
++import com.papaya.claims.persistence.PostgresPersistenceSupport;
++import java.math.BigDecimal;
++import java.time.Clock;
++import java.util.*;
++import java.util.concurrent.atomic.AtomicBoolean;
++import org.springframework.jdbc.datasource.DataSourceTransactionManager;
++import org.junit.jupiter.api.Test;
++import org.testcontainers.containers.PostgreSQLContainer;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++
++@Testcontainers(disabledWithoutDocker = true)
++class TransitionAtomicityIT {
++    @Container static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
++
++    @Test void auditFailureRollsBackClaimUpdateAndOutbox() throws Exception {
++        var h = PostgresPersistenceSupport.start(POSTGRES);
++        UUID id = UUID.randomUUID();
++        ClaimSnapshot claim = new ClaimSnapshot(id, "member-001", "SUBMITTED", new BigDecimal("25.00"), "USD",
++                Map.of("requiredDocuments", List.of("receipt"), "documents", Map.of("receipt", true)), 0, 0, null, null);
++        h.transactions().executeWithoutResult(s -> h.claims().insert(claim));
++        AuditRepository failAudit = new AuditRepository() {
++            @Override public void append(AuditEntry entry) { throw new IllegalStateException("injected audit failure"); }
++            @Override public List<AuditEntry> findByClaimId(UUID claimId) { return h.audits().findByClaimId(claimId); }
++        };
++        ClaimService service = service(h, failAudit, h.effects());
++        assertThatThrownBy(() -> service.transition(new Actor("clerk", "document_clerk"), id,
++                new TransitionCommand("DOCUMENTS_VERIFIED", 0, "atomic-1", "verified")))
++                .isInstanceOf(IllegalStateException.class).hasMessageContaining("injected audit failure");
++        assertThat(h.claims().find(id).orElseThrow().state()).isEqualTo("SUBMITTED");
++        assertThat(h.audits().findByClaimId(id)).isEmpty();
++        assertThat(h.effects().pending()).isEmpty();
++        assertThat(h.commands().find(id, "clerk", "atomic-1")).isEmpty();
++        outboxFailureRollsBack(h);
++        outerTransactionRollbackDoesNotDeliver(h);
++    }
++
++    private void outerTransactionRollbackDoesNotDeliver(PostgresPersistenceSupport.Harness h) {
++        UUID id = UUID.randomUUID();
++        ClaimSnapshot claim = new ClaimSnapshot(id, "member-001", "SUBMITTED", new BigDecimal("25.00"), "USD",
++                Map.of("requiredDocuments", List.of("receipt"), "documents", Map.of("receipt", true)), 0, 0, null, null);
++        h.transactions().executeWithoutResult(s -> h.claims().insert(claim));
++        MockEffectFactory factory = spy(new MockEffectFactory(h.json()));
++        ClaimService service = service(h, h.audits(), h.effects(), factory);
++        AtomicBoolean uncommittedOutboxWasVisible = new AtomicBoolean(false);
++        assertThatThrownBy(() -> h.transactions().executeWithoutResult(status -> {
++            service.transition(new Actor("clerk", "document_clerk"), id,
++                    new TransitionCommand("DOCUMENTS_VERIFIED", 0, "outer-rollback", "verified"));
++            uncommittedOutboxWasVisible.set(!h.effects().pending().isEmpty());
++            throw new IllegalStateException("rollback enclosing transaction");
++        })).isInstanceOf(IllegalStateException.class).hasMessageContaining("rollback enclosing transaction");
++        assertThat(uncommittedOutboxWasVisible).hasValue(true);
++        assertThat(h.claims().find(id).orElseThrow().state()).isEqualTo("SUBMITTED");
++        assertThat(h.audits().findByClaimId(id)).isEmpty();
++        assertThat(h.effects().pending()).isEmpty();
++        assertThat(h.commands().find(id, "clerk", "outer-rollback")).isEmpty();
++        var dispatcher = new EffectDispatcher(h.effects(), factory, Clock.systemUTC(), new DataSourceTransactionManager(h.dataSource()));
++        dispatcher.retryPending();
++        verify(factory, never()).deliver(any());
++    }
++    private void outboxFailureRollsBack(PostgresPersistenceSupport.Harness h) {
++        UUID id = UUID.randomUUID();
++        ClaimSnapshot claim = new ClaimSnapshot(id, "member-001", "SUBMITTED", new BigDecimal("25.00"), "USD",
++                Map.of("requiredDocuments", List.of("receipt"), "documents", Map.of("receipt", true)), 0, 0, null, null);
++        h.transactions().executeWithoutResult(s -> h.claims().insert(claim));
++        EffectRepository failOutbox = new EffectRepository() {
++            @Override public void enqueue(List<OutboxMessage> messages) { throw new IllegalStateException("injected outbox failure"); }
++            @Override public List<OutboxMessage> pending() { return h.effects().pending(); }
++            @Override public void markDelivered(UUID value) { h.effects().markDelivered(value); }
++            @Override public void markFailed(UUID value, String error, java.time.Instant at) { h.effects().markFailed(value, error, at); }
++            @Override public void createPaymentRequest(UUID claimId, UUID requestId) { h.effects().createPaymentRequest(claimId, requestId); }
++            @Override public boolean paymentRequestExists(UUID claimId) { return h.effects().paymentRequestExists(claimId); }
++        };
++        assertThatThrownBy(() -> service(h, h.audits(), failOutbox).transition(new Actor("clerk", "document_clerk"), id,
++                new TransitionCommand("DOCUMENTS_VERIFIED", 0, "outbox-1", "verified"))).isInstanceOf(IllegalStateException.class);
++        assertThat(h.claims().find(id).orElseThrow().state()).isEqualTo("SUBMITTED");
++        assertThat(h.audits().findByClaimId(id)).isEmpty(); assertThat(h.commands().find(id, "clerk", "outbox-1")).isEmpty();
++    }
++    static ClaimService service(PostgresPersistenceSupport.Harness h, AuditRepository audit, EffectRepository effects) {
++        return service(h, audit, effects, new MockEffectFactory(h.json()));
++    }
++    static ClaimService service(PostgresPersistenceSupport.Harness h, AuditRepository audit, EffectRepository effects, MockEffectFactory factory) {
++        ObjectMapper json = h.json();
++        return new ClaimService(h.claims(), audit, h.commands(), effects,
++                new ConfiguredWorkflowEngine(WorkflowLoader.load(java.nio.file.Path.of("config/workflow.yml"))), h.transactions(),
++                Clock.systemUTC(), factory, json);
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/application/TransitionConcurrencyIT.java b/src/test/java/com/papaya/claims/application/TransitionConcurrencyIT.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/application/TransitionConcurrencyIT.java
+@@ -0,0 +1,31 @@
++package com.papaya.claims.application;
++
++import static org.assertj.core.api.Assertions.*;
++import com.papaya.claims.contract.Model.*;
++import com.papaya.claims.persistence.PostgresPersistenceSupport;
++import java.math.BigDecimal;
++import java.util.*;
++import java.util.concurrent.*;
++import org.junit.jupiter.api.Test;
++import org.testcontainers.containers.PostgreSQLContainer;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++
++@Testcontainers(disabledWithoutDocker = true)
++class TransitionConcurrencyIT {
++    @Container static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
++    @Test void rowLockAndVersionAllowOnlyOneConcurrentCommand() throws Exception {
++        var h = PostgresPersistenceSupport.start(POSTGRES); UUID id = UUID.randomUUID();
++        ClaimSnapshot claim = new ClaimSnapshot(id, "member-001", "APPROVED", new BigDecimal("25.00"), "USD", Map.of("paymentRequestCreated", true), 0, 0, null, null);
++        h.transactions().executeWithoutResult(s -> { h.claims().insert(claim); h.effects().createPaymentRequest(id, UUID.randomUUID()); });
++        ClaimService service = TransitionAtomicityIT.service(h, h.audits(), h.effects());
++        var start = new CountDownLatch(1); var pool = Executors.newFixedThreadPool(2);
++        Callable<Boolean> attempt = () -> { start.await(); try {
++            service.transition(new Actor("finance", "finance"), id, new TransitionCommand("PAYMENT_INITIATED", 0, UUID.randomUUID().toString(), "start payment")); return true;
++        } catch (RuntimeException expectedLoser) { return false; } };
++        Future<Boolean> one = pool.submit(attempt); Future<Boolean> two = pool.submit(attempt); start.countDown();
++        boolean won = one.get(30, TimeUnit.SECONDS) ^ two.get(30, TimeUnit.SECONDS); pool.shutdownNow();
++        assertThat(won).isTrue(); assertThat(h.claims().find(id).orElseThrow().version()).isEqualTo(1);
++        assertThat(h.audits().findByClaimId(id)).hasSize(1); assertThat(h.commands().find(id, "finance", "unused")).isEmpty();
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/application/TransitionServiceTest.java b/src/test/java/com/papaya/claims/application/TransitionServiceTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/application/TransitionServiceTest.java
+@@ -0,0 +1,72 @@
++package com.papaya.claims.application;
++
++import static org.assertj.core.api.Assertions.*;
++import static org.mockito.ArgumentMatchers.*;
++import static org.mockito.Mockito.*;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.fasterxml.jackson.databind.json.JsonMapper;
++import com.papaya.claims.contract.*;
++import com.papaya.claims.contract.Model.*;
++import com.papaya.claims.engine.ConfiguredWorkflowEngine;
++import com.papaya.claims.engine.WorkflowLoader;
++import java.math.BigDecimal;
++import java.nio.file.Path;
++import java.time.*;
++import java.util.*;
++import org.junit.jupiter.api.Test;
++import org.springframework.transaction.support.*;
++
++class TransitionServiceTest {
++    @Test void approvalAtomicallyCreatesPaymentAndAuditAndDispatchesAfterExecuteReturns() {
++        ClaimRepository claims = mock(ClaimRepository.class); AuditRepository audits = mock(AuditRepository.class);
++        CommandRepository commands = mock(CommandRepository.class); EffectRepository effects = mock(EffectRepository.class);
++        ClaimSnapshot claim = new ClaimSnapshot(UUID.randomUUID(), "member-001", "UNDER_ASSESSMENT", new BigDecimal("100.00"), "USD",
++                Map.of("requiredDocuments", List.of("receipt"), "documents", Map.of("receipt", true), "reportComplete", true,
++                        "assessmentAmount", new BigDecimal("80.00"), "assessmentCurrency", "USD"), 0, 2, Instant.EPOCH, null);
++        when(claims.findForUpdate(claim.id())).thenReturn(Optional.of(claim)); when(commands.find(any(), any(), any())).thenReturn(Optional.empty());
++        when(claims.compareAndSet(any(), eq(2L))).thenReturn(true);
++        TransactionTemplate tx = new TransactionTemplate(new AbstractPlatformTransactionManager() {
++            @Override protected Object doGetTransaction() { return new Object(); }
++            @Override protected void doBegin(Object transaction, TransactionDefinition definition) {}
++            @Override protected void doCommit(DefaultTransactionStatus status) {}
++            @Override protected void doRollback(DefaultTransactionStatus status) {}
++        });
++        ObjectMapper json = JsonMapper.builder().findAndAddModules().build(); MockEffectFactory factory = new MockEffectFactory(json);
++        MockEffectFactory factorySpy = spy(factory);
++        ClaimService service = new ClaimService(claims, audits, commands, effects,
++                new ConfiguredWorkflowEngine(WorkflowLoader.load(Path.of("config/workflow.yml"))), tx,
++                Clock.fixed(Instant.parse("2026-01-02T03:04:05.123456789Z"), ZoneOffset.UTC), factorySpy, json);
++        ClaimSnapshot result = service.transition(new Actor("assessor", "assessor"), claim.id(), new TransitionCommand("APPROVED", 2, "approve-1", "Approved"));
++        assertThat(result.state()).isEqualTo("APPROVED"); assertThat(result.facts()).containsEntry("paymentRequestCreated", true);
++        verify(effects).createPaymentRequest(eq(claim.id()), any()); verify(audits).append(argThat(a -> a.sequence() == 3 && a.configVersion().equals("1")));
++        verify(effects).enqueue(argThat(list -> list.size() == 1 && list.getFirst().effect().equals("notify_approval")));
++        verify(factorySpy, never()).deliver(any()); verify(commands).insert(eq(claim.id()), eq("assessor"), eq("approve-1"), any());
++    }
++
++    @Test void replayReturnsStoredResultBeforeCheckingStaleVersionAndRejectsChangedPayload() {
++        ClaimRepository claims = mock(ClaimRepository.class); CommandRepository commands = mock(CommandRepository.class);
++        ClaimSnapshot current = new ClaimSnapshot(UUID.randomUUID(), "member-001", "APPROVED", BigDecimal.TEN, "USD", Map.of(), 0, 4, null, null);
++        ClaimSnapshot saved = new ClaimSnapshot(current.id(), current.memberId(), "APPROVED", BigDecimal.TEN, "USD", Map.of(), 0, 3, null, null);
++        when(claims.findForUpdate(current.id())).thenReturn(Optional.of(current));
++        ClaimService service = service(claims, commands, mock(AuditRepository.class), mock(EffectRepository.class));
++        when(commands.find(current.id(), "finance", "key")).thenReturn(Optional.of(new CommandReceipt(hash("CLOSED", 2, "note", "finance"), saved)));
++        assertThat(service.transition(new Actor("finance", "finance"), current.id(), new TransitionCommand("CLOSED", 2, "key", "note"))).isEqualTo(saved);
++        assertThatThrownBy(() -> service.transition(new Actor("finance", "finance"), current.id(), new TransitionCommand("CLOSED", 2, "key", "other")))
++                .isInstanceOf(BusinessException.class).hasMessageContaining("different command");
++        verify(claims, never()).compareAndSet(any(), anyLong());
++    }
++    private static String hash(String target, long version, String notes, String role) {
++        try { return HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest((target+"\u0000"+version+"\u0000"+notes+"\u0000"+role).getBytes(java.nio.charset.StandardCharsets.UTF_8))); }
++        catch (Exception e) { throw new RuntimeException(e); }
++    }
++    static ClaimService service(ClaimRepository claims, CommandRepository commands, AuditRepository audits, EffectRepository effects) {
++        var json = JsonMapper.builder().findAndAddModules().build(); var factory = new MockEffectFactory(json);
++        return new ClaimService(claims, audits, commands, effects, new ConfiguredWorkflowEngine(WorkflowLoader.load(Path.of("config/workflow.yml"))),
++                new TransactionTemplate(new AbstractPlatformTransactionManager() {
++                    @Override protected Object doGetTransaction(){return new Object();}
++                    @Override protected void doBegin(Object t, TransactionDefinition d){}
++                    @Override protected void doCommit(DefaultTransactionStatus s){}
++                    @Override protected void doRollback(DefaultTransactionStatus s){}
++                }), Clock.systemUTC(), factory, json);
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/security/RoleAuthorizationTest.java b/src/test/java/com/papaya/claims/security/RoleAuthorizationTest.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/security/RoleAuthorizationTest.java
+@@ -0,0 +1,17 @@
++package com.papaya.claims.security;
++
++import static org.assertj.core.api.Assertions.*;
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
++import org.springframework.security.core.authority.SimpleGrantedAuthority;
++
++class RoleAuthorizationTest {
++    @Test void derivesStableActorFromAuthenticatedPrincipalAndRejectsAnonymous() {
++        var auth = new UsernamePasswordAuthenticationToken("member-001", "n/a", List.of(new SimpleGrantedAuthority("ROLE_MEMBER")));
++        assertThat(AuthenticatedActors.from(auth).userId()).isEqualTo("member-001");
++        assertThat(AuthenticatedActors.from(auth).role()).isEqualTo("member");
++        assertThatThrownBy(() -> AuthenticatedActors.from(UsernamePasswordAuthenticationToken.unauthenticated("anonymousUser", "")))
++                .isInstanceOf(IllegalArgumentException.class);
++    }
++}

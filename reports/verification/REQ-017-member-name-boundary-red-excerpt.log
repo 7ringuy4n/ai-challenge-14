@@ -1,0 +1,13 @@
+Command executed before source fix:
+docker run --rm --network host -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/workspace" -v /tmp/claims-m2:/root/.m2 -w /workspace maven:3.9.11-eclipse-temurin-21 mvn -B -Dtest=SecurityConfigurationTest test
+
+Observed failing test output (excerpt preserved from the command result; the tool-rendered output was truncated):
+running test case 1/5: acceptsMaximumMemberNameThatFitsDatabaseIdentityAndRejectsLongerName()
+[ERROR] com.papaya.claims.security.SecurityConfigurationTest.acceptsMaximumMemberNameThatFitsDatabaseIdentityAndRejectsLongerName -- Time elapsed: 0.935 s <<< FAILURE!
+java.lang.AssertionError:
+Expecting code to raise a throwable.
+[ERROR] Tests run: 5, Failures: 1, Errors: 0, Skipped: 0
+[ERROR] BUILD FAILURE
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.6:test (default-test) on project claims-workflow: There are test failures.
+
+This excerpt is not a replacement for a full raw Maven log; the complete post-fix focused log is `REQ-017-member-name-boundary.log`.

@@ -1,0 +1,5 @@
+Command: CLAIMS_API_BASE=http://127.0.0.1:8080 CLAIMS_EVIDENCE_DIR=reports/verification/REQ-017-final-live python3 scripts/run-scenarios.py
+Attempted: 2026-10-17T06:39:17Z, default sandbox
+Result: BLOCKED after 0/29 scenarios
+Failure: Scenario failure after 0/29 cases: <urlopen error [Errno 1] Operation not permitted>
+Resolution: Re-ran the same scenarios via the authorized local-network invocation. The 29/29 result and successful invocation are recorded in console.log.

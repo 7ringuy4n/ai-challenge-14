@@ -1,0 +1,84 @@
+--- a/src/main/java/com/papaya/claims/persistence/MyBatisAuditRepository.java
++++ b/src/main/java/com/papaya/claims/persistence/MyBatisAuditRepository.java
+@@ -7,7 +7,7 @@
+ import org.springframework.stereotype.Repository;
+ 
+ @Repository
+-public final class MyBatisAuditRepository implements AuditRepository {
++public class MyBatisAuditRepository implements AuditRepository {
+     private final AuditMapper mapper;
+ 
+     public MyBatisAuditRepository(AuditMapper mapper) {
+--- a/src/main/java/com/papaya/claims/persistence/MyBatisClaimRepository.java
++++ b/src/main/java/com/papaya/claims/persistence/MyBatisClaimRepository.java
+@@ -10,7 +10,7 @@
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ @Repository
+-public final class MyBatisClaimRepository implements ClaimRepository {
++public class MyBatisClaimRepository implements ClaimRepository {
+     private final ClaimMapper mapper;
+     private final ObjectMapper json;
+ 
+--- a/src/main/java/com/papaya/claims/persistence/MyBatisCommandRepository.java
++++ b/src/main/java/com/papaya/claims/persistence/MyBatisCommandRepository.java
+@@ -8,7 +8,7 @@
+ import org.springframework.stereotype.Repository;
+ 
+ @Repository
+-public final class MyBatisCommandRepository implements CommandRepository {
++public class MyBatisCommandRepository implements CommandRepository {
+     private final CommandMapper mapper;
+     private final ObjectMapper json;
+ 
+--- a/src/main/java/com/papaya/claims/persistence/MyBatisEffectRepository.java
++++ b/src/main/java/com/papaya/claims/persistence/MyBatisEffectRepository.java
+@@ -8,7 +8,7 @@
+ import org.springframework.stereotype.Repository;
+ 
+ @Repository
+-public final class MyBatisEffectRepository implements EffectRepository {
++public class MyBatisEffectRepository implements EffectRepository {
+     private final EffectMapper mapper;
+ 
+     public MyBatisEffectRepository(EffectMapper mapper) {
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/persistence/PersistenceProxyTest.java
+@@ -0,0 +1,37 @@
++package com.papaya.claims.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Mockito.mock;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import java.util.List;
++import org.aopalliance.intercept.MethodInterceptor;
++import org.junit.jupiter.api.Test;
++import org.springframework.aop.framework.AopUtils;
++import org.springframework.aop.framework.ProxyFactory;
++
++class PersistenceProxyTest {
++    @Test
++    void repositoryAdaptersCanBeWrappedBySpringClassBasedProxies() {
++        ObjectMapper json = new ObjectMapper();
++        List<Object> repositories = List.of(
++                new MyBatisClaimRepository(mock(ClaimMapper.class), json),
++                new MyBatisAuditRepository(mock(AuditMapper.class)),
++                new MyBatisCommandRepository(mock(CommandMapper.class), json),
++                new MyBatisEffectRepository(mock(EffectMapper.class)));
++
++        for (Object repository : repositories) {
++            Object proxy = classProxy(repository);
++
++            assertThat(AopUtils.isCglibProxy(proxy)).isTrue();
++            assertThat(proxy).isInstanceOf(repository.getClass());
++        }
++    }
++
++    private Object classProxy(Object target) {
++        ProxyFactory factory = new ProxyFactory(target);
++        factory.setProxyTargetClass(true);
++        factory.addAdvice((MethodInterceptor) invocation -> invocation.proceed());
++        return factory.getProxy();
++    }
++}

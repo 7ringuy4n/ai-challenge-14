@@ -1,0 +1,11 @@
+cross-member verification failed: RuntimeError: member-alpha session failed: HTTP 401
+Traceback (most recent call last):
+  File "/home/tringuyen/Documents/ai-challenge-14/scripts/browser/verify-cross-member.py", line 133, in <module>
+    try: raise SystemExit(main())
+                          ^^^^^^
+  File "/home/tringuyen/Documents/ai-challenge-14/scripts/browser/verify-cross-member.py", line 89, in main
+    alpha.login(); beta.login()
+    ^^^^^^^^^^^^^
+  File "/home/tringuyen/Documents/ai-challenge-14/scripts/browser/verify-cross-member.py", line 58, in login
+    raise RuntimeError(f'{self.user} session failed: HTTP {status}')
+RuntimeError: member-alpha session failed: HTTP 401

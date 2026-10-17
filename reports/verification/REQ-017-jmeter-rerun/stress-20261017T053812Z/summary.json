@@ -1,0 +1,27 @@
+{
+  "samples": 141803,
+  "errors": 0,
+  "error_rate": 0.0,
+  "duration_seconds": 60.238,
+  "rps": 2354.045619044457,
+  "throughput_requests_per_second": 2354.045619044457,
+  "latency_ms": {
+    "p50": 72,
+    "p95": 341,
+    "p99": 470
+  },
+  "by_sampler": {
+    "Get session and CSRF token": {
+      "samples": 70720,
+      "errors": 0
+    },
+    "Create claim": {
+      "samples": 499,
+      "errors": 0
+    },
+    "Authenticated list claims": {
+      "samples": 70584,
+      "errors": 0
+    }
+  }
+}

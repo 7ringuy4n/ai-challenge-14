@@ -1,0 +1,22 @@
+{
+  "task": "T09",
+  "attempt": "01",
+  "status": "submitted",
+  "author": "foundation_tests_worker",
+  "summary": "Drafted six new test classes for model boundaries, guard evaluation, workflow validation, workflow definition immutability, persistence adapter boundaries, and PostgreSQL repository paths.",
+  "patch": "rules/workflow/artifacts/T09/01/candidate.patch",
+  "allowed_patch_paths": [
+    "src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java",
+    "src/test/java/com/papaya/claims/engine/GuardBoundaryTest.java",
+    "src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java",
+    "src/test/java/com/papaya/claims/engine/DefinitionImmutabilityTest.java",
+    "src/test/java/com/papaya/claims/persistence/PersistenceBoundaryTest.java",
+    "src/test/java/com/papaya/claims/persistence/PersistenceBoundaryIT.java"
+  ],
+  "proposed_checks": [
+    {"status": "NOT_RUN", "command": "mvn -B -Dtest=ModelBoundaryTest,GuardBoundaryTest,WorkflowValidationTest,DefinitionImmutabilityTest,PersistenceBoundaryTest test", "reason": "Worker instructions prohibit running builds; coordinator owns verification."},
+    {"status": "NOT_RUN", "command": "mvn -B -Dit.test=PersistenceBoundaryIT verify", "reason": "Worker instructions prohibit build and database operations; coordinator owns PostgreSQL Testcontainers verification."}
+  ],
+  "findings": [],
+  "known_limits": ["Patch has not been compiled or executed; coordinator must check/apply and run both proposed commands."]
+}

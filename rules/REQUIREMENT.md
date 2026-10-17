@@ -370,3 +370,86 @@ A broader non-root search found Java 21.0.12.1 at `/home/tringuyen/.local/java/j
 - Status: in progress.
 - Supersedes: none.
 - Disposition: remote state must be distinguished from a failed network/auth request; if the repository has no existing history, establish a minimal planning/contract baseline on `main`, then continue implementation from it on `develop` while preserving all current files on a recoverable snapshot ref.
+
+
+## REQ-20261017-014 — 2026-10-17
+
+- Source: PROMPT-20261017-014 in `docs/submission/user-prompts.jsonl`.
+- Scope: resolve Git baseline safely and continue claims workflow implementation, meaningful coverage, PostgreSQL verification, independent review, and synchronized evidence.
+- Acceptance: implementation remains on `develop`; do not discard work or merge unfinished code into `main`; meet 95% line / 90% branch coverage, complete database/startup/scenario verification, and independent review before any acceptance.
+- Status: in progress.
+- Supersedes: none.
+- Disposition: the empty remote was preserved as evidence; planning/contracts-only main baseline `521cb1427f910ebbd01129cc1a950c55b899ee87` was initialized and `develop` continues from it. Reviewed implementation commit `207c70d7e559af9be86fb5cf9e9b538a42b8bf22` is on `develop`. The final clean quality run passed 120 unit and 9 PostgreSQL/Testcontainers tests, applied all five Liquibase changesets, and measured 97.3799% line / 90.1478% branch coverage. Repeat Compose startup, authenticated smoke, and the 20-case live API workflow passed. Independent review found no remaining critical/high finding after the coordinator fixed and rereviewed a CAS test race. Preserve review raw payload limitations as `NOT_CAPTURED` / `PARTIAL`; JMeter 100/500-client runs and a single end-to-end run of the entire 29-case matrix are still `NOT_RUN`. Work remains in progress and is not accepted or complete.
+
+## REQ-20261017-015 — Remaining acceptance gates (2026-10-17)
+- Source: verbatim human prompt in `docs/submission/user-prompts.jsonl`.
+- Requirement: execute all 29 PostgreSQL-backed live scenarios in one combined run with request/response evidence; provide reproducible Apache JMeter profiles and actual performance metrics against approved targets; implement and evidence OpenTelemetry propagation across HTTP and asynchronous outbox with log correlation; update requirement traceability; reconcile actual and inaccessible LLM records; verify a no-manual-edit Postman workflow; verify editable/rendered architecture, workflow, database, security, and deployment diagrams; retain 129-test and JaCoCo gates; independently review changes; synchronize project history, reports and task evidence; commit verified changes to `develop` without merge or push.
+- Constraints: no fabricated evidence, actual commands/timestamps/environment; distinguish PASS, FAIL, BLOCKED and NOT_RUN. Ask for approval when mandatory performance thresholds are undefined. Do not accept until all gates pass.
+- Status: in progress; acceptance explicitly withheld pending evidence and thresholds.
+- Supersedes: none.
+
+## REQ-20261017-016 — Performance threshold clarification (2026-10-17)
+- Source: verbatim response in `docs/submission/user-prompts.jsonl`.
+- Requirement: compare measured load runs against P95 latency ≤ 500 ms, P99 latency ≤ 1,000 ms, and HTTP error rate ≤ 1%.
+- Status: approved by the user; resource saturation/database/outbox metrics must still be reported separately as observed measurements.
+- Supersedes: no prior numeric threshold; resolves REQ-20261017-015's missing latency/error targets.
+
+## REQ-20261017-015/016 — Verification outcome (2026-10-17)
+- Status: implementation and specified evidence substantially complete; overall acceptance remains NOT_ACCEPTED.
+- PASS evidence: combined live API 29/29 against PostgreSQL; clean Maven 123 unit + 9 PostgreSQL/Testcontainers tests, six migrations, 97.0464% line / 90.1116% branch; seven JMeter profiles within approved latency/error targets; Newman 27 requests/14 assertions; actual OTLP HTTP→security→outbox child-span/log correlation evidence; editable sources and SVG/PNG for five diagram families; independent review has no critical/high finding.
+- Provenance qualification: seven full JMeter runs were against the business/outbox/tracing implementation before a final HTTP trace-context log field adjustment. The post-adjustment five-second baseline verifies only runner metadata/compression, not full load performance. A malformed-metadata diagnostic run is retained and excluded from comparison.
+- Remaining: browser UI scenario, live cross-member scenario with two runtime principals, requirement-level HTTP execution of all individual criteria (the 29 cases are grouped), byte-identical full JMeter rerun, and full raw host-managed LLM payload capture. LLM audit remains PARTIAL with inaccessible records NOT_CAPTURED.
+- Authoritative current evidence: `reports/verification/REQ-015-final.json`; trace matrix: `docs/testing/traceability-matrix.md`; JMeter aggregation: `reports/performance/comparison.json`.
+
+
+## REQ-20261017-017 — Mandatory completion and final merge (2026-10-17)
+
+- Source: PROMPT-20261017-017 in `docs/submission/user-prompts.jsonl`; the full prompt is preserved verbatim from the attached file and its SHA-256 is recorded in that entry.
+- Scope: complete the final JMeter byte-identical reruns, real browser UI verification, live cross-member isolation, requirement-by-requirement verification, and expanded local Codex/LLM audit; update reports; merge `develop` into `main` only if every mandatory gate passes. Never push.
+- Acceptance: all prescribed quality, live, performance, security, browser, traceability, documentation and audit criteria have real evidence; the final acceptance matrix has no unresolved FAIL/BLOCKED/NOT_RUN gates. Full host-managed capture is expressly mandatory; if inaccessible historical payloads cannot be recovered, disclose the irrecoverable gap, do not merge, and request an acceptance-policy decision.
+- Status: in progress; no merge authorized until acceptance conditions are genuinely met.
+- Execution order: inspect repository and evidence; fingerprint exact JMX/config and source; execute seven profiles; execute browser and live ownership workflows; map each requirement to executable or documentary verification; inventory accessible session and archive evidence; then regression tests, independent review, and final report.
+- Ownership: coordinator owns all source/config/shared requirements/manifests/reports. Verification workstreams T13–T16 have disjoint report artifacts and read-only boundaries; production source changes, if required, remain serialized under coordinator ownership.
+- Supersedes: no prior requirement; tightens completion/merge policy beyond REQ-015/016.
+- Disposition: preserve current `main` baseline and `develop` commits. An explicit historical host-managed payload condition remains binding; no downgrade or inferred capture.
+
+## REQ-20261017-018 — Approved member principal configuration (2026-10-17)
+
+- Source: PROMPT-20261017-018 verbatim approval in `docs/submission/user-prompts.jsonl`.
+- Decision: implement the approved design: a validated configurable `CLAIMS_MEMBER_USERNAMES` list, defaulting to `member-demo`; all configured local members retain the existing human password and MEMBER role. This enables two identities for live PostgreSQL ownership verification without changing the default member account.
+- Acceptance: names must be valid, unique member principals; no built-in staff/system identities can be shadowed; default profile remains compatible. Tests assert configuration validation and both principals' assigned roles. Live test proves cross-member GET/list/update/transition denial and unchanged database state.
+- Status: approved and in progress; requirement is specific to local/demo in-memory authentication, not a persistent identity-provider migration.
+- Parent: REQ-20261017-017 / T14. Implementation ownership: `src/main/java/com/papaya/claims/security/SecurityConfiguration.java`, `src/main/resources/application.yml`, `docker/compose.yml`, `src/test/java/com/papaya/claims/security/SecurityConfigurationTest.java`; browser scenario source and evidence paths are separately listed on T14.
+
+
+## REQ-20261017-019 — Approval confirmation recorded (2026-10-17)
+
+- Source: PROMPT-20261017-019 in `docs/submission/user-prompts.jsonl`.
+- Decision: user confirmed approval of the REQ-018 design; the validated local member identity list keeps the `member-demo` default and uses the configured human password with MEMBER role.
+- Disposition: continue the already authorized REQ-018 implementation and live tests; this confirmation does not change the scope or production identity-provider behavior.
+- Status: implemented; verification in progress under T14.
+
+## REQ-20261017-017 — Verification disposition (2026-10-17)
+
+- Source: the attached verbatim PROMPT-20261017-017 record; this entry records execution outcome and does not replace or waive the submitted requirements.
+- Final-source performance: all seven approved JMeter profiles actually executed against clean source commit `0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2`, with unchanged JMX and profile properties hashes. Six passed. Stress failed the approved P95 limit (564 ms vs 500 ms; P99 767 ms; errors 0%). A later default run failed P95 917 ms/P99 1,077 ms. Diagnostic connection-pool and Tomcat variants were worse; independent review recommends no tuning based on sequential, changing database state. The gate is FAIL; targets were not weakened.
+- Functional and quality evidence: 127 unit + 9 PostgreSQL/Testcontainers tests, six migrations, 97.0195% line and 90.2326% branch coverage, 29 combined live cases, 17 real Chrome cases, 7 live cross-member checks, Postman/Newman and trace propagation passed; evidence is linked in `reports/acceptance/FINAL-ACCEPTANCE.md`.
+- Local model session audit: refreshed export covers 64 project-related sessions and 8,172 accessible records; transcript hashes and contained unique paths pass. Host-managed raw request/response payloads, IDs, system/developer envelopes and encrypted reasoning remain `NOT_CAPTURED`; the full-capture requirement remains BLOCKED and is not waived.
+- Status: IN_PROGRESS_NOT_ACCEPTED. No merge or push. Final-source JMeter run evidence is in `reports/verification/REQ-017-jmeter-final/`; the reviewed diagnostic experiments are in `reports/verification/REQ-017-jmeter-ab/`; full gate matrix is `reports/verification/REQ-017-requirement-matrix.json`.
+- Required next intervention: a dedicated performance environment for controlled same-database stress profiling, plus a supported historical export for host-managed model payloads or an explicit user acceptance-policy decision. Until these mandatory conditions are resolved, `develop` must not merge to `main`.
+
+
+### 2026-10-17 REQ-017 audit inventory refresh
+
+After the T15 rereview request, the local session exporter was rerun. It found 65 project-related sessions among 145 candidates and exported 8,310 accessible message/tool records; all 65 transcript hashes match and paths are unique/contained. Host-managed raw model envelopes, IDs, system/developer payloads and encrypted reasoning remain NOT_CAPTURED; audit remains PARTIAL/BLOCKED.
+### 2026-10-17 REQ-017 reporting and audit closeout
+
+T15's reporting task was independently accepted on rereview 04 after correcting the same-run live evidence references, clarifying current application-log trace correlation versus earlier collector-exported span proof, refreshing the requirement-matrix timestamp, and reconciling counts. Latest local export contains 65 project-related sessions and 8,483 accessible message/tool records; 65 transcript hashes and unique contained paths verify. The interaction ledger has 101 entries and 60 interaction IDs. Host-managed raw model payloads remain NOT_CAPTURED and mandatory full-capture status remains BLOCKED. Project acceptance remains NOT_ACCEPTED because the approved stress P95 limit fails (564 ms >500 ms) and the host payload gate is blocked. No merge or push.
+## REQ-20261017-020 — Revised acceptance policy (2026-10-17)
+
+- Source: PROMPT-20261017-020 in `docs/submission/user-prompts.jsonl`.
+- Scope: Apply the owner's revised hardware-constrained JMeter exception policy and LLM proof-of-work acceptance policy; reassess final acceptance and merge only if every revised mandatory gate passes.
+- Acceptance: preserve all original benchmark results and prior FAIL/BLOCKED decisions; establish hardware/test-environment limits with actual resource evidence before assigning `HARDWARE_CONSTRAINED`; do not claim the 500 ms target passed or production-scale performance verified. Verify transcript/session paths, IDs, SHA-256, accessible conversation/tool evidence, and traceability; report host-managed raw payloads `NOT_CAPTURED` and raw completeness `PARTIAL`, while accepting proof-of-work if evidence demonstrates activity. Rerun applicable regressions and workflow validation, obtain independent review, update requirement/history/changelog/Git evidence, and merge `develop` into existing `main` only if all revised mandatory gates pass. Never push.
+- Status: accepted with local performance exception after independent review-03 PASS; local merge to the existing `main` remains pending execution.
+- Supersedes: only the prior requirement for full raw-payload completeness as an acceptance gate is revised to proof-of-work; inaccessible payloads remain honestly `NOT_CAPTURED`. Prior observed JMeter stress FAIL remains immutable history; REQ-020 evidence-based local exception classification is accepted after independent review.
+- Disposition: measured shared-host CPU saturation supports `HARDWARE_CONSTRAINED` under the revised local policy; original P95 failure (564 ms) remains unchanged and production performance remains unverified. Accessible transcript proof-of-work passes with a disclosed active-source growth qualification; raw host payload completeness remains PARTIAL/NOT_CAPTURED. A logged 127+9 Maven regression and 18-task workflow validation pass. Final acceptance is granted as `ACCEPTED_WITH_PERFORMANCE_EXCEPTION` after independent review-03 PASS. The project is `ACCEPTED_WITH_PERFORMANCE_EXCEPTION`; local merge into existing `main` is the authorized next Git operation; no push.

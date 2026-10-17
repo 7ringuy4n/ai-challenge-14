@@ -1,0 +1,608 @@
+diff --git a/src/main/java/com/papaya/claims/claim/domain/mapper/AuditMapper.java b/src/main/java/com/papaya/claims/claim/domain/mapper/AuditMapper.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/mapper/AuditMapper.java
+@@ -0,0 +1,14 @@
++package com.papaya.claims.claim.domain.mapper;
++
++import com.papaya.claims.claim.domain.persistence.AuditRow;
++import java.util.List;
++import java.util.UUID;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++
++@Mapper
++public interface AuditMapper {
++    int append(AuditRow row);
++    List<AuditRow> page(@Param("claimId") UUID claimId, @Param("limit") int limit, @Param("offset") long offset);
++    long count(@Param("claimId") UUID claimId);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/mapper/ClaimMapper.java b/src/main/java/com/papaya/claims/claim/domain/mapper/ClaimMapper.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/mapper/ClaimMapper.java
+@@ -0,0 +1,19 @@
++package com.papaya.claims.claim.domain.mapper;
++
++import com.papaya.claims.claim.domain.persistence.ClaimRow;
++import java.util.List;
++import java.util.UUID;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++
++@Mapper
++public interface ClaimMapper {
++    int insert(ClaimRow row);
++    ClaimRow find(@Param("id") UUID id);
++    ClaimRow findForUpdate(@Param("id") UUID id);
++    List<ClaimRow> pageAll(@Param("limit") int limit, @Param("offset") long offset);
++    long countAll();
++    List<ClaimRow> pageMember(@Param("memberId") String memberId, @Param("limit") int limit, @Param("offset") long offset);
++    long countMember(@Param("memberId") String memberId);
++    int compareAndSet(@Param("row") ClaimRow row, @Param("expectedVersion") long expectedVersion);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/mapper/EffectsMapper.java b/src/main/java/com/papaya/claims/claim/domain/mapper/EffectsMapper.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/mapper/EffectsMapper.java
+@@ -0,0 +1,21 @@
++package com.papaya.claims.claim.domain.mapper;
++
++import com.papaya.claims.claim.domain.persistence.OutboxRow;
++import com.papaya.claims.claim.domain.persistence.PaymentRow;
++import java.time.Instant;
++import java.util.List;
++import java.util.UUID;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++
++@Mapper
++public interface EffectsMapper {
++    int enqueue(OutboxRow row);
++    List<OutboxRow> claimDue(@Param("now") Instant now, @Param("limit") int limit);
++    int delivered(@Param("id") UUID id, @Param("at") Instant at);
++    int failed(@Param("id") UUID id, @Param("error") String error, @Param("retry") Instant retry);
++    int createPayment(PaymentRow row);
++    int confirmPayment(@Param("claimId") UUID claimId, @Param("reference") String reference);
++    boolean paymentExists(@Param("claimId") UUID claimId);
++    PaymentRow paymentConfirmation(@Param("claimId") UUID claimId);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/mapper/ReceiptMapper.java b/src/main/java/com/papaya/claims/claim/domain/mapper/ReceiptMapper.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/mapper/ReceiptMapper.java
+@@ -0,0 +1,11 @@
++package com.papaya.claims.claim.domain.mapper;
++
++import com.papaya.claims.claim.domain.persistence.ReceiptRow;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++
++@Mapper
++public interface ReceiptMapper {
++    ReceiptRow find(@Param("actorId") String actorId, @Param("scope") String scope, @Param("key") String key);
++    int insert(ReceiptRow row);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/mapper/SystemAuditMapper.java b/src/main/java/com/papaya/claims/claim/domain/mapper/SystemAuditMapper.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/mapper/SystemAuditMapper.java
+@@ -0,0 +1,7 @@
++package com.papaya.claims.claim.domain.mapper;
++
++import com.papaya.claims.claim.domain.persistence.SystemAuditRow;
++import org.apache.ibatis.annotations.Mapper;
++
++@Mapper
++public interface SystemAuditMapper { int append(SystemAuditRow row); }
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/AuditRow.java b/src/main/java/com/papaya/claims/claim/domain/persistence/AuditRow.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/AuditRow.java
+@@ -0,0 +1,9 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import java.time.Instant;
++import java.util.UUID;
++
++public class AuditRow {
++    public UUID id, claimId; public long sequence; public Instant occurredAt; public String fromState, toState,
++            actorId, role, reason, correlationId, workflowVersion;
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/ClaimRow.java b/src/main/java/com/papaya/claims/claim/domain/persistence/ClaimRow.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/ClaimRow.java
+@@ -0,0 +1,12 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.UUID;
++
++public class ClaimRow {
++    public UUID id; public String memberId; public String state; public BigDecimal policyLimit; public String currency;
++    public long version; public String factsJson; public int informationRequests;
++    public Instant lastInformationRequestedAt, lastInformationReceivedAt, assessmentStartedAt, rejectedAt,
++            memberAcknowledgedRejectionAt, createdAt, updatedAt;
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisClaimAuditRepository.java b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisClaimAuditRepository.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisClaimAuditRepository.java
+@@ -0,0 +1,22 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import com.papaya.claims.claim.domain.*;
++import com.papaya.claims.claim.domain.mapper.AuditMapper;
++import java.util.UUID;
++import org.springframework.stereotype.Repository;
++
++@Repository
++public class MyBatisClaimAuditRepository implements ClaimAuditRepository {
++    private final AuditMapper mapper;
++    public MyBatisClaimAuditRepository(AuditMapper mapper) { this.mapper=mapper; }
++    @Override public void append(AuditRecord a) {
++        AuditRow r=new AuditRow(); r.id=a.id(); r.claimId=a.claimId(); r.sequence=a.sequence(); r.occurredAt=a.occurredAt();
++        r.fromState=a.fromState(); r.toState=a.toState(); r.actorId=a.actorId(); r.role=a.role(); r.reason=a.reason();
++        r.correlationId=a.correlationId(); r.workflowVersion=a.workflowVersion(); mapper.append(r);
++    }
++    @Override public PageResult<AuditRecord> findByClaim(UUID id, PageRequest p) {
++        var items=mapper.page(id,p.size(),p.offset()).stream().map(r -> new AuditRecord(r.id,r.claimId,r.sequence,
++                r.occurredAt,r.fromState,r.toState,r.actorId,r.role,r.reason,r.correlationId,r.workflowVersion)).toList();
++        return new PageResult<>(items,mapper.count(id),p);
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisClaimRepository.java b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisClaimRepository.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisClaimRepository.java
+@@ -0,0 +1,25 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.papaya.claims.claim.domain.*;
++import com.papaya.claims.claim.domain.mapper.ClaimMapper;
++import java.util.Optional;
++import org.springframework.stereotype.Repository;
++
++@Repository
++public class MyBatisClaimRepository implements ClaimRepository {
++    private final ClaimMapper mapper; private final ObjectMapper json;
++    public MyBatisClaimRepository(ClaimMapper mapper, ObjectMapper json) { this.mapper=mapper; this.json=json; }
++    @Override public void insert(ClaimAggregate claim) { mapper.insert(PersistenceMapping.row(json, claim)); }
++    @Override public Optional<ClaimAggregate> find(java.util.UUID id) { return Optional.ofNullable(mapper.find(id)).map(r -> PersistenceMapping.aggregate(json,r)); }
++    @Override public Optional<ClaimAggregate> findForUpdate(java.util.UUID id) { return Optional.ofNullable(mapper.findForUpdate(id)).map(r -> PersistenceMapping.aggregate(json,r)); }
++    @Override public PageResult<ClaimAggregate> listVisible(PageRequest page, Actor actor) {
++        boolean all = actor.system() || actor.hasRole("claims_admin");
++        var rows = all ? mapper.pageAll(page.size(),page.offset()) : mapper.pageMember(actor.id(),page.size(),page.offset());
++        long total = all ? mapper.countAll() : mapper.countMember(actor.id());
++        return new PageResult<>(rows.stream().map(r -> PersistenceMapping.aggregate(json,r)).toList(), total, page);
++    }
++    @Override public boolean compareAndSet(ClaimAggregate claim, long expectedVersion) {
++        return mapper.compareAndSet(PersistenceMapping.row(json, claim), expectedVersion) == 1;
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisIdempotencyRepository.java b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisIdempotencyRepository.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisIdempotencyRepository.java
+@@ -0,0 +1,23 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.papaya.claims.claim.domain.IdempotencyRepository;
++import com.papaya.claims.claim.domain.mapper.ReceiptMapper;
++import java.util.Optional;
++import org.springframework.stereotype.Repository;
++
++@Repository
++public class MyBatisIdempotencyRepository implements IdempotencyRepository {
++    private final ReceiptMapper mapper; private final ObjectMapper json;
++    public MyBatisIdempotencyRepository(ReceiptMapper mapper,ObjectMapper json) { this.mapper=mapper; this.json=json; }
++    @Override public Optional<Receipt> find(String actor,String scope,String key) {
++        ReceiptRow r=mapper.find(actor,scope,key);
++        if(r==null) return Optional.empty();
++        return Optional.of(new Receipt(r.id,r.actorId,r.scope,r.idempotencyKey,r.fingerprint,r.resultJson));
++    }
++    @Override public void insert(Receipt receipt) {
++        ReceiptRow r=new ReceiptRow(); r.id=receipt.id(); r.actorId=receipt.actorId(); r.scope=receipt.scope();
++        r.idempotencyKey=receipt.idempotencyKey(); r.fingerprint=receipt.fingerprint(); r.resultJson=receipt.resultJson();
++        mapper.insert(r); // Unique(actor,scope,key) violations propagate for service-level race/replay handling.
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisOutboxRepository.java b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisOutboxRepository.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisOutboxRepository.java
+@@ -0,0 +1,25 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.papaya.claims.claim.domain.OutboxRepository;
++import com.papaya.claims.claim.domain.mapper.EffectsMapper;
++import java.time.Instant;
++import java.util.List;
++import java.util.UUID;
++import org.springframework.stereotype.Repository;
++
++@Repository
++public class MyBatisOutboxRepository implements OutboxRepository {
++    private final EffectsMapper mapper; private final ObjectMapper json;
++    public MyBatisOutboxRepository(EffectsMapper mapper,ObjectMapper json) { this.mapper=mapper; this.json=json; }
++    @Override public void enqueue(Message m) {
++        OutboxRow r=new OutboxRow(); r.id=m.id(); r.claimId=m.claimId(); r.effect=m.effect(); r.payloadJson=m.payload();
++        r.attempts=m.attempts(); r.availableAt=m.availableAt(); mapper.enqueue(r);
++    }
++    @Override public List<Message> claimDue(Instant now,int limit) {
++        if(limit<1) throw new IllegalArgumentException("limit must be positive");
++        return mapper.claimDue(now,limit).stream().map(r -> new Message(r.id,r.claimId,r.effect,r.payloadJson,r.attempts,r.availableAt)).toList();
++    }
++    @Override public boolean markDelivered(UUID id,Instant at) { return mapper.delivered(id,at)==1; }
++    @Override public boolean markFailed(UUID id,String safeError,Instant retryAt) { return mapper.failed(id,safeError,retryAt)==1; }
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisPaymentRepository.java b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisPaymentRepository.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisPaymentRepository.java
+@@ -0,0 +1,22 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import com.papaya.claims.claim.domain.PaymentRepository;
++import com.papaya.claims.claim.domain.mapper.EffectsMapper;
++import java.math.BigDecimal;
++import java.util.Optional;
++import java.util.UUID;
++import org.springframework.stereotype.Repository;
++
++@Repository
++public class MyBatisPaymentRepository implements PaymentRepository {
++    private final EffectsMapper mapper;
++    public MyBatisPaymentRepository(EffectsMapper mapper) { this.mapper=mapper; }
++    @Override public void create(UUID claimId,UUID requestId,String currency,BigDecimal amount) {
++        PaymentRow r=new PaymentRow(); r.claimId=claimId; r.requestId=requestId; r.currency=currency; r.amount=amount; mapper.createPayment(r);
++    }
++    @Override public boolean exists(UUID claimId) { return mapper.paymentExists(claimId); }
++    @Override public Optional<Confirmation> confirmation(UUID claimId) {
++        PaymentRow r=mapper.paymentConfirmation(claimId); return r==null ? Optional.empty() : Optional.of(new Confirmation(r.reference,r.confirmedAt));
++    }
++    @Override public boolean confirm(UUID claimId,String reference) { return mapper.confirmPayment(claimId,reference)==1; }
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisSystemOperationAuditRepository.java b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisSystemOperationAuditRepository.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisSystemOperationAuditRepository.java
+@@ -0,0 +1,17 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import com.papaya.claims.claim.domain.SystemOperationAuditRecord;
++import com.papaya.claims.claim.domain.SystemOperationAuditRepository;
++import com.papaya.claims.claim.domain.mapper.SystemAuditMapper;
++import org.springframework.stereotype.Repository;
++
++@Repository
++public class MyBatisSystemOperationAuditRepository implements SystemOperationAuditRepository {
++    private final SystemAuditMapper mapper;
++    public MyBatisSystemOperationAuditRepository(SystemAuditMapper mapper) { this.mapper=mapper; }
++    @Override public void append(SystemOperationAuditRecord a) {
++        SystemAuditRow r=new SystemAuditRow(); r.id=a.id(); r.action=a.action(); r.resource=a.resource(); r.resourceId=a.resourceId();
++        r.actorId=a.actorId(); r.correlationId=a.correlationId(); r.outcome=a.outcome(); r.errorType=a.errorType();
++        r.occurredAt=a.occurredAt(); mapper.append(r);
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/OutboxRow.java b/src/main/java/com/papaya/claims/claim/domain/persistence/OutboxRow.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/OutboxRow.java
+@@ -0,0 +1,8 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import java.time.Instant;
++import java.util.UUID;
++
++public class OutboxRow {
++    public UUID id, claimId; public String effect, payloadJson; public int attempts; public Instant availableAt;
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/PaymentRow.java b/src/main/java/com/papaya/claims/claim/domain/persistence/PaymentRow.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/PaymentRow.java
+@@ -0,0 +1,9 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.UUID;
++
++public class PaymentRow {
++    public UUID id, claimId, requestId; public String currency, reference; public BigDecimal amount; public Instant confirmedAt;
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/PersistenceMapping.java b/src/main/java/com/papaya/claims/claim/domain/persistence/PersistenceMapping.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/PersistenceMapping.java
+@@ -0,0 +1,34 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import com.fasterxml.jackson.core.JsonProcessingException;
++import com.fasterxml.jackson.core.type.TypeReference;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.papaya.claims.claim.domain.*;
++import java.util.Map;
++
++final class PersistenceMapping {
++    private static final TypeReference<Map<String,Object>> MAP = new TypeReference<>() {};
++    private PersistenceMapping() {}
++    static String json(ObjectMapper mapper, Object value) {
++        try { return mapper.writeValueAsString(value); }
++        catch (JsonProcessingException e) { throw new IllegalArgumentException("Could not encode persistence JSON", e); }
++    }
++    static Map<String,Object> map(ObjectMapper mapper, String value) {
++        try { return mapper.readValue(value, MAP); }
++        catch (JsonProcessingException e) { throw new IllegalStateException("Could not decode persisted JSON", e); }
++    }
++    static ClaimAggregate aggregate(ObjectMapper mapper, ClaimRow r) {
++        Claim c = new Claim(r.id, r.memberId, r.state, r.policyLimit, r.currency, r.version,
++                new ClaimFacts(map(mapper, r.factsJson)), r.createdAt, r.updatedAt);
++        return new ClaimAggregate(c, new ClaimWorkflowData(r.informationRequests, r.lastInformationRequestedAt,
++                r.lastInformationReceivedAt, r.assessmentStartedAt, r.rejectedAt, r.memberAcknowledgedRejectionAt));
++    }
++    static ClaimRow row(ObjectMapper mapper, ClaimAggregate a) {
++        Claim c = a.claim(); ClaimWorkflowData w = a.workflow(); ClaimRow r = new ClaimRow();
++        r.id=c.id(); r.memberId=c.memberId(); r.state=c.state(); r.policyLimit=c.policyLimit(); r.currency=c.currency();
++        r.version=c.version(); r.factsJson=json(mapper,c.facts().values()); r.informationRequests=w.informationRequests();
++        r.lastInformationRequestedAt=w.lastInformationRequestedAt(); r.lastInformationReceivedAt=w.lastInformationReceivedAt();
++        r.assessmentStartedAt=w.assessmentStartedAt(); r.rejectedAt=w.rejectedAt();
++        r.memberAcknowledgedRejectionAt=w.memberAcknowledgedRejectionAt(); r.createdAt=c.createdAt(); r.updatedAt=c.updatedAt(); return r;
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/ReceiptRow.java b/src/main/java/com/papaya/claims/claim/domain/persistence/ReceiptRow.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/ReceiptRow.java
+@@ -0,0 +1,7 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import java.util.UUID;
++
++public class ReceiptRow {
++    public UUID id; public String actorId, scope, idempotencyKey, fingerprint, resultJson;
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/SystemAuditRow.java b/src/main/java/com/papaya/claims/claim/domain/persistence/SystemAuditRow.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/SystemAuditRow.java
+@@ -0,0 +1,9 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import java.time.Instant;
++import java.util.UUID;
++
++public class SystemAuditRow {
++    public UUID id; public String action, resource, resourceId, actorId, correlationId, outcome, errorType;
++    public Instant occurredAt;
++}
+diff --git a/src/main/resources/sql/service/claim/AuditMapper.xml b/src/main/resources/sql/service/claim/AuditMapper.xml
+new file mode 100644
+--- /dev/null
++++ b/src/main/resources/sql/service/claim/AuditMapper.xml
+@@ -0,0 +1,18 @@
++<?xml version="1.0" encoding="UTF-8" ?>
++<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
++<mapper namespace="com.papaya.claims.claim.domain.mapper.AuditMapper">
++  <resultMap id="auditRow" type="com.papaya.claims.claim.domain.persistence.AuditRow">
++    <id property="id" column="id"/><result property="claimId" column="claim_id"/><result property="sequence" column="sequence"/>
++    <result property="occurredAt" column="occurred_at"/><result property="fromState" column="from_state"/>
++    <result property="toState" column="to_state"/><result property="actorId" column="actor_id"/>
++    <result property="role" column="role"/><result property="reason" column="reason"/>
++    <result property="correlationId" column="correlation_id"/><result property="workflowVersion" column="workflow_version"/>
++  </resultMap>
++  <insert id="append" parameterType="com.papaya.claims.claim.domain.persistence.AuditRow">
++    INSERT INTO claim_audit(id,claim_id,sequence,occurred_at,from_state,to_state,actor_id,role,reason,correlation_id,workflow_version)
++    VALUES(#{id},#{claimId},#{sequence},#{occurredAt},#{fromState},#{toState},#{actorId},#{role},#{reason},#{correlationId},#{workflowVersion})
++  </insert>
++  <select id="page" resultMap="auditRow">SELECT id,claim_id,sequence,occurred_at,from_state,to_state,actor_id,role,reason,correlation_id,workflow_version
++    FROM claim_audit WHERE claim_id=#{claimId} ORDER BY sequence ASC,id ASC LIMIT #{limit} OFFSET #{offset}</select>
++  <select id="count" resultType="long">SELECT count(*) FROM claim_audit WHERE claim_id=#{claimId}</select>
++</mapper>
+diff --git a/src/main/resources/sql/service/claim/ClaimMapper.xml b/src/main/resources/sql/service/claim/ClaimMapper.xml
+new file mode 100644
+--- /dev/null
++++ b/src/main/resources/sql/service/claim/ClaimMapper.xml
+@@ -0,0 +1,40 @@
++<?xml version="1.0" encoding="UTF-8" ?>
++<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
++<mapper namespace="com.papaya.claims.claim.domain.mapper.ClaimMapper">
++  <resultMap id="claimRow" type="com.papaya.claims.claim.domain.persistence.ClaimRow">
++    <id property="id" column="id"/><result property="memberId" column="member_id"/><result property="state" column="state"/>
++    <result property="policyLimit" column="policy_limit"/><result property="currency" column="currency"/>
++    <result property="version" column="version"/><result property="factsJson" column="facts_json"/>
++    <result property="informationRequests" column="information_requests"/>
++    <result property="lastInformationRequestedAt" column="last_information_requested_at"/>
++    <result property="lastInformationReceivedAt" column="last_information_received_at"/>
++    <result property="assessmentStartedAt" column="assessment_started_at"/><result property="rejectedAt" column="rejected_at"/>
++    <result property="memberAcknowledgedRejectionAt" column="member_acknowledged_rejection_at"/>
++    <result property="createdAt" column="created_at"/><result property="updatedAt" column="updated_at"/>
++  </resultMap>
++  <sql id="columns">id, member_id, state, policy_limit, currency, version, facts::text AS facts_json,
++    information_requests, last_information_requested_at, last_information_received_at, assessment_started_at,
++    rejected_at, member_acknowledged_rejection_at, created_at, updated_at</sql>
++  <insert id="insert" parameterType="com.papaya.claims.claim.domain.persistence.ClaimRow">
++    INSERT INTO claims(id,member_id,state,policy_limit,currency,version,facts,information_requests,
++      last_information_requested_at,last_information_received_at,assessment_started_at,rejected_at,
++      member_acknowledged_rejection_at,created_at,updated_at)
++    VALUES(#{id},#{memberId},#{state},#{policyLimit},#{currency},#{version},CAST(#{factsJson} AS jsonb),#{informationRequests},
++      #{lastInformationRequestedAt},#{lastInformationReceivedAt},#{assessmentStartedAt},#{rejectedAt},
++      #{memberAcknowledgedRejectionAt},#{createdAt},#{updatedAt})
++  </insert>
++  <select id="find" resultMap="claimRow">SELECT <include refid="columns"/> FROM claims WHERE id=#{id}</select>
++  <select id="findForUpdate" resultMap="claimRow">SELECT <include refid="columns"/> FROM claims WHERE id=#{id} FOR UPDATE</select>
++  <select id="pageAll" resultMap="claimRow">SELECT <include refid="columns"/> FROM claims ORDER BY created_at DESC,id LIMIT #{limit} OFFSET #{offset}</select>
++  <select id="countAll" resultType="long">SELECT count(*) FROM claims</select>
++  <select id="pageMember" resultMap="claimRow">SELECT <include refid="columns"/> FROM claims WHERE member_id=#{memberId} ORDER BY created_at DESC,id LIMIT #{limit} OFFSET #{offset}</select>
++  <select id="countMember" resultType="long">SELECT count(*) FROM claims WHERE member_id=#{memberId}</select>
++  <update id="compareAndSet">
++    UPDATE claims SET member_id=#{row.memberId},state=#{row.state},policy_limit=#{row.policyLimit},currency=#{row.currency},
++      facts=CAST(#{row.factsJson} AS jsonb),information_requests=#{row.informationRequests},
++      last_information_requested_at=#{row.lastInformationRequestedAt},last_information_received_at=#{row.lastInformationReceivedAt},
++      assessment_started_at=#{row.assessmentStartedAt},rejected_at=#{row.rejectedAt},
++      member_acknowledged_rejection_at=#{row.memberAcknowledgedRejectionAt},updated_at=#{row.updatedAt},version=version+1
++    WHERE id=#{row.id} AND version=#{expectedVersion}
++  </update>
++</mapper>
+diff --git a/src/main/resources/sql/service/claim/EffectsMapper.xml b/src/main/resources/sql/service/claim/EffectsMapper.xml
+new file mode 100644
+--- /dev/null
++++ b/src/main/resources/sql/service/claim/EffectsMapper.xml
+@@ -0,0 +1,33 @@
++<?xml version="1.0" encoding="UTF-8" ?>
++<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
++<mapper namespace="com.papaya.claims.claim.domain.mapper.EffectsMapper">
++  <resultMap id="outboxRow" type="com.papaya.claims.claim.domain.persistence.OutboxRow">
++    <id property="id" column="id"/><result property="claimId" column="claim_id"/><result property="effect" column="effect"/>
++    <result property="payloadJson" column="payload_json"/><result property="attempts" column="attempts"/>
++    <result property="availableAt" column="available_at"/>
++  </resultMap>
++  <resultMap id="paymentRow" type="com.papaya.claims.claim.domain.persistence.PaymentRow">
++    <id property="claimId" column="claim_id"/><result property="reference" column="reference"/><result property="confirmedAt" column="confirmed_at"/>
++  </resultMap>
++  <insert id="enqueue" parameterType="com.papaya.claims.claim.domain.persistence.OutboxRow">
++    INSERT INTO local_outbox(id,claim_id,effect,payload,attempts,available_at)
++    VALUES(#{id},#{claimId},#{effect},CAST(#{payloadJson} AS jsonb),#{attempts},#{availableAt})
++  </insert>
++  <select id="claimDue" resultMap="outboxRow">
++    WITH due AS (SELECT id FROM local_outbox WHERE delivered_at IS NULL AND available_at &lt;= #{now}
++      ORDER BY available_at,id FOR UPDATE SKIP LOCKED LIMIT #{limit})
++    UPDATE local_outbox o SET attempts=o.attempts+1,available_at=#{now} + interval '30 seconds'
++      FROM due WHERE o.id=due.id
++    RETURNING o.id,o.claim_id,o.effect,o.payload::text AS payload_json,o.attempts,o.available_at
++  </select>
++  <update id="delivered">UPDATE local_outbox SET delivered_at=#{at} WHERE id=#{id} AND delivered_at IS NULL</update>
++  <update id="failed">UPDATE local_outbox SET last_error=left(#{error},240),available_at=#{retry} WHERE id=#{id} AND delivered_at IS NULL</update>
++  <insert id="createPayment" parameterType="com.papaya.claims.claim.domain.persistence.PaymentRow">
++    INSERT INTO payment_requests(id,claim_id,request_id,currency,amount) VALUES(gen_random_uuid(),#{claimId},#{requestId},#{currency},#{amount})
++  </insert>
++  <update id="confirmPayment">UPDATE payment_requests SET status='CONFIRMED',reference=#{reference},confirmed_at=clock_timestamp()
++    WHERE claim_id=#{claimId} AND status='REQUESTED'</update>
++  <select id="paymentExists" resultType="boolean">SELECT EXISTS(SELECT 1 FROM payment_requests WHERE claim_id=#{claimId})</select>
++  <select id="paymentConfirmation" resultMap="paymentRow">SELECT claim_id,reference,confirmed_at FROM payment_requests
++    WHERE claim_id=#{claimId} AND status='CONFIRMED'</select>
++</mapper>
+diff --git a/src/main/resources/sql/service/claim/ReceiptMapper.xml b/src/main/resources/sql/service/claim/ReceiptMapper.xml
+new file mode 100644
+--- /dev/null
++++ b/src/main/resources/sql/service/claim/ReceiptMapper.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="UTF-8" ?>
++<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
++<mapper namespace="com.papaya.claims.claim.domain.mapper.ReceiptMapper">
++  <resultMap id="receiptRow" type="com.papaya.claims.claim.domain.persistence.ReceiptRow">
++    <id property="id" column="id"/><result property="actorId" column="actor_id"/><result property="scope" column="scope"/>
++    <result property="idempotencyKey" column="idempotency_key"/><result property="fingerprint" column="fingerprint"/>
++    <result property="resultJson" column="result_json"/>
++  </resultMap>
++  <select id="find" resultMap="receiptRow">SELECT id,actor_id,scope,idempotency_key,fingerprint,result_json::text AS result_json
++    FROM command_receipts WHERE actor_id=#{actorId} AND scope=#{scope} AND idempotency_key=#{key}</select>
++  <insert id="insert" parameterType="com.papaya.claims.claim.domain.persistence.ReceiptRow">
++    INSERT INTO command_receipts(id,actor_id,scope,idempotency_key,fingerprint,result_json)
++    VALUES(#{id},#{actorId},#{scope},#{idempotencyKey},#{fingerprint},CAST(#{resultJson} AS jsonb))
++  </insert>
++</mapper>
+diff --git a/src/main/resources/sql/service/claim/SystemAuditMapper.xml b/src/main/resources/sql/service/claim/SystemAuditMapper.xml
+new file mode 100644
+--- /dev/null
++++ b/src/main/resources/sql/service/claim/SystemAuditMapper.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="UTF-8" ?>
++<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
++<mapper namespace="com.papaya.claims.claim.domain.mapper.SystemAuditMapper">
++  <insert id="append" parameterType="com.papaya.claims.claim.domain.persistence.SystemAuditRow">
++    INSERT INTO system_operation_audit(id,action,resource,resource_id,actor_id,correlation_id,outcome,error_type,occurred_at)
++    VALUES(#{id},#{action},#{resource},#{resourceId},#{actorId},#{correlationId},#{outcome},#{errorType},#{occurredAt})
++  </insert>
++</mapper>
+diff --git a/src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java b/src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java
+@@ -0,0 +1,80 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import com.papaya.claims.claim.domain.*;
++import java.math.BigDecimal;
++import java.sql.DriverManager;
++import java.sql.Statement;
++import java.time.Instant;
++import java.util.Map;
++import java.util.Set;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.test.context.DynamicPropertyRegistry;
++import org.springframework.test.context.DynamicPropertySource;
++import org.testcontainers.containers.PostgreSQLContainer;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++
++@Testcontainers(disabledWithoutDocker = true)
++@SpringBootTest
++class ClaimPersistenceIT {
++    @Container static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
++    @DynamicPropertySource static void database(DynamicPropertyRegistry properties) {
++        POSTGRES.start();
++        try (var connection=DriverManager.getConnection(POSTGRES.getJdbcUrl(),POSTGRES.getUsername(),POSTGRES.getPassword());
++             Statement statement=connection.createStatement()) {
++            statement.execute("CREATE ROLE claims_runtime LOGIN PASSWORD 'runtime-test'");
++            statement.execute("CREATE ROLE claims_migration LOGIN SUPERUSER PASSWORD 'migration-test'");
++        } catch (Exception e) { throw new IllegalStateException("Could not provision isolated test roles",e); }
++        properties.add("spring.datasource.url",POSTGRES::getJdbcUrl);
++        properties.add("spring.datasource.username",() -> "claims_runtime");
++        properties.add("spring.datasource.password",() -> "runtime-test");
++        properties.add("spring.liquibase.user",() -> "claims_migration");
++        properties.add("spring.liquibase.password",() -> "migration-test");
++    }
++    @Autowired ClaimRepository claims;
++    @Autowired ClaimAuditRepository audits;
++    @Autowired IdempotencyRepository receipts;
++    @Autowired OutboxRepository outbox;
++
++    @Test void storesExactNumbersAppliesMemberFilterAndComparesExpectedVersion() {
++        UUID id=UUID.randomUUID(); Instant now=Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
++        Claim claim=new Claim(id,id.toString(),"submitted",new BigDecimal("1234567890123456.78"),"USD",0,
++                new ClaimFacts(Map.of("nested",Map.of("amount",new BigDecimal("0.000000000000000000123456789")))),now,now);
++        ClaimAggregate aggregate=new ClaimAggregate(claim,ClaimWorkflowData.empty()); claims.insert(aggregate);
++        Actor member=new Actor(id.toString(),Set.of("member"),false);
++        var page=claims.listVisible(new PageRequest(0,20),member);
++        assertThat(page.total()).isEqualTo(1); assertThat(page.items()).extracting(a -> a.claim().id()).contains(id);
++        ClaimAggregate loaded=claims.find(id).orElseThrow();
++        assertThat(loaded.claim().policyLimit()).isEqualByComparingTo("1234567890123456.78");
++        assertThat((BigDecimal)((Map<?,?>)loaded.claim().facts().values().get("nested")).get("amount"))
++                .isEqualByComparingTo("0.000000000000000000123456789");
++        assertThat(claims.compareAndSet(loaded,0)).isTrue();
++        assertThat(claims.compareAndSet(loaded,0)).isFalse();
++        assertThat(claims.find(id).orElseThrow().claim().version()).isEqualTo(1);
++        assertThat(claims.listVisible(new PageRequest(0,20),new Actor("member-b",Set.of("member"),false)).total()).isZero();
++    }
++
++    @Test void auditsAreAppendOnlyAndReadInSequenceOrder() {
++        UUID claimId=UUID.randomUUID();
++        for (long sequence : new long[]{2,1}) audits.append(new AuditRecord(UUID.randomUUID(),claimId,sequence,
++                Instant.now(),"new","review","worker","adjuster","reason","corr","v1"));
++        var result=audits.findByClaim(claimId,new PageRequest(0,10));
++        assertThat(result.total()).isEqualTo(2); assertThat(result.items()).extracting(AuditRecord::sequence).containsExactly(1L,2L);
++    }
++
++    @Test void persistsReceiptReplayDataAndOutboxClaimLease() {
++        UUID receiptId=UUID.randomUUID(); var receipt=new IdempotencyRepository.Receipt(receiptId,"actor","claim:create","key-1","a".repeat(64),"{\"claimId\":\"abc\"}");
++        receipts.insert(receipt);
++        assertThat(receipts.find("actor","claim:create","key-1").orElseThrow().resultJson()).isEqualTo(receipt.resultJson());
++        UUID messageId=UUID.randomUUID(); Instant now=Instant.now().plusSeconds(1);
++        outbox.enqueue(new OutboxRepository.Message(messageId,null,"notify","{}",0,now.minusSeconds(1)));
++        var claimed=outbox.claimDue(now,10);
++        assertThat(claimed).extracting(OutboxRepository.Message::id).contains(messageId);
++        assertThat(outbox.markDelivered(messageId,Instant.now())).isTrue();
++    }
++}

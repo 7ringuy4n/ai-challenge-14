@@ -1,0 +1,128 @@
+{
+  "requirement": "REQ-20261017-017",
+  "source_commit": "0435e1b6f82e2c01b9b0068151e19eeb9d79cdd2",
+  "execution_window_utc": {
+    "start": "2026-10-17T06:10:16Z",
+    "end": "2026-10-17T06:21:36Z"
+  },
+  "host": "Linux Mint 22.3, 8 visible CPUs; shared local JMeter/application/PostgreSQL host",
+  "java": "OpenJDK 21.0.12.1",
+  "jmeter": "Apache JMeter 5.6.3",
+  "command": "bash scripts/performance/run-profile.sh {baseline,normal,peak,stress,spike,soak,concurrent-claims}; between profile executions restore only reports/performance/baseline.jtl; python3 scripts/performance/compare-runs.py reports/verification/REQ-017-jmeter-final",
+  "thresholds": {
+    "p95_ms_max": 500,
+    "p99_ms_max": 1000,
+    "http_error_rate_max": 0.01
+  },
+  "profiles": 7,
+  "profile_results": [
+    {
+      "profile": "baseline",
+      "status": "PASS",
+      "configured_concurrency": 1,
+      "duration_seconds": 30,
+      "samples": 8084,
+      "requests_per_second": 270.30461096064465,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 3,
+        "p95": 7,
+        "p99": 11
+      }
+    },
+    {
+      "profile": "concurrent-claims",
+      "status": "PASS",
+      "configured_concurrency": 50,
+      "duration_seconds": 60,
+      "samples": 105060,
+      "requests_per_second": 1750.0083286137856,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 17,
+        "p95": 70,
+        "p99": 130
+      }
+    },
+    {
+      "profile": "normal",
+      "status": "PASS",
+      "configured_concurrency": 10,
+      "duration_seconds": 60,
+      "samples": 90820,
+      "requests_per_second": 1515.0807420258907,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 5,
+        "p95": 13,
+        "p99": 20
+      }
+    },
+    {
+      "profile": "peak",
+      "status": "PASS",
+      "configured_concurrency": 100,
+      "duration_seconds": 60,
+      "samples": 107481,
+      "requests_per_second": 1789.649832658974,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 17,
+        "p95": 149,
+        "p99": 206
+      }
+    },
+    {
+      "profile": "soak",
+      "status": "PASS",
+      "configured_concurrency": 25,
+      "duration_seconds": 300,
+      "samples": 635807,
+      "requests_per_second": 2119.6675512408488,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 9,
+        "p95": 29,
+        "p99": 44
+      }
+    },
+    {
+      "profile": "spike",
+      "status": "PASS",
+      "configured_concurrency": 150,
+      "duration_seconds": 30,
+      "samples": 53183,
+      "requests_per_second": 1765.7038512616202,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 31,
+        "p95": 227,
+        "p99": 345
+      }
+    },
+    {
+      "profile": "stress",
+      "status": "FAIL",
+      "configured_concurrency": 500,
+      "duration_seconds": 60,
+      "samples": 88762,
+      "requests_per_second": 1460.5258827788198,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 111,
+        "p95": 564,
+        "p99": 767
+      }
+    }
+  ],
+  "aggregate_samples": 1089197,
+  "gate_status": "FAIL",
+  "failing_profile": "stress",
+  "failure": "Default stress P95 564 ms exceeds 500 ms; P99 767 ms and errors 0%. A later default repeat also missed (P95 917 ms, P99 1077 ms), but database contents/run-order differed.",
+  "profile_plan_hashes_identical_before_after": true,
+  "official_profile_evidence": "reports/verification/REQ-017-jmeter-final",
+  "diagnostic_runs": "reports/verification/REQ-017-jmeter-ab",
+  "diagnostic_caveat": "Temporary pool/Tomcat A/Bs were sequential on evolving database state, without snapshot/reset or randomized order; diagnostic only, not causal proof. Both were materially worse.",
+  "source_change": "None after 0435e1b; current final code change is not claimed to have solved stress performance.",
+  "no_criteria_waiver": true
+}

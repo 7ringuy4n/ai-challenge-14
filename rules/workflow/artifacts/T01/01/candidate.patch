@@ -1,0 +1,585 @@
+--- /dev/null
++++ b/config/workflow.yml
+@@ -0,0 +1,111 @@
++version: "1"
++initialState: SUBMITTED
++states:
++  - SUBMITTED
++  - DOCUMENTS_VERIFIED
++  - UNDER_ASSESSMENT
++  - PENDING_INFO
++  - APPROVED
++  - REJECTED
++  - PAYMENT_INITIATED
++  - CLOSED
++roles: [document_clerk, team_lead, assessor, finance, system]
++maxInformationRequests: 3
++transitions:
++  - from: SUBMITTED
++    to: DOCUMENTS_VERIFIED
++    role: document_clerk
++    guards:
++      - type: allDocumentsValid
++        field: requiredDocuments
++        message: All required documents must be present and valid
++    effects: [notify_assessors]
++  - from: DOCUMENTS_VERIFIED
++    to: UNDER_ASSESSMENT
++    role: team_lead
++    guards:
++      - type: present
++        field: assessorId
++        message: An assessor must be assigned
++    effects: [assessment_started]
++    timerAction: START
++  - from: UNDER_ASSESSMENT
++    to: APPROVED
++    role: assessor
++    guards:
++      - type: isTrue
++        field: reportComplete
++        message: Assessment report must be complete
++      - type: lessOrEqual
++        field: assessmentAmount
++        otherField: policyLimit
++        message: Assessment amount must not exceed policy limit
++      - type: equal
++        field: assessmentCurrency
++        otherField: currency
++        message: Assessment currency must match claim currency
++      - type: allDocumentsValid
++        field: requiredDocuments
++        message: All required documents must be present and valid
++    effects: [notify_approval, create_payment_request]
++  - from: UNDER_ASSESSMENT
++    to: REJECTED
++    role: assessor
++    guards:
++      - type: isTrue
++        field: reportComplete
++      - type: present
++        field: rejectionReason
++    effects: [notify_rejection]
++  - from: UNDER_ASSESSMENT
++    to: PENDING_INFO
++    role: assessor
++    guards:
++      - type: present
++        field: missingInfoDescription
++    effects: [request_information]
++    informationRequest: true
++    clearFacts: [reportComplete, assessmentAmount, assessmentCurrency]
++  - from: PENDING_INFO
++    to: DOCUMENTS_VERIFIED
++    role: document_clerk
++    guards:
++      - type: after
++        field: informationReceivedAt
++        otherField: lastInformationRequestedAt
++        message: New information must have been received after the request
++      - type: allDocumentsValid
++        field: requiredDocuments
++    effects: [assessment_timer_reset]
++    timerAction: RESET
++  - from: APPROVED
++    to: PAYMENT_INITIATED
++    role: finance
++    guards:
++      - type: isTrue
++        field: paymentRequestCreated
++    effects: [trigger_payment]
++  - from: PAYMENT_INITIATED
++    to: CLOSED
++    role: finance
++    guards:
++      - type: isTrue
++        field: paymentConfirmed
++      - type: present
++        field: paymentReference
++    effects: [notify_payment]
++  - from: REJECTED
++    to: CLOSED
++    role: system
++    guards:
++      - type: any
++        guards:
++          - type: beforeOrEqual
++            field: appealDeadline
++            otherField: now
++            message: Appeal period has not expired
++          - type: isTrue
++            field: memberAcknowledged
++            message: Member must acknowledge rejection or appeal period must expire
++        message: Appeal period must expire or member must acknowledge rejection
++    effects: [archive_claim]
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/engine/ConfiguredWorkflowEngine.java
+@@ -0,0 +1,50 @@
++package com.papaya.claims.engine;
++
++import com.papaya.claims.contract.BusinessException;
++import com.papaya.claims.contract.Model.*;
++import com.papaya.claims.contract.WorkflowEngine;
++import java.time.Instant;
++import java.util.*;
++import java.util.stream.Collectors;
++
++/** Pure config-driven evaluator; states are opaque strings. */
++public final class ConfiguredWorkflowEngine implements WorkflowEngine {
++    public static final String MAX_REQUESTS_MESSAGE = "Maximum information requests exceeded — escalate to team lead";
++    private final WorkflowDefinition definition;
++    private final GuardEvaluator guardEvaluator = new GuardEvaluator();
++    public ConfiguredWorkflowEngine(WorkflowDefinition definition) { this.definition = Objects.requireNonNull(definition); }
++    @Override public String initialState() { return definition.initialState(); }
++    @Override public String configVersion() { return definition.version(); }
++
++    @Override public Decision evaluate(ClaimSnapshot claim, Actor actor, TransitionCommand command, Instant now) {
++        var candidates = definition.transitions().stream().filter(t -> t.from().equals(claim.state()) && t.to().equals(command.target())).toList();
++        if (candidates.isEmpty()) {
++            String available = definition.transitions().stream().filter(t -> t.from().equals(claim.state())).map(WorkflowDefinition.Transition::to).distinct().collect(Collectors.joining(", "));
++            throw new BusinessException("INVALID_TRANSITION", 409, "Transition " + claim.state() + " → " + command.target() + " is not configured; available: " + (available.isEmpty() ? "none" : available));
++        }
++        var transition = candidates.getFirst();
++        if (!transition.role().equals(actor.role())) throw new BusinessException("FORBIDDEN_ROLE", 403, "Transition to " + transition.to() + " requires role " + transition.role());
++        if (transition.informationRequest() && claim.informationRequests() >= definition.maxInformationRequests())
++            throw new BusinessException("INFORMATION_REQUEST_LIMIT", 422, MAX_REQUESTS_MESSAGE);
++        var failed = guardEvaluator.failures(transition.guards(), claim, now);
++        if (!failed.isEmpty()) throw new BusinessException("GUARD_FAILED", 422, failed.stream().map(GuardEvaluator.Failure::message).collect(Collectors.joining("; ")));
++        int count = claim.informationRequests() + (transition.informationRequest() ? 1 : 0);
++        Instant started = switch (transition.timerAction()) {
++            case START -> now;
++            case RESET -> null;
++            case NONE -> claim.assessmentStartedAt();
++        };
++        Instant requested = transition.informationRequest() ? now : claim.lastInformationRequestedAt();
++        return new Decision(claim.state(), transition.to(), count, started, requested, transition.effects(), transition.clearFacts());
++    }
++
++    @Override public List<TransitionOption> options(ClaimSnapshot claim, Actor actor, Instant now) {
++        return definition.transitions().stream().filter(t -> t.from().equals(claim.state())).map(t -> {
++            var blockers = new ArrayList<String>();
++            if (!t.role().equals(actor.role())) blockers.add("Requires role " + t.role());
++            if (t.informationRequest() && claim.informationRequests() >= definition.maxInformationRequests()) blockers.add(MAX_REQUESTS_MESSAGE);
++            guardEvaluator.failures(t.guards(), claim, now).forEach(f -> blockers.add(f.message()));
++            return new TransitionOption(t.to(), t.role(), blockers.isEmpty(), blockers);
++        }).toList();
++    }
++}
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/engine/EffectRegistry.java
+@@ -0,0 +1,13 @@
++package com.papaya.claims.engine;
++
++import java.util.Set;
++
++/** Registry capability boundary for supported effect strategies. */
++public final class EffectRegistry {
++    private static final Set<String> SUPPORTED = Set.of("notify_assessors", "assessment_started",
++            "notify_approval", "create_payment_request", "notify_rejection", "request_information",
++            "assessment_timer_reset", "trigger_payment", "notify_payment", "archive_claim");
++    private EffectRegistry() {}
++    public static boolean supports(String effectId) { return SUPPORTED.contains(effectId); }
++    public static Set<String> effectIds() { return SUPPORTED; }
++}
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/engine/GuardEvaluator.java
+@@ -0,0 +1,59 @@
++package com.papaya.claims.engine;
++
++import com.papaya.claims.contract.Model.ClaimSnapshot;
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.time.format.DateTimeParseException;
++import java.util.*;
++
++/** Evaluates guard primitives without expressions or reflection. */
++public final class GuardEvaluator {
++    public record Failure(String type, String field, String message) {}
++    public List<Failure> failures(List<WorkflowDefinition.Guard> guards, ClaimSnapshot claim, Instant now) {
++        Map<String,Object> facts = facts(claim, now);
++        var failures = new ArrayList<Failure>();
++        for (var guard : guards) if (!matches(guard, facts)) failures.add(new Failure(guard.type(), guard.field(),
++                guard.message() == null || guard.message().isBlank() ? defaultMessage(guard) : guard.message()));
++        return List.copyOf(failures);
++    }
++    private boolean matches(WorkflowDefinition.Guard g, Map<String,Object> f) {
++        Object value = f.get(g.field());
++        try {
++            return switch (g.type()) {
++                case "present" -> value != null && (!(value instanceof String s) || !s.isBlank()) && (!(value instanceof Collection<?> c) || !c.isEmpty());
++                case "isTrue" -> Boolean.TRUE.equals(value);
++                case "lessOrEqual" -> number(value).compareTo(number(g.otherField() == null ? g.value() : f.get(g.otherField()))) <= 0;
++                case "equal" -> equal(g.otherField() == null ? value : value, g.otherField() == null ? g.value() : f.get(g.otherField()));
++                case "after" -> instant(value).isAfter(instant(g.otherField() == null ? g.value() : f.get(g.otherField())));
++                case "beforeOrEqual" -> !instant(value).isAfter(instant(g.otherField() == null ? g.value() : f.get(g.otherField())));
++                case "allDocumentsValid" -> documentsValid(f);
++                case "any" -> g.guards().stream().anyMatch(child -> matches(child, f));
++                default -> false;
++            };
++        } catch (RuntimeException badFact) { return false; }
++    }
++    private static boolean equal(Object a, Object b) {
++        if (a == null || b == null) return a == b;
++        try { if (a instanceof Number || b instanceof Number) return number(a).compareTo(number(b)) == 0; }
++        catch (RuntimeException ignored) { return false; }
++        return a.equals(b);
++    }
++    private static boolean documentsValid(Map<String,Object> facts) {
++        Object required = facts.get("requiredDocuments"), docs = facts.get("documents");
++        if (!(required instanceof List<?> list) || list.isEmpty() || !(docs instanceof Map<?,?> map)) return false;
++        return list.stream().allMatch(key -> key instanceof String s && Boolean.TRUE.equals(map.get(s)));
++    }
++    private static BigDecimal number(Object n) {
++        if (n instanceof BigDecimal d) return d;
++        if (n instanceof Number || n instanceof String) return new BigDecimal(n.toString());
++        throw new IllegalArgumentException("not numeric");
++    }
++    private static Instant instant(Object v) { if (v instanceof Instant i) return i; return Instant.parse((String) v); }
++    private static Map<String,Object> facts(ClaimSnapshot claim, Instant now) {
++        var result = new HashMap<String,Object>(claim.facts());
++        result.put("policyLimit", claim.policyLimit()); result.put("currency", claim.currency());
++        result.put("lastInformationRequestedAt", claim.lastInformationRequestedAt()); result.put("now", now);
++        return result;
++    }
++    private static String defaultMessage(WorkflowDefinition.Guard g) { return "Guard " + g.type() + " failed" + (g.field() == null ? "" : " for " + g.field()); }
++}
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/engine/WorkflowDefinition.java
+@@ -0,0 +1,48 @@
++package com.papaya.claims.engine;
++
++import java.util.List;
++import java.util.Map;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.LinkedHashMap;
++
++/** Immutable, validated workflow configuration. */
++public record WorkflowDefinition(String version, String initialState, List<String> states,
++                                 List<String> roles, int maxInformationRequests,
++                                 List<Transition> transitions) {
++    public WorkflowDefinition {
++        states = List.copyOf(states);
++        roles = List.copyOf(roles);
++        transitions = List.copyOf(transitions);
++    }
++    public record Transition(String from, String to, String role, List<Guard> guards,
++                             List<String> effects, boolean informationRequest,
++                             TimerAction timerAction, List<String> clearFacts) {
++        public Transition {
++            guards = List.copyOf(guards);
++            effects = List.copyOf(effects);
++            clearFacts = List.copyOf(clearFacts);
++        }
++    }
++    public record Guard(String type, String field, String otherField, Object value,
++                        List<Guard> guards, String message) {
++        public Guard {
++            guards = guards == null ? List.of() : List.copyOf(guards);
++            value = freeze(value);
++        }
++        private static Object freeze(Object input) {
++            if (input instanceof Map<?,?> map) {
++                var copy = new LinkedHashMap<String,Object>();
++                map.forEach((k,v) -> copy.put(String.valueOf(k), freeze(v)));
++                return Collections.unmodifiableMap(copy);
++            }
++            if (input instanceof List<?> list) {
++                var copy = new ArrayList<Object>();
++                list.forEach(v -> copy.add(freeze(v)));
++                return Collections.unmodifiableList(copy);
++            }
++            return input;
++        }
++    }
++    public enum TimerAction { NONE, START, RESET }
++}
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/engine/WorkflowLoader.java
+@@ -0,0 +1,97 @@
++package com.papaya.claims.engine;
++
++import com.fasterxml.jackson.databind.DeserializationFeature;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
++import java.io.IOException;
++import java.nio.file.Path;
++import java.util.*;
++
++/** Loads and validates the safe YAML workflow DSL. */
++public final class WorkflowLoader {
++    private static final Set<String> GUARDS = Set.of("present", "isTrue", "lessOrEqual", "equal",
++            "after", "beforeOrEqual", "allDocumentsValid", "any");
++    private WorkflowLoader() {}
++
++    public static WorkflowDefinition load(Path path) {
++        Objects.requireNonNull(path, "path");
++        try {
++            var mapper = new ObjectMapper(new YAMLFactory()).enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
++            Raw raw = mapper.readValue(path.toFile(), Raw.class);
++            validate(raw, path.toString());
++            var transitions = raw.transitions.stream().map(t -> new WorkflowDefinition.Transition(
++                    t.from, t.to, t.role, convert(t.guards), t.effects, t.informationRequest,
++                    WorkflowDefinition.TimerAction.valueOf(t.timerAction == null ? "NONE" : t.timerAction), t.clearFacts)).toList();
++            return new WorkflowDefinition(raw.version, raw.initialState, raw.states, raw.roles,
++                    raw.maxInformationRequests, transitions);
++        } catch (IOException | RuntimeException error) {
++            if (error instanceof IllegalArgumentException iae && iae.getMessage() != null && iae.getMessage().startsWith(path + ":")) throw iae;
++            throw new IllegalArgumentException(path + ": invalid workflow configuration: " + error.getMessage(), error);
++        }
++    }
++
++    private static List<WorkflowDefinition.Guard> convert(List<RawGuard> guards) {
++        if (guards == null) return List.of();
++        return guards.stream().map(g -> new WorkflowDefinition.Guard(g.type, g.field, g.otherField,
++                g.value, convert(g.guards), g.message)).toList();
++    }
++    private static void validate(Raw raw, String path) {
++        if (raw == null) fail(path, "$", "document is empty");
++        required(raw.version, path, "version"); required(raw.initialState, path, "initialState");
++        if (raw.states == null || raw.states.isEmpty()) fail(path, "states", "must contain at least one state");
++        if (new HashSet<>(raw.states).size() != raw.states.size()) fail(path, "states", "contains duplicate state");
++        if (!raw.states.contains(raw.initialState)) fail(path, "initialState", "must name a configured state");
++        if (raw.roles == null || raw.roles.isEmpty() || new HashSet<>(raw.roles).size() != raw.roles.size()) fail(path, "roles", "must contain unique roles");
++        if (raw.maxInformationRequests < 0) fail(path, "maxInformationRequests", "must be nonnegative");
++        if (raw.transitions == null) fail(path, "transitions", "is required");
++        var edges = new HashSet<String>();
++        for (int i = 0; i < raw.transitions.size(); i++) {
++            RawTransition t = raw.transitions.get(i); String at = "transitions[" + i + "]";
++            if (t == null) fail(path, at, "must not be null");
++            required(t.from, path, at + ".from"); required(t.to, path, at + ".to"); required(t.role, path, at + ".role");
++            if (!raw.states.contains(t.from) || !raw.states.contains(t.to)) fail(path, at, "from/to must name configured states");
++            if (!raw.roles.contains(t.role)) fail(path, at + ".role", "must name a configured role");
++            if (!edges.add(t.from + "\u0000" + t.to)) fail(path, at, "duplicate from/to edge");
++            if (t.timerAction != null) try { WorkflowDefinition.TimerAction.valueOf(t.timerAction); }
++            catch (IllegalArgumentException e) { fail(path, at + ".timerAction", "must be NONE, START, or RESET"); }
++            if (t.effects == null) t.effects = List.of();
++            for (String effect : t.effects) if (!EffectRegistry.supports(effect)) fail(path, at + ".effects", "unknown effect ID " + effect);
++            if (t.clearFacts == null) t.clearFacts = List.of();
++            validateGuards(t.guards, path, at + ".guards", 0);
++        }
++    }
++    private static void validateGuards(List<RawGuard> guards, String path, String at, int depth) {
++        if (depth > 12) fail(path, at, "guard nesting exceeds 12");
++        if (guards == null) return;
++        for (int i = 0; i < guards.size(); i++) {
++            RawGuard g = guards.get(i); String field = at + "[" + i + "]";
++            if (g == null || !GUARDS.contains(g.type)) fail(path, field + ".type", "unknown guard type");
++            if (g.type.equals("any") && (g.guards == null || g.guards.isEmpty())) fail(path, field + ".guards", "any requires child guards");
++            if (Set.of("present", "isTrue", "lessOrEqual", "after", "beforeOrEqual", "allDocumentsValid").contains(g.type) && blank(g.field)) fail(path, field + ".field", "is required for " + g.type);
++            if (Set.of("lessOrEqual", "after", "beforeOrEqual").contains(g.type) && blank(g.otherField) && g.value == null) fail(path, field, "requires value or otherField");
++            if (g.type.equals("equal") && blank(g.field)) fail(path, field + ".field", "is required for equal");
++            validateGuards(g.guards, path, field + ".guards", depth + 1);
++        }
++    }
++    private static void required(String v, String p, String f) { if (blank(v)) fail(p, f, "is required"); }
++    private static boolean blank(String v) { return v == null || v.isBlank(); }
++    private static void fail(String path, String field, String message) { throw new IllegalArgumentException(path + ": " + field + " " + message); }
++
++    public static final class Raw {
++        public String version, initialState;
++        public List<String> states, roles;
++        public int maxInformationRequests;
++        public List<RawTransition> transitions;
++    }
++    public static final class RawTransition {
++        public String from, to, role, timerAction;
++        public List<RawGuard> guards;
++        public List<String> effects, clearFacts;
++        public boolean informationRequest;
++    }
++    public static final class RawGuard {
++        public String type, field, otherField, message;
++        public Object value;
++        public List<RawGuard> guards;
++    }
++}
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/engine/EngineFixtures.java
+@@ -0,0 +1,27 @@
++package com.papaya.claims.engine;
++
++import com.papaya.claims.contract.Model.*;
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.*;
++
++final class EngineFixtures {
++    static final Instant NOW = Instant.parse("2026-10-16T00:00:00Z");
++    static final ConfiguredWorkflowEngine ENGINE = new ConfiguredWorkflowEngine(WorkflowLoader.load(java.nio.file.Path.of("config/workflow.yml")));
++    static ClaimSnapshot claim(String state, Map<String,Object> facts, int requests) {
++        return new ClaimSnapshot(UUID.randomUUID(), "member-001", state, new BigDecimal("100.00"), "USD", facts,
++                requests, 1, NOW.minusSeconds(600), NOW.minusSeconds(60));
++    }
++    static Map<String,Object> validDocs() {
++        return new HashMap<>(Map.of("requiredDocuments", List.of("invoice"), "documents", Map.of("invoice", true)));
++    }
++    static Decision evaluate(String from, String to, String role, Map<String,Object> facts, int requests) {
++        return ENGINE.evaluate(claim(from, facts, requests), new Actor("worker", role), new TransitionCommand(to, 1, "key", "note"), NOW);
++    }
++    static void expect(int status, String code, Runnable work) {
++        var error = org.junit.jupiter.api.Assertions.assertThrows(com.papaya.claims.contract.BusinessException.class, work::run);
++        org.junit.jupiter.api.Assertions.assertEquals(status, error.status());
++        org.junit.jupiter.api.Assertions.assertEquals(code, error.code());
++    }
++    private EngineFixtures() {}
++}
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/engine/GuardEvaluatorTest.java
+@@ -0,0 +1,47 @@
++package com.papaya.claims.engine;
++
++import static org.junit.jupiter.api.Assertions.*;
++import com.papaya.claims.contract.Model.*;
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.*;
++import org.junit.jupiter.api.Test;
++
++class GuardEvaluatorTest {
++    private final GuardEvaluator evaluator = new GuardEvaluator();
++    private ClaimSnapshot claim(Map<String,Object> facts) {
++        return new ClaimSnapshot(UUID.randomUUID(), "member-001", "X", new BigDecimal("100.00"), "USD", facts, 0, 0, null, null);
++    }
++    private WorkflowDefinition.Guard guard(String type, String field, String other, Object value) {
++        return new WorkflowDefinition.Guard(type, field, other, value, List.of(), "failed");
++    }
++    @Test void evaluatesBoundaryAmountAndCurrencyEquality() {
++        var c = claim(Map.of("assessmentAmount", new BigDecimal("100.00"), "assessmentCurrency", "USD"));
++        assertTrue(evaluator.failures(List.of(guard("lessOrEqual", "assessmentAmount", "policyLimit", null), guard("equal", "assessmentCurrency", "currency", null)), c, EngineFixtures.NOW).isEmpty());
++    }
++    @Test void rejectsAmountAbovePolicyLimit() {
++        var c = claim(Map.of("assessmentAmount", 100.01));
++        assertFalse(evaluator.failures(List.of(guard("lessOrEqual", "assessmentAmount", "policyLimit", null)), c, EngineFixtures.NOW).isEmpty());
++    }
++    @Test void checksAfterAndBeforeOrEqualInstantsAtBoundary() {
++        var c = claim(Map.of("informationReceivedAt", "2026-10-15T23:59:00Z", "appealDeadline", "2026-10-16T00:00:00Z"));
++        assertFalse(evaluator.failures(List.of(guard("after", "informationReceivedAt", null, "2026-10-15T23:59:00Z")), c, EngineFixtures.NOW).isEmpty());
++        assertTrue(evaluator.failures(List.of(guard("beforeOrEqual", "appealDeadline", "now", null)), c, EngineFixtures.NOW).isEmpty());
++    }
++    @Test void malformedFactFailsSafely() {
++        assertFalse(evaluator.failures(List.of(guard("lessOrEqual", "assessmentAmount", null, "not money")), claim(Map.of("assessmentAmount", "bad")), EngineFixtures.NOW).isEmpty());
++    }
++    @Test void allDocumentsRequiresEveryRequiredDocumentValid() {
++        var c = claim(Map.of("requiredDocuments", List.of("id", "invoice"), "documents", Map.of("id", true, "invoice", false)));
++        assertFalse(evaluator.failures(List.of(guard("allDocumentsValid", "requiredDocuments", null, null)), c, EngineFixtures.NOW).isEmpty());
++    }
++    @Test void anyAcceptsOneSatisfiedChildGuard() {
++        var child = guard("isTrue", "memberAcknowledged", null, null);
++        var any = new WorkflowDefinition.Guard("any", null, null, null, List.of(child), "none");
++        assertTrue(evaluator.failures(List.of(any), claim(Map.of("memberAcknowledged", true)), EngineFixtures.NOW).isEmpty());
++    }
++    @Test void missingAndMalformedFactsFailClosed() {
++        assertFalse(evaluator.failures(List.of(guard("present", "assessorId", null, null)), claim(Map.of()), EngineFixtures.NOW).isEmpty());
++        assertFalse(evaluator.failures(List.of(guard("after", "informationReceivedAt", null, "bad")), claim(Map.of("informationReceivedAt", "bad")), EngineFixtures.NOW).isEmpty());
++    }
++}
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/engine/WorkflowConfigTest.java
+@@ -0,0 +1,35 @@
++package com.papaya.claims.engine;
++
++import static org.junit.jupiter.api.Assertions.*;
++import java.nio.file.*;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.io.TempDir;
++
++class WorkflowConfigTest {
++    @TempDir Path temp;
++    @Test void loadsAllNineOriginalEdgesAndMetadata() {
++        var definition = WorkflowLoader.load(Path.of("config/workflow.yml"));
++        assertEquals("SUBMITTED", definition.initialState()); assertEquals(9, definition.transitions().size());
++        assertEquals(3, definition.maxInformationRequests());
++    }
++    @Test void rejectsUnknownEffectWithPath() throws Exception {
++        String yaml = Files.readString(Path.of("config/workflow.yml")).replace("notify_assessors", "magic_effect");
++        var path = temp.resolve("bad.yml"); Files.writeString(path, yaml);
++        var error = assertThrows(IllegalArgumentException.class, () -> WorkflowLoader.load(path));
++        assertTrue(error.getMessage().contains("bad.yml")); assertTrue(error.getMessage().contains("unknown effect"));
++    }
++    @Test void rejectsMalformedGuardAtStartup() throws Exception {
++        String yaml = Files.readString(Path.of("config/workflow.yml")).replace("type: present\n        field: assessorId", "type: eval\n        field: assessorId");
++        var path = temp.resolve("bad-guard.yml"); Files.writeString(path, yaml);
++        assertTrue(assertThrows(IllegalArgumentException.class, () -> WorkflowLoader.load(path)).getMessage().contains("guards"));
++    }
++    @Test void acceptsConfigOnlyNewStateAndExistingPrimitives() throws Exception {
++        String yaml = Files.readString(Path.of("config/workflow.yml"))
++                .replace("  - CLOSED\n", "  - CLOSED\n  - MANUAL_REVIEW\n")
++                .replace("    effects: [notify_assessors]\n", "    effects: [notify_assessors]\n")
++                .replace("  - from: REJECTED\n", "  - from: UNDER_ASSESSMENT\n    to: MANUAL_REVIEW\n    role: team_lead\n    guards: []\n    effects: [notify_assessors]\n  - from: MANUAL_REVIEW\n    to: UNDER_ASSESSMENT\n    role: team_lead\n    guards: []\n    effects: [assessment_started]\n  - from: REJECTED\n");
++        var path = temp.resolve("extension.yml"); Files.writeString(path, yaml);
++        var engine = new ConfiguredWorkflowEngine(WorkflowLoader.load(path));
++        assertEquals("MANUAL_REVIEW", engine.options(EngineFixtures.claim("UNDER_ASSESSMENT", java.util.Map.of(), 0), new com.papaya.claims.contract.Model.Actor("lead", "team_lead"), EngineFixtures.NOW).stream().filter(o -> o.target().equals("MANUAL_REVIEW")).findFirst().orElseThrow().target());
++    }
++}
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/engine/WorkflowEngineTest.java
+@@ -0,0 +1,68 @@
++package com.papaya.claims.engine;
++
++import static org.junit.jupiter.api.Assertions.*;
++import static com.papaya.claims.engine.EngineFixtures.*;
++import com.papaya.claims.contract.Model.*;
++import java.util.*;
++import org.junit.jupiter.api.Test;
++
++class WorkflowEngineTest {
++    @Test void submittedToDocumentsVerifiedRequiresValidDocuments() {
++        var d = evaluate("SUBMITTED", "DOCUMENTS_VERIFIED", "document_clerk", validDocs(), 0);
++        assertEquals(List.of("notify_assessors"), d.effects());
++    }
++    @Test void assignmentStartsAssessmentTimer() {
++        var d = evaluate("DOCUMENTS_VERIFIED", "UNDER_ASSESSMENT", "team_lead", Map.of("assessorId", "assessor-7"), 0);
++        assertEquals(NOW, d.assessmentStartedAt());
++    }
++    @Test void approvalChecksReportLimitCurrencyAndDocuments() {
++        var f = validDocs(); f.put("reportComplete", true); f.put("assessmentAmount", 100); f.put("assessmentCurrency", "USD");
++        assertEquals(List.of("notify_approval", "create_payment_request"), evaluate("UNDER_ASSESSMENT", "APPROVED", "assessor", f, 0).effects());
++    }
++    @Test void rejectionRequiresReasonAndCompletedReport() {
++        assertEquals("REJECTED", evaluate("UNDER_ASSESSMENT", "REJECTED", "assessor", Map.of("reportComplete", true, "rejectionReason", "Not covered"), 0).toState());
++    }
++    @Test void informationRequestClearsStaleAssessment() {
++        var d = evaluate("UNDER_ASSESSMENT", "PENDING_INFO", "assessor", Map.of("missingInfoDescription", "Need receipt"), 0);
++        assertEquals(1, d.informationRequests());
++        assertEquals(List.of("reportComplete", "assessmentAmount", "assessmentCurrency"), d.clearFacts());
++        assertEquals(NOW, d.lastInformationRequestedAt());
++    }
++    @Test void returningWithNewInformationResetsTimer() {
++        var facts = validDocs(); facts.put("informationReceivedAt", NOW.toString());
++        assertNull(evaluate("PENDING_INFO", "DOCUMENTS_VERIFIED", "document_clerk", facts, 1).assessmentStartedAt());
++    }
++    @Test void financeCanStartPaymentOnlyWhenRequestExists() {
++        assertEquals("PAYMENT_INITIATED", evaluate("APPROVED", "PAYMENT_INITIATED", "finance", Map.of("paymentRequestCreated", true), 0).toState());
++    }
++    @Test void financeClosesConfirmedPayment() {
++        assertEquals("CLOSED", evaluate("PAYMENT_INITIATED", "CLOSED", "finance", Map.of("paymentConfirmed", true, "paymentReference", "PAY-1"), 0).toState());
++    }
++    @Test void systemClosesAcknowledgedRejection() {
++        assertEquals("CLOSED", evaluate("REJECTED", "CLOSED", "system", Map.of("memberAcknowledged", true), 0).toState());
++    }
++    @Test void fourthInformationRequestHasExactEscalationMessage() {
++        var error = assertThrows(com.papaya.claims.contract.BusinessException.class, () -> evaluate("UNDER_ASSESSMENT", "PENDING_INFO", "assessor", Map.of("missingInfoDescription", "More"), 3));
++        assertEquals(422, error.status()); assertEquals(MAX_REQUESTS_MESSAGE, error.getMessage());
++    }
++    @Test void thirdInformationRequestIsAccepted() {
++        var d = evaluate("UNDER_ASSESSMENT", "PENDING_INFO", "assessor", Map.of("missingInfoDescription", "More"), 2);
++        assertEquals(3, d.informationRequests());
++    }
++    @Test void unauthorizedEdgeIsVisibleButNotExecutable() {
++        var claim = claim("SUBMITTED", validDocs(), 0);
++        var option = ENGINE.options(claim, new Actor("lead", "team_lead"), NOW).getFirst();
++        assertFalse(option.allowed()); assertTrue(option.blockers().getFirst().contains("document_clerk"));
++        expect(403, "FORBIDDEN_ROLE", () -> ENGINE.evaluate(claim, new Actor("lead", "team_lead"), new TransitionCommand("DOCUMENTS_VERIFIED", 1, "k", ""), NOW));
++    }
++    @Test void unknownEdgeReturnsSpecificConflict() {
++        expect(409, "INVALID_TRANSITION", () -> evaluate("SUBMITTED", "APPROVED", "assessor", Map.of(), 0));
++    }
++    @Test void optionsReportGuardBlockers() {
++        var option = ENGINE.options(claim("UNDER_ASSESSMENT", Map.of(), 0), new Actor("a", "assessor"), NOW).getFirst();
++        assertFalse(option.allowed()); assertTrue(option.blockers().stream().anyMatch(s -> s.contains("report")));
++    }
++    @Test void definitionAndReturnedListsAreImmutable() {
++        assertThrows(UnsupportedOperationException.class, () -> ENGINE.options(claim("SUBMITTED", validDocs(), 0), new Actor("c", "document_clerk"), NOW).clear());
++    }
++}

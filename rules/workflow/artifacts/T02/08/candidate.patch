@@ -1,0 +1,355 @@
+diff --git a/src/main/java/com/papaya/claims/claim/domain/ClaimRepository.java b/src/main/java/com/papaya/claims/claim/domain/ClaimRepository.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/ClaimRepository.java
+@@ -0,0 +1,13 @@
++package com.papaya.claims.claim.domain;
++
++import java.util.Optional;
++import java.util.UUID;
++
++/** Persistence port for claim state. Mutations must participate in the caller's transaction. */
++public interface ClaimRepository {
++    void insert(Claim claim);
++    Optional<Claim> find(UUID claimId);
++    Optional<Claim> findForUpdate(UUID claimId);
++    PageResult<Claim> listVisible(PageRequest page, Actor actor);
++    boolean compareAndSet(Claim claim, long expectedVersion);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/ClaimAuditRepository.java b/src/main/java/com/papaya/claims/claim/domain/ClaimAuditRepository.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/ClaimAuditRepository.java
+@@ -0,0 +1,9 @@
++package com.papaya.claims.claim.domain;
++
++import java.util.UUID;
++
++/** Append/read-only claim transition audit port. */
++public interface ClaimAuditRepository {
++    void append(AuditRecord record);
++    PageResult<AuditRecord> findByClaim(UUID claimId, PageRequest page);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRecord.java b/src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRecord.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRecord.java
+@@ -0,0 +1,22 @@
++package com.papaya.claims.claim.domain;
++
++import java.time.Instant;
++import java.util.Objects;
++import java.util.UUID;
++
++/** Safe metadata for a system operation; method arguments are deliberately not stored. */
++public record SystemOperationAuditRecord(UUID id, String action, String resource, String resourceId,
++        String actorId, String correlationId, String outcome, String errorType, Instant occurredAt) {
++    public SystemOperationAuditRecord {
++        Objects.requireNonNull(id, "id");
++        require(action, "action");
++        require(resource, "resource");
++        require(actorId, "actorId");
++        Objects.requireNonNull(correlationId, "correlationId");
++        require(outcome, "outcome");
++        Objects.requireNonNull(occurredAt, "occurredAt");
++    }
++    private static void require(String value, String name) {
++        if (value == null || value.isBlank()) throw new IllegalArgumentException(name + " is required");
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRepository.java b/src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRepository.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRepository.java
+@@ -0,0 +1,6 @@
++package com.papaya.claims.claim.domain;
++
++/** Append-only system-operation audit port. */
++public interface SystemOperationAuditRepository {
++    void append(SystemOperationAuditRecord record);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/IdempotencyRepository.java b/src/main/java/com/papaya/claims/claim/domain/IdempotencyRepository.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/IdempotencyRepository.java
+@@ -0,0 +1,13 @@
++package com.papaya.claims.claim.domain;
++
++import java.util.Optional;
++import java.util.UUID;
++
++/** Stores canonical fingerprints and serialized outcomes in the same transaction as writes. */
++public interface IdempotencyRepository {
++    Optional<Receipt> find(String actorId, String scope, String key);
++    void insert(Receipt receipt);
++
++    record Receipt(UUID id, String actorId, String scope, String idempotencyKey,
++                   String fingerprint, String resultJson) { }
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/PaymentRepository.java b/src/main/java/com/papaya/claims/claim/domain/PaymentRepository.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/PaymentRepository.java
+@@ -0,0 +1,10 @@
++package com.papaya.claims.claim.domain;
++
++import java.util.UUID;
++
++/** Durable local payment request port. */
++public interface PaymentRepository {
++    void create(UUID claimId, UUID requestId, String currency, java.math.BigDecimal amount);
++    boolean exists(UUID claimId);
++    boolean confirm(UUID claimId, String reference);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/OutboxRepository.java b/src/main/java/com/papaya/claims/claim/domain/OutboxRepository.java
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/OutboxRepository.java
+@@ -0,0 +1,16 @@
++package com.papaya.claims.claim.domain;
++
++import java.time.Instant;
++import java.util.List;
++import java.util.UUID;
++
++/** Durable local outbox port; delivery is at-least-once and consumers must be idempotent. */
++public interface OutboxRepository {
++    void enqueue(Message message);
++    List<Message> claimDue(Instant now, int limit);
++    boolean markDelivered(UUID id, Instant deliveredAt);
++    boolean markFailed(UUID id, String safeError, Instant retryAt);
++
++    record Message(UUID id, UUID claimId, String effect, String payload,
++                   int attempts, Instant availableAt) { }
++}
+diff --git a/src/main/resources/db/changelog/changes/002-persistence.sql b/src/main/resources/db/changelog/changes/002-persistence.sql
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/src/main/resources/db/changelog/changes/002-persistence.sql
+@@ -0,0 +1,49 @@
++--liquibase formatted sql
++--changeset codex:002-claim-persistence
++CREATE TABLE claim_audit (
++ id UUID PRIMARY KEY, claim_id UUID NOT NULL, sequence BIGINT NOT NULL CHECK(sequence >= 0),
++ occurred_at TIMESTAMPTZ NOT NULL, from_state VARCHAR(80), to_state VARCHAR(80) NOT NULL,
++ actor_id VARCHAR(120) NOT NULL, role VARCHAR(80) NOT NULL, reason TEXT NOT NULL,
++ correlation_id VARCHAR(128) NOT NULL, workflow_version VARCHAR(80) NOT NULL,
++ UNIQUE(claim_id, sequence)
++);
++CREATE INDEX claim_audit_claim_sequence_idx ON claim_audit(claim_id, sequence DESC, id);
++CREATE TABLE system_operation_audit (
++ id UUID PRIMARY KEY, action VARCHAR(120) NOT NULL, resource VARCHAR(120) NOT NULL,
++ resource_id VARCHAR(160), actor_id VARCHAR(120) NOT NULL, correlation_id VARCHAR(128) NOT NULL,
++ outcome VARCHAR(24) NOT NULL, error_type VARCHAR(160), occurred_at TIMESTAMPTZ NOT NULL
++);
++CREATE INDEX system_operation_audit_occurred_idx ON system_operation_audit(occurred_at DESC, id);
++CREATE TABLE command_receipts (
++ id UUID PRIMARY KEY, actor_id VARCHAR(120) NOT NULL, scope VARCHAR(200) NOT NULL,
++ idempotency_key VARCHAR(200) NOT NULL, fingerprint CHAR(64) NOT NULL,
++ result_json JSONB NOT NULL CHECK(jsonb_typeof(result_json) = 'object'),
++ created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
++ UNIQUE(actor_id, scope, idempotency_key)
++);
++CREATE TABLE payment_requests (
++ id UUID PRIMARY KEY, claim_id UUID NOT NULL REFERENCES claims(id),
++ request_id UUID NOT NULL UNIQUE, currency CHAR(3) NOT NULL CHECK(currency ~ '^[A-Z]{3}$'),
++ amount NUMERIC(18,2) NOT NULL CHECK(amount >= 0), status VARCHAR(24) NOT NULL DEFAULT 'REQUESTED' CHECK(status IN ('REQUESTED','CONFIRMED','FAILED')),
++ reference VARCHAR(240), created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
++ confirmed_at TIMESTAMPTZ, UNIQUE(claim_id)
++);
++CREATE TABLE local_outbox (
++ id UUID PRIMARY KEY, claim_id UUID REFERENCES claims(id), effect VARCHAR(120) NOT NULL,
++ payload JSONB NOT NULL CHECK(jsonb_typeof(payload) = 'object'), attempts INTEGER NOT NULL DEFAULT 0 CHECK(attempts >= 0),
++ available_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(), delivered_at TIMESTAMPTZ,
++ last_error VARCHAR(240), created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
++);
++CREATE INDEX local_outbox_due_idx ON local_outbox(available_at, id) WHERE delivered_at IS NULL;
++CREATE FUNCTION reject_audit_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
++BEGIN RAISE EXCEPTION 'audit records are append-only' USING ERRCODE = '42501'; END $$;
++CREATE TRIGGER claim_audit_immutable BEFORE UPDATE OR DELETE ON claim_audit
++ FOR EACH ROW EXECUTE FUNCTION reject_audit_mutation();
++CREATE TRIGGER system_operation_audit_immutable BEFORE UPDATE OR DELETE ON system_operation_audit
++ FOR EACH ROW EXECUTE FUNCTION reject_audit_mutation();
++REVOKE ALL ON claim_audit, system_operation_audit, command_receipts, payment_requests, local_outbox FROM PUBLIC;
++GRANT SELECT, INSERT ON claim_audit, system_operation_audit, command_receipts, payment_requests, local_outbox TO claims_runtime;
++GRANT SELECT, UPDATE ON local_outbox TO claims_runtime;
++GRANT SELECT, UPDATE ON payment_requests TO claims_runtime;
++GRANT SELECT, INSERT, UPDATE ON claims TO claims_runtime;
++REVOKE CREATE ON SCHEMA public FROM claims_runtime;
+diff --git a/src/main/java/com/papaya/claims/claim/domain/ClaimWorkflowData.java b/src/main/java/com/papaya/claims/claim/domain/ClaimWorkflowData.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/ClaimWorkflowData.java
+@@ -0,0 +1,13 @@
++package com.papaya.claims.claim.domain;
++
++import java.time.Instant;
++
++/** Server-owned workflow metadata; never part of request or response DTOs. */
++public record ClaimWorkflowData(int informationRequests, Instant lastInformationRequestedAt,
++        Instant lastInformationReceivedAt, Instant assessmentStartedAt, Instant rejectedAt,
++        Instant memberAcknowledgedRejectionAt) {
++    public ClaimWorkflowData {
++        if (informationRequests < 0) throw new IllegalArgumentException("informationRequests cannot be negative");
++    }
++    public static ClaimWorkflowData empty() { return new ClaimWorkflowData(0, null, null, null, null, null); }
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/ClaimAggregate.java b/src/main/java/com/papaya/claims/claim/domain/ClaimAggregate.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/ClaimAggregate.java
+@@ -0,0 +1,10 @@
++package com.papaya.claims.claim.domain;
++
++import java.util.Objects;
++
++/** Typed persistence aggregate, intentionally absent from the API package. */
++public record ClaimAggregate(Claim claim, ClaimWorkflowData workflow) {
++    public ClaimAggregate { Objects.requireNonNull(claim); Objects.requireNonNull(workflow); }
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/mapper/ClaimMapper.java b/src/main/java/com/papaya/claims/claim/domain/mapper/ClaimMapper.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/mapper/ClaimMapper.java
+@@ -0,0 +1,23 @@
++package com.papaya.claims.claim.domain.mapper;
++
++import com.papaya.claims.claim.domain.persistence.ClaimRow;
++import java.util.List;
++import java.util.UUID;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++
++@Mapper
++public interface ClaimMapper {
++    int insert(ClaimRow row);
++    ClaimRow find(@Param("id") UUID id);
++    ClaimRow findForUpdate(@Param("id") UUID id);
++    List<ClaimRow> pageAll(@Param("limit") int limit, @Param("offset") long offset);
++    long countAll();
++    List<ClaimRow> pageMember(@Param("memberId") String memberId, @Param("limit") int limit,
++                              @Param("offset") long offset);
++    long countMember(@Param("memberId") String memberId);
++    int compareAndSet(@Param("r") ClaimRow row, @Param("expectedVersion") long expectedVersion);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/mapper/AuditMapper.java b/src/main/java/com/papaya/claims/claim/domain/mapper/AuditMapper.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/mapper/AuditMapper.java
+@@ -0,0 +1,15 @@
++package com.papaya.claims.claim.domain.mapper;
++import com.papaya.claims.claim.domain.persistence.AuditRow;
++import java.util.List;
++import java.util.UUID;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++@Mapper public interface AuditMapper {
++ int append(AuditRow row);
++ List<AuditRow> page(@Param("claimId") UUID claimId, @Param("limit") int limit, @Param("offset") long offset);
++ long count(@Param("claimId") UUID claimId);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/mapper/ReceiptMapper.java b/src/main/java/com/papaya/claims/claim/domain/mapper/ReceiptMapper.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/mapper/ReceiptMapper.java
+@@ -0,0 +1,15 @@
++package com.papaya.claims.claim.domain.mapper;
++import com.papaya.claims.claim.domain.persistence.ReceiptRow;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++@Mapper public interface ReceiptMapper {
++ ReceiptRow find(@Param("actor") String actor, @Param("scope") String scope, @Param("key") String key);
++ int insert(ReceiptRow row);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/mapper/EffectsMapper.java b/src/main/java/com/papaya/claims/claim/domain/mapper/EffectsMapper.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/mapper/EffectsMapper.java
+@@ -0,0 +1,22 @@
++package com.papaya.claims.claim.domain.mapper;
++import com.papaya.claims.claim.domain.persistence.OutboxRow;
++import java.time.Instant;
++import java.util.List;
++import java.util.UUID;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++@Mapper public interface EffectsMapper {
++ int enqueue(OutboxRow row);
++ List<OutboxRow> claimDue(@Param("now") Instant now, @Param("limit") int limit);
++ int delivered(@Param("id") UUID id, @Param("at") Instant at);
++ int failed(@Param("id") UUID id, @Param("error") String error, @Param("retry") Instant retry);
++ int createPayment(@Param("claimId") UUID claimId, @Param("requestId") UUID requestId,
++                   @Param("currency") String currency, @Param("amount") java.math.BigDecimal amount);
++ int confirmPayment(@Param("claimId") UUID claimId, @Param("reference") String reference,
++                    @Param("at") Instant at);
++ boolean paymentExists(@Param("claimId") UUID claimId);
++}
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/ClaimRow.java b/src/main/java/com/papaya/claims/claim/domain/persistence/ClaimRow.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/ClaimRow.java
+@@ -0,0 +1,17 @@
++package com.papaya.claims.claim.domain.persistence;
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.UUID;
++public record ClaimRow(UUID id, String memberId, String state, BigDecimal policyLimit, String currency,
++ String facts, int informationRequests, long version, Instant assessmentStartedAt,
++ Instant lastInformationRequestedAt, Instant lastInformationReceivedAt, Instant rejectedAt,
++ Instant memberAcknowledgedRejectionAt, Instant createdAt, Instant updatedAt) { }
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/AuditRow.java b/src/main/java/com/papaya/claims/claim/domain/persistence/AuditRow.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/AuditRow.java
+@@ -0,0 +1,9 @@
++package com.papaya.claims.claim.domain.persistence;
++import java.time.Instant;
++import java.util.UUID;
++public record AuditRow(UUID id, UUID claimId, long sequence, Instant occurredAt, String fromState,
++ String toState, String actorId, String role, String reason, String correlationId, String workflowVersion) { }
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/ReceiptRow.java b/src/main/java/com/papaya/claims/claim/domain/persistence/ReceiptRow.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/ReceiptRow.java
+@@ -0,0 +1,7 @@
++package com.papaya.claims.claim.domain.persistence;
++import java.util.UUID;
++public record ReceiptRow(UUID id, String actorId, String scope, String idempotencyKey,
++ String fingerprint, String resultJson) { }
+diff --git a/src/main/java/com/papaya/claims/claim/domain/persistence/OutboxRow.java b/src/main/java/com/papaya/claims/claim/domain/persistence/OutboxRow.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/claim/domain/persistence/OutboxRow.java
+@@ -0,0 +1,9 @@
++package com.papaya.claims.claim.domain.persistence;
++import java.time.Instant;
++import java.util.UUID;
++public record OutboxRow(UUID id, UUID claimId, String effect, String payloadJson,
++ int attempts, Instant availableAt, Instant deliveredAt, String lastError) { }
+diff --git a/src/main/resources/sql/service/claim/ClaimMapper.xml b/src/main/resources/sql/service/claim/ClaimMapper.xml
+new file mode 100644
+--- /dev/null
++++ b/src/main/resources/sql/service/claim/ClaimMapper.xml
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="UTF-8" ?>
++<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
++<mapper namespace="com.papaya.claims.claim.domain.mapper.ClaimMapper">
++ <resultMap id="claim" type="com.papaya.claims.claim.domain.persistence.ClaimRow">
++  <constructor><idArg column="id" javaType="java.util.UUID"/><arg column="member_id" javaType="String"/><arg column="state" javaType="String"/><arg column="policy_limit" javaType="java.math.BigDecimal"/><arg column="currency" javaType="String"/><arg column="facts" javaType="String"/><arg column="information_requests" javaType="int"/><arg column="version" javaType="long"/><arg column="assessment_started_at" javaType="java.time.Instant"/><arg column="last_information_requested_at" javaType="java.time.Instant"/><arg column="last_information_received_at" javaType="java.time.Instant"/><arg column="rejected_at" javaType="java.time.Instant"/><arg column="member_acknowledged_rejection_at" javaType="java.time.Instant"/><arg column="created_at" javaType="java.time.Instant"/><arg column="updated_at" javaType="java.time.Instant"/></constructor>
++ </resultMap>
++ <sql id="cols">id,member_id,state,policy_limit,currency,facts::text AS facts,information_requests,version,assessment_started_at,last_information_requested_at,last_information_received_at,rejected_at,member_acknowledged_rejection_at,created_at,updated_at</sql>
++ <insert id="insert">INSERT INTO claims(id,member_id,state,policy_limit,currency,facts,information_requests,version,assessment_started_at,last_information_requested_at,last_information_received_at,rejected_at,member_acknowledged_rejection_at) VALUES(#{id},#{memberId},#{state},#{policyLimit},#{currency},CAST(#{facts} AS jsonb),#{informationRequests},#{version},#{assessmentStartedAt},#{lastInformationRequestedAt},#{lastInformationReceivedAt},#{rejectedAt},#{memberAcknowledgedRejectionAt})</insert>
++ <select id="find" resultMap="claim">SELECT <include refid="cols"/> FROM claims WHERE id=#{id}</select>
++ <select id="findForUpdate" resultMap="claim">SELECT <include refid="cols"/> FROM claims WHERE id=#{id} FOR UPDATE</select>
++ <select id="pageAll" resultMap="claim">SELECT <include refid="cols"/> FROM claims ORDER BY created_at DESC,id LIMIT #{limit} OFFSET #{offset}</select><select id="countAll" resultType="long">SELECT count(*) FROM claims</select>
++ <select id="pageMember" resultMap="claim">SELECT <include refid="cols"/> FROM claims WHERE member_id=#{memberId} ORDER BY created_at DESC,id LIMIT #{limit} OFFSET #{offset}</select><select id="countMember" resultType="long">SELECT count(*) FROM claims WHERE member_id=#{memberId}</select>
++ <update id="compareAndSet">UPDATE claims SET state=#{r.state},facts=CAST(#{r.facts} AS jsonb),information_requests=#{r.informationRequests},assessment_started_at=#{r.assessmentStartedAt},last_information_requested_at=#{r.lastInformationRequestedAt},last_information_received_at=#{r.lastInformationReceivedAt},rejected_at=#{r.rejectedAt},member_acknowledged_rejection_at=#{r.memberAcknowledgedRejectionAt},version=version+1,updated_at=clock_timestamp() WHERE id=#{r.id} AND version=#{expectedVersion}</update>
++</mapper>

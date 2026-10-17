@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.papaya.claims.claim.domain.mapper.ReceiptMapper">
+  <select id="lock" resultType="java.lang.Object" flushCache="true" useCache="false">
+    SELECT pg_advisory_xact_lock(hashtextextended(
+      length(#{actorId})::text || ':' || #{actorId} || length(#{scope})::text || ':' || #{scope} || length(#{key})::text || ':' || #{key}, 0))
+  </select>
+  <resultMap id="receiptRow" type="com.papaya.claims.claim.domain.persistence.ReceiptRow">
+    <id property="id" column="id" javaType="java.util.UUID" typeHandler="com.papaya.claims.claim.domain.persistence.UuidTypeHandler"/><result property="actorId" column="actor_id"/><result property="scope" column="scope"/>
+    <result property="idempotencyKey" column="idempotency_key"/><result property="fingerprint" column="fingerprint"/>
+    <result property="resultJson" column="result_json"/>
+  </resultMap>
+  <select id="find" resultMap="receiptRow">SELECT id,actor_id,scope,idempotency_key,fingerprint,result_json::text AS result_json
+    FROM command_receipts WHERE actor_id=#{actorId} AND scope=#{scope} AND idempotency_key=#{key}</select>
+  <insert id="insert" parameterType="com.papaya.claims.claim.domain.persistence.ReceiptRow">
+    INSERT INTO command_receipts(id,actor_id,scope,idempotency_key,fingerprint,result_json)
+    VALUES(#{id},#{actorId},#{scope},#{idempotencyKey},#{fingerprint},CAST(#{resultJson} AS jsonb))
+  </insert>
+</mapper>

@@ -1,0 +1,5 @@
+# T02/14 current-tree independent rereview
+
+Task T02 / requirements REQ-20261017-010 and REQ-20261017-011; independent reviewer gpt-6-luna / medium, read-only. Important integration context: attempt 13 was returned REWORK and its candidate patch was never applied to the working tree. Attempt 14 is a standalone patch adding the five persistence IT files to the current source tree; its base tree therefore does not contain those files. `git apply --check rules/workflow/artifacts/T02/14/candidate.patch` passed on the current tree.
+
+Review attempt 14's patch and handoff, the current production adapters/mappers/migration, and `reports/sub-agents/T02/re-review-13.md`. Verify standalone patch scope/applicability; assess the fixture's post-Liquibase fresh migration connection and whether the checks execute while that connection is open; inspect the adapter-facing test assertions and prior criteria. Do not assume attempt 13 was integrated. Do not run tests/build/Docker/database/Git mutations. Write only `reports/sub-agents/T02/re-review-15.md`. Return PASS/REWORK/FAIL with exact findings and clearly mark runtime tests NOT_RUN. Do not accept T02 or claim verification.

@@ -1,0 +1,37 @@
+{
+  "task": "T04",
+  "attempt": "04",
+  "author_role": "implementation_worker",
+  "status": "submitted",
+  "base_contract_sha256": "71ac00a58ca165a0126de13bee19e3c19c403c55c7e96ef74d61370e6967a9eb",
+  "packet_sha256": "130498457ac46ab7dbe12cb152888fad128495e636044d119c1d51e6f90c8a3e",
+  "artifact": "rules/workflow/artifacts/T04/04/candidate.patch",
+  "patch_targets": [
+    "src/main/java/com/papaya/claims/application/ClaimService.java",
+    "src/test/java/com/papaya/claims/application/SystemTransitionTest.java",
+    "src/test/java/com/papaya/claims/application/TransitionAtomicityIT.java",
+    "src/test/java/com/papaya/claims/application/TransitionServiceTest.java"
+  ],
+  "verification": [
+    {
+      "command": "mvn -B -Dtest=TransitionServiceTest,RoleAuthorizationTest,IdempotencyTest,FactAuthorizationTest,EffectDispatcherTest,FactoryStrategyTest,InputValidationTest,SystemTransitionTest test",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol prohibits builds; coordinator runs the checks after applying this delta."
+    },
+    {
+      "command": "mvn -B -Dit.test=TransitionAtomicityIT,TransitionConcurrencyIT verify",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol prohibits Docker/database/build operations; coordinator runs the real PostgreSQL checks."
+    }
+  ],
+  "implementation_notes": [
+    "This is a delta against current root where T04 attempt03 is already integrated and ClaimOperations.systemTransition is frozen under contract v1.2.",
+    "ClaimService.transition rejects actors with system role before repository access. ClaimService.systemTransition requires system role before repository access. Both delegate to the same configured-engine transaction path, preserving arbitrary configured system edges.",
+    "Added tests for configured system edge success through systemTransition, generic system-transition rejection, and rejection of human actors on systemTransition.",
+    "Fixed the two integrated compile failures reported by coordinator: imported Spring TransactionDefinition in TransitionServiceTest; changed AtomicBoolean assertion to isTrue()."
+  ],
+  "shared_config_requests": [],
+  "known_limits": [
+    "No checks were run; evidence remains NOT_RUN. Independent review pending."
+  ]
+}

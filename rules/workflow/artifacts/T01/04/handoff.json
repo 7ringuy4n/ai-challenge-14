@@ -1,0 +1,25 @@
+{
+  "task": "T01",
+  "attempt": "04",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    "src/main/java/com/papaya/claims/engine/ConfiguredWorkflowEngine.java",
+    "src/main/java/com/papaya/claims/engine/GuardEvaluator.java",
+    "src/test/java/com/papaya/claims/engine/GuardEvaluatorTest.java",
+    "src/test/java/com/papaya/claims/engine/WorkflowEngineTest.java"
+  ],
+  "summary": [
+    "Normalized evaluate/options server time to UTC microseconds before guard evaluation and timer decisions.",
+    "Normalized parsed Instant operands consistently in GuardEvaluator.",
+    "Added a strict-after microsecond-boundary regression and canonical Decision timer/request timestamp assertions."
+  ],
+  "tests_proposed": [
+    "mvn -B -Dtest=WorkflowEngineTest,WorkflowConfigTest,GuardEvaluatorTest test"
+  ],
+  "test_evidence": {
+    "status": "NOT_RUN",
+    "reason": "Worker instructions prohibit builds and tests; coordinator verifies after applying the patch."
+  },
+  "contract_reference": "docs/challenge-14/CONTRACTS.md timestamp precision refinement v1.1",
+  "contract_change_needed": false
+}

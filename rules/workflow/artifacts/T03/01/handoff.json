@@ -1,0 +1,35 @@
+{
+  "task": "T03",
+  "attempt": "01",
+  "status": "SUBMITTED",
+  "changed_paths": [
+    ".env.example",
+    "docker/Dockerfile",
+    "docker/compose.yml",
+    "docker/initdb/10-create-runtime-role.sh",
+    "scripts/setup.sh",
+    "scripts/smoke.sh"
+  ],
+  "tests_proposed": [
+    {
+      "command": "docker compose --env-file .env.example -f docker/compose.yml config --quiet",
+      "status": "NOT_RUN",
+      "reason": "Worker restrictions prohibit running Docker; coordinator must verify after applying the patch."
+    },
+    {
+      "command": "docker compose --env-file .env -f docker/compose.yml up -d --build --wait && bash scripts/smoke.sh",
+      "status": "NOT_RUN",
+      "reason": "Runtime build and smoke checks are coordinator-owned and require Docker."
+    }
+  ],
+  "assumptions": [
+    "The T01 worker supplies config/workflow.yml at the frozen runtime path before Docker build.",
+    "The application exposes the frozen /actuator/health and /api/session endpoints and serves the UI at /.",
+    "The demo clerk Basic Auth username is clerk, as specified by the frozen security identity mapping."
+  ],
+  "notes": [
+    "The Compose init script creates claims_app using psql variable binding and does not echo secrets.",
+    "The setup script generates secrets only when absent or still marked as dummy, preserves existing configured values, validates Compose, then builds and waits for healthy services.",
+    "No source, manifest, documentation, memory, build configuration, .env file, or Git state was modified."
+  ]
+}

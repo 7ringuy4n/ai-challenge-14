@@ -1,0 +1,4 @@
+$ docker compose --env-file .env.example -f docker/compose.yml config --quiet
+exit_code=0
+$ bash -n scripts/setup.sh scripts/smoke.sh
+exit_code=0

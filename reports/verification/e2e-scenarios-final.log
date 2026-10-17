@@ -1,0 +1,21 @@
+running test case 1/20: unauthenticated claims request is rejected
+running test case 2/20: authenticated session supplies CSRF token
+running test case 3/20: member creates claim
+running test case 4/20: create idempotency replays the original claim
+running test case 5/20: claim owner can read claim
+running test case 6/20: claim owner can read audit
+running test case 7/20: unsafe request without CSRF token is rejected
+running test case 8/20: member cannot edit submitted document roster
+running test case 9/20: document clerk records complete document
+running test case 10/20: document clerk verifies claim
+running test case 11/20: team lead assigns assessor
+running test case 12/20: team lead starts assessment
+running test case 13/20: assigned assessor submits report
+running test case 14/20: assessor approves and persists payment request
+running test case 15/20: finance dispatches payment via outbox
+running test case 16/20: human identity cannot invoke system transition
+running test case 17/20: finance can inspect transition options
+running test case 18/20: finance closes claim after outbox confirmation
+running test case 19/20: member list endpoint returns visible claims
+running test case 20/20: complete lifecycle exposes claim transition audit
+Completed 20/20 end-to-end API scenarios.

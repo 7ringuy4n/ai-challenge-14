@@ -1,0 +1,113 @@
+{
+  "task_id": "T01",
+  "attempt_id": "coordinator-remediation-04",
+  "requirement_ids": [
+    "REQ-20261017-006",
+    "REQ-20261017-007",
+    "REQ-20261017-008",
+    "REQ-20261017-009",
+    "REQ-20261017-010"
+  ],
+  "source_hash": "70388cbebd58b763b596557d6ccc5a67b507726b4b6edc96cb41ad3161db7570",
+  "source_hash_algorithm": "See reports/verification/T01/source-hash-inputs.txt",
+  "source_files": [
+    "src/main/java/com/papaya/claims/config/WorkflowConfiguration.java",
+    "src/main/java/com/papaya/claims/workflow/EffectIntent.java",
+    "src/main/java/com/papaya/claims/workflow/EffectRegistry.java",
+    "src/main/java/com/papaya/claims/workflow/GuardEvaluator.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowConfigLoader.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowDecision.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowDefinition.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowEngine.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowEvaluationContext.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowEvidence.java",
+    "src/main/java/com/papaya/claims/workflow/WorkflowOption.java",
+    "src/test/java/com/papaya/claims/workflow/GuardEvaluatorTest.java",
+    "src/test/java/com/papaya/claims/workflow/WorkflowConfigTest.java",
+    "src/test/java/com/papaya/claims/workflow/WorkflowEngineTest.java"
+  ],
+  "tests": 16,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "coverage": {
+    "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B jacoco:report",
+    "exit_code": 0,
+    "result": "PASS_REPORT_GENERATED",
+    "log": "reports/verification/T01/jacoco-report.log",
+    "xml": "reports/verification/T01/jacoco.xml",
+    "bundle_counters": {
+      "branch": {
+        "covered": 187,
+        "total": 294,
+        "missed": 107,
+        "ratio": 0.6360544217687075
+      },
+      "line": {
+        "covered": 302,
+        "total": 344,
+        "missed": 42,
+        "ratio": 0.877906976744186
+      }
+    },
+    "package_counters": {
+      "com/papaya/claims/workflow": {
+        "branch": {
+          "covered": 119,
+          "total": 160,
+          "ratio": 0.74375
+        },
+        "line": {
+          "covered": 192,
+          "total": 195,
+          "ratio": 0.9846153846153847
+        }
+      },
+      "com/papaya/claims/config": {
+        "branch": {
+          "covered": 2,
+          "total": 4,
+          "ratio": 0.5
+        },
+        "line": {
+          "covered": 11,
+          "total": 14,
+          "ratio": 0.7857142857142857
+        }
+      }
+    },
+    "gate_result": "BELOW_95_PERCENT_LINE_AND_90_PERCENT_BRANCH_GATES"
+  },
+  "commands": [
+    {
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=WorkflowEngineTest,WorkflowConfigTest,GuardEvaluatorTest test",
+      "exit_code": 0,
+      "result": "PASS",
+      "log": "reports/verification/T01/focused-maven.log",
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "not_run": [
+    {
+      "command": "mvn -B -Pquality clean verify",
+      "reason": "Full application implementation remains incomplete; quality/coverage and integrated database acceptance gates not yet executable."
+    },
+    {
+      "command": "PostgreSQL/Testcontainers migration and integration checks",
+      "reason": "Docker daemon access is denied; no database runtime evidence was produced."
+    }
+  ],
+  "full_unit_suite": {
+    "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+    "exit_code": 0,
+    "result": "PASS",
+    "log": "reports/verification/T01/all-unit-tests.log",
+    "tests": 27,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

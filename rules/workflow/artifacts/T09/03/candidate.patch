@@ -1,0 +1,13 @@
+diff --git a/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java b/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java
+--- a/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java
++++ b/src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java
+@@ -66,7 +66,7 @@ class ModelBoundaryTest {
+         Map<?, ?> frozenNested = (Map<?, ?>) snapshot.facts().get("nested");
+         List<?> frozenValues = (List<?>) frozenNested.get("values");
+         assertThat(frozenValues).isEqualTo(List.of(
+                 new BigInteger("9000000000000000000"), new BigDecimal("1.2300")));
+-        assertThat(frozenNested).doesNotContainKey("later");
++        assertThat(frozenNested.containsKey("later")).isFalse();
+         assertThat(snapshot.facts()).doesNotContainKey("new");
+         assertMapRejectsMutation(frozenNested);
+         assertListRejectsMutation(frozenValues);

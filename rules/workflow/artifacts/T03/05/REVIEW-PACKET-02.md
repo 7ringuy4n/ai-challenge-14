@@ -1,0 +1,5 @@
+# Independent review — T03/05, attempt 02
+
+Requirement: REQ-20261017-010 and accepted Challenge 14 delivery requirements. Task T03, C14-28. Selected reviewer: gpt-6-luna / medium.
+
+Inspect the candidate patch and repository contract using read-only file inspection (for example, `sed`, `cat`, `rg`, or Python that only reads). Do not edit files. Do not run builds, tests, Docker/Compose commands, setup, or smoke checks. Review static correctness of `rules/workflow/artifacts/T03/05/candidate.patch` (SHA-256: 2b32a69247086ac08df65f68ca5be1881c6cccc6998db5cc89ec4136c1216c53), including Compose/environment semantics, secret handling, role separation, Dockerfile assumptions, setup repeatability, health checks, and smoke API/auth assumptions. Compare against `rules/workflow/artifacts/T03/05/TASK-PACKET.md`, `docs/challenge-14/CONTRACTS.md`, and `rules/workflow/QUALITY-GATES.md`. Return PASS/FAIL with prioritized findings and exact file/line references. Clearly distinguish runtime checks not run. Do not treat earlier BLOCKED attempt as a review. Raw host payloads remain NOT_CAPTURED; trace status PARTIAL.

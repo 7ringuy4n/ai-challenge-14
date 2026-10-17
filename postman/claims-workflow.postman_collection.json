@@ -1,0 +1,735 @@
+{
+  "info": {
+    "_postman_id": "8b0c6918-f567-4a1a-89cf-874c3e8ed80f",
+    "name": "Claims Workflow Local End-to-End",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Happy-path workflow against local Compose. Run with scripts/run-postman.sh; session CSRF and claim IDs are extracted automatically."
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "{{postmanUsername}}",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "{{demoPassword}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8080"
+    },
+    {
+      "key": "postmanUsername",
+      "value": "member-demo"
+    },
+    {
+      "key": "demoPassword",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Bootstrap session and CSRF",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "member-demo",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/session"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"session bootstraps\",()=>pm.response.to.have.status(200)); const x=pm.response.json(); pm.environment.set(\"csrfToken\",x.csrfToken); pm.environment.set(\"csrfHeaderName\",x.csrfHeaderName);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create claim",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "member-demo",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"policyLimit\":500,\"currency\":\"USD\",\"facts\":{\"requestedAmount\":125.50}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"claim created\",()=>pm.response.to.have.status(201)); const x=pm.response.json(); pm.environment.set(\"claimId\",x.id); pm.environment.set(\"version\",x.version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Read claim",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "member-demo",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims/{{claimId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"owner reads claim\",()=>pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Record required invoice",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "clerk",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims/{{claimId}}/facts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"expectedVersion\":{{version}},\"facts\":{\"documents\":{\"invoice\":{\"required\":true,\"present\":true,\"valid\":true}}}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"documents recorded\",()=>pm.response.to.have.status(200)); pm.environment.set(\"version\",pm.response.json().version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Verify documents",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "clerk",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims/{{claimId}}/transitions",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"targetState\":\"DOCUMENTS_VERIFIED\",\"expectedVersion\":{{version}},\"reason\":\"Documents verified\",\"facts\":{}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"documents verified\",()=>pm.response.to.have.status(200)); const x=pm.response.json().claim; pm.environment.set(\"version\",x.version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assign assessor",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "lead",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims/{{claimId}}/facts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"expectedVersion\":{{version}},\"facts\":{\"assessorId\":\"assessor\"}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"assessor assigned\",()=>pm.response.to.have.status(200)); pm.environment.set(\"version\",pm.response.json().version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Start assessment",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "lead",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims/{{claimId}}/transitions",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"targetState\":\"UNDER_ASSESSMENT\",\"expectedVersion\":{{version}},\"reason\":\"Assigned\",\"facts\":{}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"assessment started\",()=>pm.response.to.have.status(200)); pm.environment.set(\"version\",pm.response.json().claim.version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submit assessment report",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "assessor",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims/{{claimId}}/facts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"expectedVersion\":{{version}},\"facts\":{\"assessmentReport\":{\"complete\":true}}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"report saved\",()=>pm.response.to.have.status(200)); pm.environment.set(\"version\",pm.response.json().version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Approve claim",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "assessor",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims/{{claimId}}/transitions",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"targetState\":\"APPROVED\",\"expectedVersion\":{{version}},\"reason\":\"Covered\",\"facts\":{}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"claim approved\",()=>pm.response.to.have.status(200)); pm.environment.set(\"version\",pm.response.json().claim.version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Initiate payment",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "finance",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims/{{claimId}}/transitions",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"targetState\":\"PAYMENT_INITIATED\",\"expectedVersion\":{{version}},\"reason\":\"Dispatch\",\"facts\":{}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"payment queued\",()=>pm.response.to.have.status(200)); pm.environment.set(\"version\",pm.response.json().claim.version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wait for outbox confirmation",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "finance",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims/{{claimId}}/transitions"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const opts=pm.response.json(); const ready=opts.some(x=>x.transitionId===\"close-paid-claim\" && x.available); let n=Number(pm.environment.get(\"pollCount\")||0); if(!ready && n<30){pm.environment.set(\"pollCount\",n+1);pm.execution.setNextRequest(pm.info.requestName);} else {pm.environment.unset(\"pollCount\");pm.test(\"outbox confirmed\",()=>pm.expect(ready).to.eql(true));}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Close paid claim",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "finance",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-TOKEN",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims/{{claimId}}/transitions",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"targetState\":\"CLOSED\",\"expectedVersion\":{{version}},\"reason\":\"Payment confirmed\",\"facts\":{}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"claim closed\",()=>pm.response.to.have.status(200)); pm.test(\"terminal state\",()=>pm.expect(pm.response.json().claim.state).to.eql(\"CLOSED\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Read final audit",
+      "request": {
+        "auth": {
+          "type": "basic",
+          "basic": [
+            {
+              "key": "username",
+              "value": "member-demo",
+              "type": "string"
+            },
+            {
+              "key": "password",
+              "value": "{{demoPassword}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/claims/{{claimId}}/audit"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"audit has five workflow transitions\",()=>{pm.response.to.have.status(200);pm.expect(pm.response.json().items.length).to.be.at.least(5);});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

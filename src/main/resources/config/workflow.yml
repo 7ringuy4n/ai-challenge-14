@@ -1,0 +1,105 @@
+workflow:
+  version: challenge-14-v1
+  initial-state: SUBMITTED
+  information-cycle-limit: 3
+  cycle-policy:
+    transition-id: request-information
+    counter: informationRequests
+    maximum: 3
+    error-message: Maximum information requests exceeded — escalate to team lead
+  states:
+    - SUBMITTED
+    - DOCUMENTS_VERIFIED
+    - UNDER_ASSESSMENT
+    - PENDING_INFO
+    - APPROVED
+    - REJECTED
+    - PAYMENT_INITIATED
+    - CLOSED
+  guard-catalog:
+    all_required_documents_present:
+      failure-message: All required documents must be present and valid before verification.
+    assessor_assigned:
+      failure-message: An assessor must be assigned before assessment can start.
+    assessment_report_complete:
+      failure-message: A complete assessment report is required before a decision.
+    amount_within_policy_limit:
+      failure-message: The requested amount must be nonnegative and no greater than the policy limit.
+    rejection_reason_present:
+      failure-message: A rejection reason is required.
+    information_description_present:
+      failure-message: A description of the missing information is required.
+    new_information_received:
+      failure-message: New information must be received before returning to verification.
+    payment_request_exists:
+      failure-message: A persisted payment request is required before payment initiation.
+    payment_confirmed:
+      failure-message: Payment must be confirmed with a reference before closure.
+    appeal_period_expired_or_member_acknowledged:
+      failure-message: The appeal period must expire or the member must acknowledge the rejection.
+  effect-catalog:
+    notify_assessor_team: Log a notification to the assessor team.
+    record_assessment_start: Record the assessment start time.
+    notify_member_approval: Log an approval notification to the member.
+    create_payment_request: Persist a payment request.
+    notify_member_rejection: Log the reason and appeal instructions for the member.
+    notify_information_request: Log the requested information for the member.
+    reset_assessment_timer: Reset the assessment timer and clear stale completion data.
+    trigger_payment_system: Add a payment dispatch request to the local outbox.
+    notify_member_payment_reference: Log the confirmed payment reference to the member.
+    archive_claim: Archive the rejected claim after the appeal condition is met.
+  transitions:
+    - id: verify-documents
+      from: SUBMITTED
+      to: DOCUMENTS_VERIFIED
+      authorized-roles: [document_clerk]
+      guards: [all_required_documents_present]
+      effects: [notify_assessor_team]
+    - id: start-assessment
+      from: DOCUMENTS_VERIFIED
+      to: UNDER_ASSESSMENT
+      authorized-roles: [team_lead]
+      guards: [assessor_assigned]
+      effects: [record_assessment_start]
+    - id: approve-claim
+      from: UNDER_ASSESSMENT
+      to: APPROVED
+      authorized-roles: [assessor]
+      guards: [assessment_report_complete, amount_within_policy_limit]
+      effects: [notify_member_approval, create_payment_request]
+    - id: reject-claim
+      from: UNDER_ASSESSMENT
+      to: REJECTED
+      authorized-roles: [assessor]
+      guards: [assessment_report_complete, rejection_reason_present]
+      effects: [notify_member_rejection]
+    - id: request-information
+      from: UNDER_ASSESSMENT
+      to: PENDING_INFO
+      authorized-roles: [assessor]
+      guards: [information_description_present]
+      effects: [notify_information_request]
+    - id: return-with-information
+      from: PENDING_INFO
+      to: DOCUMENTS_VERIFIED
+      authorized-roles: [document_clerk]
+      guards: [new_information_received]
+      effects: [reset_assessment_timer]
+    - id: initiate-payment
+      from: APPROVED
+      to: PAYMENT_INITIATED
+      authorized-roles: [finance]
+      guards: [payment_request_exists]
+      effects: [trigger_payment_system]
+    - id: close-paid-claim
+      from: PAYMENT_INITIATED
+      to: CLOSED
+      authorized-roles: [finance]
+      guards: [payment_confirmed]
+      effects: [notify_member_payment_reference]
+    - id: close-rejected-claim
+      from: REJECTED
+      to: CLOSED
+      authorized-roles: [system]
+      guards: [appeal_period_expired_or_member_acknowledged]
+      effects: [archive_claim]

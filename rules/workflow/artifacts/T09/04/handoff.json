@@ -1,0 +1,18 @@
+{
+  "task": "T09",
+  "attempt": "04",
+  "status": "submitted",
+  "author": "foundation_tests_worker",
+  "summary": "Created a current-root delta that includes the not-yet-applied T09/03 wildcard-key fix, adds a regression for unsupported mutable fact values, corrects the strict-after microsecond boundary to assert failure at the same normalized microsecond and success at the next microsecond, and fixes the blank-edge YAML replacement target.",
+  "patch": "rules/workflow/artifacts/T09/04/candidate.patch",
+  "allowed_patch_paths": [
+    "src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java",
+    "src/test/java/com/papaya/claims/engine/GuardBoundaryTest.java",
+    "src/test/java/com/papaya/claims/engine/WorkflowValidationTest.java"
+  ],
+  "proposed_checks": [
+    {"status": "NOT_RUN", "command": "mvn -B -Dtest=ModelBoundaryTest,GuardBoundaryTest,WorkflowValidationTest,DefinitionImmutabilityTest,PersistenceBoundaryTest test", "reason": "Worker instructions prohibit running builds; coordinator owns verification."}
+  ],
+  "findings": [],
+  "known_limits": ["Patch has not been compiled or executed. The coordinator's prior build log contained independent compilation errors in application tests outside this delta."]
+}

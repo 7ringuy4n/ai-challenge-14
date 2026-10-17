@@ -1,0 +1,183 @@
+(node:348965) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+newman
+
+Claims Workflow Local End-to-End
+
+→ Bootstrap session and CSRF
+  GET http://127.0.0.1:8080/api/v1/session [200 OK, 637B, 78ms]
+  ✓  session bootstraps
+
+→ Create claim
+  POST http://127.0.0.1:8080/api/v1/claims [201 Created, 689B, 15ms]
+  ✓  claim created
+
+→ Read claim
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168 [200 OK, 624B, 6ms]
+  ✓  owner reads claim
+
+→ Record required invoice
+  PUT http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/facts [200 OK, 694B, 66ms]
+  ✓  documents recorded
+
+→ Verify documents
+  POST http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 1.02kB, 68ms]
+  ✓  documents verified
+
+→ Assign assessor
+  PUT http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/facts [200 OK, 727B, 69ms]
+  ✓  assessor assigned
+
+→ Start assessment
+  POST http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 1.03kB, 72ms]
+  ✓  assessment started
+
+→ Submit assessment report
+  PUT http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/facts [200 OK, 762B, 69ms]
+  ✓  report saved
+
+→ Approve claim
+  POST http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 1.06kB, 69ms]
+  ✓  claim approved
+
+→ Initiate payment
+  POST http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 1.06kB, 73ms]
+  ✓  payment queued
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 63ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 66ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 62ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 62ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 62ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 63ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 65ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 68ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 69ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 65ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 68ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 68ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 62ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 65ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 66ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 65ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 65ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 67ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 66ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 64ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 595B, 65ms]
+
+Attempting to set next request to Wait for outbox confirmation
+
+→ Wait for outbox confirmation
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 575B, 62ms]
+  ✓  outbox confirmed
+
+→ Close paid claim
+  POST http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/transitions [200 OK, 1.06kB, 73ms]
+  ✓  claim closed
+  ✓  terminal state
+
+→ Read final audit
+  GET http://127.0.0.1:8080/api/v1/claims/692ea07f-e7fb-4c9b-919c-8f91d2177168/audit [200 OK, 1.81kB, 7ms]
+  ✓  audit has five workflow transitions
+
+┌─────────────────────────┬──────────────────┬──────────────────┐
+│                         │         executed │           failed │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              iterations │                1 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│                requests │               34 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│            test-scripts │               34 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│      prerequest-scripts │                0 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              assertions │               14 │                0 │
+├─────────────────────────┴──────────────────┴──────────────────┤
+│ total run duration: 2.5s                                      │
+├───────────────────────────────────────────────────────────────┤
+│ total data received: 10.84kB (approx)                         │
+├───────────────────────────────────────────────────────────────┤
+│ average response time: 61ms [min: 6ms, max: 78ms, s.d.: 16ms] │
+└───────────────────────────────────────────────────────────────┘

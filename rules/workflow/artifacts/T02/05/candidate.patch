@@ -1,0 +1,36 @@
+--- a/src/test/java/com/papaya/claims/persistence/ClaimPersistenceIT.java
++++ b/src/test/java/com/papaya/claims/persistence/ClaimPersistenceIT.java
+@@ -8,6 +8,7 @@
+ import com.papaya.claims.contract.Model.OutboxMessage;
+ import java.math.BigDecimal;
+ import java.time.Instant;
++import java.time.temporal.ChronoUnit;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.UUID;
+@@ -44,6 +45,25 @@
+         harness.claims().insert(claim);
+ 
+         assertThat(harness.claims().find(claim.id())).contains(claim);
++    }
++
++    @Test
++    void persistsAndReadsBackAssessmentAndInformationTimersAtDatabasePrecision() {
++        Instant assessmentStartedAt = Instant.parse("2026-10-16T03:04:05.123456789Z");
++        Instant lastInformationRequestedAt = Instant.parse("2026-10-16T04:05:06.987654321Z");
++        ClaimSnapshot claim = new ClaimSnapshot(
++                UUID.randomUUID(), "member-001", "ASSESSMENT_IN_PROGRESS",
++                new BigDecimal("100.00"), "USD", Map.of("proof", true), 1, 3,
++                assessmentStartedAt, lastInformationRequestedAt);
++
++        harness.claims().insert(claim);
++        ClaimSnapshot persisted = harness.claims().find(claim.id()).orElseThrow();
++
++        assertThat(persisted.assessmentStartedAt())
++                .isEqualTo(assessmentStartedAt.truncatedTo(ChronoUnit.MICROS));
++        assertThat(persisted.lastInformationRequestedAt())
++                .isEqualTo(lastInformationRequestedAt.truncatedTo(ChronoUnit.MICROS));
++        assertThat(persisted).isEqualTo(claim);
+     }
+ 
+     @Test

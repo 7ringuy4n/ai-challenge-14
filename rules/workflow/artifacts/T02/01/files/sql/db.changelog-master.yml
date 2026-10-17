@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: changes/001-claims.yml
+      relativeToChangelogFile: true

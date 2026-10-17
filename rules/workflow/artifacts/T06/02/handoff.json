@@ -1,0 +1,19 @@
+{
+  "task": "T06",
+  "attempt": "02",
+  "status": "submitted",
+  "worker": "acceptance_worker",
+  "allowed_paths": [
+    "scripts/run-scenarios.sh",
+    "docs/testing/README.md"
+  ],
+  "verification": [
+    {"command": "bash scripts/run-scenarios.sh", "status": "NOT_RUN", "reason": "Coordinator owns integration execution against the running application."}
+  ],
+  "notes": [
+    "This replacement attempt is limited to the scenario runner and usage documentation. It supersedes T06/01 candidate changes to these two paths.",
+    "The script contains 14 real HTTP cases, checks expected HTTP status/error code, checks unchanged audit state on failed operations, and exports actual claim/audit responses for each completed case.",
+    "The runner assumes the current configured demo principals and existing workflow YAML. It requires the application already running and credentials from .env or environment overrides.",
+    "Java acceptance test and configuration-only extension are deferred to coordinator ownership per dispatch instruction."
+  ]
+}

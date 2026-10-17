@@ -1,0 +1,5 @@
+# T01/07 partial candidate review packet
+
+Task T01 / requirements REQ-20261017-006 through -010. Independent reviewer gpt-6-luna/medium, read-only. Candidate base hash and contract hashes are in handoff. Inspect the actual 8-file candidate patch, handoff, frozen YAML/config, contracts and AD-01 facts.
+
+Assess correctness and security of the delivered production classes. Verify patch/handoff match, loader structure and duplicate handling, transition semantics, every present guard (especially stable-ID documents, server-owned facts, info timestamps, payment, appeal), config-driven cycle behavior, role/error results, numeric exactness, microsecond handling, immutability and extension behavior. Call out compile-risk/incorrect contract assumptions with exact file/line. The task is PARTIAL by author declaration; identify whether code is safe to integrate as a reviewed foundation and list acceptance gaps. Do not run build/tests/Docker/DB/Git mutations; no edits. Return PASS/FAIL/BLOCKED, concrete criteria coverage and severity findings; do not claim acceptance or execution evidence.

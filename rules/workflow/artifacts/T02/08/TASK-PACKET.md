@@ -1,0 +1,15 @@
+# T02/08 implementation packet — PostgreSQL/MyBatis persistence
+
+Task: T02. Requirement links: REQ-20261017-006, -007, -008, -009, -010. Model: gpt-6-luna, reasoning medium. Fresh attempt; T02/07 is partial and rejected. Dependency T00 contracts are frozen including AD-01, independently PASS reviewed in `reports/sub-agents/T00/ad-01-rereview-03.md`.
+
+Contract `CH14-Contracts-v1+AD-01`; base source hash `f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af`.
+
+Read-only inputs: schema 001, master changelog, application config, frozen domain/use-case values, contracts/addendum and quality gates. Allowed patch paths: root domain ports/record already in manifest plus `ClaimAggregate.java`, `ClaimWorkflowData.java`; `claim/domain/mapper/`, `claim/domain/persistence/`, `src/main/resources/sql/service/claim/`, only `src/main/resources/db/changelog/changes/002-persistence.sql`, tests only `src/test/java/com/papaya/claims/claim/domain/persistence/`. Artifact directory only `rules/workflow/artifacts/T02/08/`. Coordinator alone includes 002 in master changelog.
+
+Implement typed `ClaimAggregate(Claim, ClaimWorkflowData)` (not API exposed) and workflow data containing cycle count, last info requested/received, assessment start, rejected and member-ack timestamps. Implement all repository ports, mapper interfaces, typed persistence rows/type handlers, XML, adapters and transaction-compatible calls. Preserve claims base schema. Add claim audit, append-only system operation audit, command/idempotency receipts, payment requests and local outbox. Use explicit columns/bound params, stable sorting, identical member predicates for page/count, optimistic CAS/locking and affected-row checks, canonical fingerprints/result replay, exact BigDecimal JSONB. No cascades from claims to audit. Migration/runtime roles distinct; runtime has least privilege; audit update/delete denied through explicit table privileges and triggers. Payment UPDATE must be column scoped to status/reference/confirmed_at; outbox UPDATE scoped to attempts/available_at/delivered_at/last_error. Do not grant broad table-wide UPDATE or default privileges. Include DB role grant verifiability.
+
+Write real PostgreSQL Testcontainers integration test sources covering claim roundtrip/page/member filter, optimistic contention/rollback, audit immutability and actual runtime grants, idempotency replay/conflict, payment/outbox retry, and exact decimal JSONB. Do not claim execution; worker cannot run builds/Docker/DB.
+
+Required coordinator command: `JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dit.test=ClaimPersistenceIT,AuditImmutabilityIT,IdempotencyIT,PaymentOutboxIT verify`.
+
+Handoff must enumerate repository/mapper signatures, schema objects and grants, contract/source hashes, paths, tests, exact NOT_RUN checks/reasons, decisions/risks and request to coordinator to add changeset include. No source/shared edits, tests/builds, Docker/DB/Git mutations or nested agents.

@@ -1,0 +1,15 @@
+Algorithm: SHA-256 over sorted repository-relative source paths. For each file hash UTF-8 path, NUL byte, exact raw file bytes, NUL byte, then hash the concatenated stream.
+src/main/java/com/papaya/claims/config/WorkflowConfiguration.java
+src/main/java/com/papaya/claims/workflow/EffectIntent.java
+src/main/java/com/papaya/claims/workflow/EffectRegistry.java
+src/main/java/com/papaya/claims/workflow/GuardEvaluator.java
+src/main/java/com/papaya/claims/workflow/WorkflowConfigLoader.java
+src/main/java/com/papaya/claims/workflow/WorkflowDecision.java
+src/main/java/com/papaya/claims/workflow/WorkflowDefinition.java
+src/main/java/com/papaya/claims/workflow/WorkflowEngine.java
+src/main/java/com/papaya/claims/workflow/WorkflowEvaluationContext.java
+src/main/java/com/papaya/claims/workflow/WorkflowEvidence.java
+src/main/java/com/papaya/claims/workflow/WorkflowOption.java
+src/test/java/com/papaya/claims/workflow/GuardEvaluatorTest.java
+src/test/java/com/papaya/claims/workflow/WorkflowConfigTest.java
+src/test/java/com/papaya/claims/workflow/WorkflowEngineTest.java

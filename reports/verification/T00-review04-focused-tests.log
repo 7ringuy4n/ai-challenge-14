@@ -1,0 +1,51 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.papaya:claims-workflow >---------------------
+[INFO] Building claims-workflow 1.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.13:prepare-agent (default) @ claims-workflow ---
+[INFO] argLine set to -javaagent:/tmp/claims-m2/org/jacoco/org.jacoco.agent/0.8.13/org.jacoco.agent-0.8.13-runtime.jar=destfile=/home/tringuyen/Documents/ai-challenge-14/target/jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ claims-workflow ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 3 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ claims-workflow ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 20 source files with javac [debug parameters release 21] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ claims-workflow ---
+[INFO] skip non existing resourceDirectory /home/tringuyen/Documents/ai-challenge-14/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ claims-workflow ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 6 source files with javac [debug parameters release 21] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ claims-workflow ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.papaya.claims.config.ResourceContractTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.314 s -- in com.papaya.claims.config.ResourceContractTest
+[INFO] Running com.papaya.claims.claim.api.dto.TransitionResultViewTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.066 s -- in com.papaya.claims.claim.api.dto.TransitionResultViewTest
+[INFO] Running com.papaya.claims.claim.api.dto.CreateClaimRequestValidationTest
+08:12:22.691 [main] INFO org.hibernate.validator.internal.util.Version -- HV000001: Hibernate Validator 8.0.3.Final
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.620 s -- in com.papaya.claims.claim.api.dto.CreateClaimRequestValidationTest
+[INFO] Running com.papaya.claims.claim.api.dto.ClaimViewTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.022 s -- in com.papaya.claims.claim.api.dto.ClaimViewTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.542 s
+[INFO] Finished at: 2026-10-17T08:12:23+07:00
+[INFO] ------------------------------------------------------------------------

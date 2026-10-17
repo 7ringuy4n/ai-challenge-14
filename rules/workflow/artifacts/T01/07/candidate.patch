@@ -1,0 +1,187 @@
+diff --git a/src/main/java/com/papaya/claims/workflow/GuardEvaluator.java b/src/main/java/com/papaya/claims/workflow/GuardEvaluator.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/workflow/GuardEvaluator.java
+@@ -0,0 +1,33 @@
++package com.papaya.claims.workflow;
++
++import java.math.BigDecimal;
++import java.time.Instant;
++import java.util.Map;
++
++public final class GuardEvaluator {
++    public boolean passes(String id, WorkflowEvaluationContext c) {
++        Map<String,Object> f=c.claim().facts().values(); WorkflowEvidence e=c.evidence();
++        return switch(id) {
++            case "all_required_documents_present" -> documentsValid(f);
++            case "assessor_assigned" -> nonblank(f.get("assessorId"));
++            case "assessment_report_complete" -> nonblank(f.get("assessmentReport"));
++            case "amount_within_policy_limit" -> amountWithin(f.get("requestedAmount"), c.claim().policyLimit());
++            case "rejection_reason_present" -> nonblank(c.command().reason());
++            case "information_description_present" -> nonblank(c.command().reason());
++            case "new_information_received" -> e.informationRequestedAt()!=null && e.informationReceivedAt()!=null && e.informationReceivedAt().isAfter(e.informationRequestedAt());
++            case "payment_request_exists" -> e.paymentRequestCreatedAt()!=null;
++            case "payment_confirmed" -> e.paymentConfirmedAt()!=null && nonblank(e.paymentReference());
++            case "appeal_period_expired_or_member_acknowledged" -> e.memberAcknowledgedAt()!=null || (e.rejectionAt()!=null && !c.now().isBefore(e.rejectionAt().plus(c.appealPeriod())));
++            default -> false;
++        };
++    }
++    private static boolean nonblank(Object o) { return o instanceof String s && !s.isBlank(); }
++    private static boolean amountWithin(Object o, BigDecimal limit) { if (!(o instanceof BigDecimal b)) return false; return b.signum()>=0 && b.compareTo(limit)<=0; }
++    private static boolean documentsValid(Map<String,Object> f) {
++        Object raw=f.get("documents"); if (!(raw instanceof Map<?,?> docs) || docs.isEmpty()) return false;
++        for (var entry:docs.entrySet()) {
++            if (!(entry.getKey() instanceof String id) || id.isBlank() || !(entry.getValue() instanceof Map<?,?> d)) return false;
++            if (Boolean.TRUE.equals(d.get("required")) && !(Boolean.TRUE.equals(d.get("present")) && Boolean.TRUE.equals(d.get("valid")))) return false;
++        } return true;
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/workflow/WorkflowConfigLoader.java b/src/main/java/com/papaya/claims/workflow/WorkflowConfigLoader.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/workflow/WorkflowConfigLoader.java
+@@ -0,0 +1,30 @@
++package com.papaya.claims.workflow;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
++import java.io.IOException;
++import java.io.InputStream;
++import java.util.*;
++
++public final class WorkflowConfigLoader {
++    private final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
++    public WorkflowDefinition load(InputStream input) {
++        try {
++            Map<?,?> root=mapper.readValue(input, Map.class); Map<?,?> w=map(root.get("workflow"),"workflow");
++            Set<String> states=new LinkedHashSet<>(strings(w.get("states"),"states")); if(states.size()!=strings(w.get("states"),"states").size()) throw bad("Duplicate states");
++            Map<String,String> guards=new LinkedHashMap<>(); map(w.get("guard-catalog"),"guard-catalog").forEach((k,v)->guards.put(text(k),text(map(v,"guard").get("failure-message"))));
++            Map<String,String> effects=new LinkedHashMap<>(); map(w.get("effect-catalog"),"effect-catalog").forEach((k,v)->effects.put(text(k),text(v)));
++            List<WorkflowDefinition.Transition> ts=new ArrayList<>(); Set<String> ids=new HashSet<>(); Set<String> edges=new HashSet<>();
++            for(Object o:(List<?>)w.get("transitions")) { Map<?,?> t=map(o,"transition"); String id=text(t.get("id")), from=text(t.get("from")), to=text(t.get("to"));
++                if(!ids.add(id)||!edges.add(from+"\u0000"+to)) throw bad("Duplicate transition id or edge"); if(!states.contains(from)||!states.contains(to)) throw bad("Dangling transition state");
++                List<String> gs=strings(t.get("guards"),"guards"), es=strings(t.get("effects"),"effects"); if(!guards.keySet().containsAll(gs)||!effects.keySet().containsAll(es)) throw bad("Unknown guard or effect");
++                ts.add(new WorkflowDefinition.Transition(id,from,to,new HashSet<>(strings(t.get("authorized-roles"),"authorized-roles")),gs,es)); }
++            Map<?,?> cp=map(w.get("cycle-policy"),"cycle-policy"); int max=((Number)cp.get("maximum")).intValue();
++            return new WorkflowDefinition(text(w.get("version")),text(w.get("initial-state")),states,ts,guards,effects,max,text(cp.get("error-message")));
++        } catch(IOException|ClassCastException|NullPointerException ex) { throw new IllegalArgumentException("Invalid workflow configuration",ex); }
++    }
++    private static Map<?,?> map(Object x,String label){if(!(x instanceof Map<?,?> m))throw bad("Missing/invalid "+label);return m;}
++    private static List<String> strings(Object x,String label){if(!(x instanceof List<?> l))throw bad("Missing/invalid "+label);return l.stream().map(WorkflowConfigLoader::text).toList();}
++    private static String text(Object x){if(!(x instanceof String s)||s.isBlank())throw bad("Expected nonblank string");return s;}
++    private static IllegalArgumentException bad(String m){return new IllegalArgumentException(m);}
++}
+diff --git a/src/main/java/com/papaya/claims/workflow/WorkflowDecision.java b/src/main/java/com/papaya/claims/workflow/WorkflowDecision.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/workflow/WorkflowDecision.java
+@@ -0,0 +1,12 @@
++package com.papaya.claims.workflow;
++
++import java.util.List;
++
++public record WorkflowDecision(boolean allowed, String transitionId, String from, String to,
++                               String failureCode, String failureMessage, List<String> effects,
++                               List<WorkflowOption> availableTransitions) {
++    public WorkflowDecision { effects = List.copyOf(effects); availableTransitions = List.copyOf(availableTransitions); }
++    public static WorkflowDecision denied(String code, String message, List<WorkflowOption> available) {
++        return new WorkflowDecision(false, null, null, null, code, message, List.of(), available);
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/workflow/WorkflowDefinition.java b/src/main/java/com/papaya/claims/workflow/WorkflowDefinition.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/workflow/WorkflowDefinition.java
+@@ -0,0 +1,14 @@
++package com.papaya.claims.workflow;
++
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++
++public record WorkflowDefinition(String version, String initialState, Set<String> states,
++        List<Transition> transitions, Map<String,String> guardMessages, Map<String,String> effects,
++        int cycleLimit, String cycleFailureMessage) {
++    public WorkflowDefinition { states=Set.copyOf(states); transitions=List.copyOf(transitions); guardMessages=Map.copyOf(guardMessages); effects=Map.copyOf(effects); }
++    public record Transition(String id, String from, String to, Set<String> roles, List<String> guards, List<String> effects) {
++        public Transition { roles=Set.copyOf(roles); guards=List.copyOf(guards); effects=List.copyOf(effects); }
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/workflow/WorkflowEngine.java b/src/main/java/com/papaya/claims/workflow/WorkflowEngine.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/workflow/WorkflowEngine.java
+@@ -0,0 +1,17 @@
++package com.papaya.claims.workflow;
++
++import java.util.List;
++
++public final class WorkflowEngine {
++    private final WorkflowDefinition definition; private final GuardEvaluator guards;
++    public WorkflowEngine(WorkflowDefinition definition, GuardEvaluator guards) { this.definition=definition; this.guards=guards; }
++    public List<WorkflowOption> available(WorkflowEvaluationContext c) { return definition.transitions().stream().filter(t->t.from().equals(c.claim().state())).map(t->new WorkflowOption(t.id(),t.from(),t.to(),t.effects())).toList(); }
++    public WorkflowDecision evaluate(WorkflowEvaluationContext c) {
++        List<WorkflowOption> opts=available(c); WorkflowDefinition.Transition t=definition.transitions().stream().filter(x->x.from().equals(c.claim().state())&&x.to().equals(c.command().targetState())).findFirst().orElse(null);
++        if(t==null) return WorkflowDecision.denied("INVALID_EDGE","No transition exists from current state to requested state",opts);
++        if(!t.roles().stream().anyMatch(c.actor()::hasRole)) return WorkflowDecision.denied("ROLE_FORBIDDEN","Actor is not authorized for this transition",opts);
++        for(String g:t.guards()) if(!guards.passes(g,c)) return WorkflowDecision.denied("GUARD_FAILED",definition.guardMessages().get(g),opts);
++        if(t.id().equals("request-information") && c.evidence().informationCycleCount()>=definition.cycleLimit()) return WorkflowDecision.denied("CYCLE_LIMIT",definition.cycleFailureMessage(),opts);
++        return new WorkflowDecision(true,t.id(),t.from(),t.to(),null,null,t.effects(),opts);
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/workflow/WorkflowEvaluationContext.java b/src/main/java/com/papaya/claims/workflow/WorkflowEvaluationContext.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/workflow/WorkflowEvaluationContext.java
+@@ -0,0 +1,17 @@
++package com.papaya.claims.workflow;
++
++import com.papaya.claims.claim.domain.Actor;
++import com.papaya.claims.claim.domain.Claim;
++import com.papaya.claims.claim.domain.TransitionCommand;
++import java.time.Duration;
++import java.time.Instant;
++import java.util.Objects;
++
++public record WorkflowEvaluationContext(Claim claim, Actor actor, TransitionCommand command,
++        WorkflowEvidence evidence, Instant now, Duration appealPeriod) {
++    public WorkflowEvaluationContext {
++        Objects.requireNonNull(claim); Objects.requireNonNull(actor); Objects.requireNonNull(command);
++        Objects.requireNonNull(evidence); now = Objects.requireNonNull(now).truncatedTo(java.time.temporal.ChronoUnit.MICROS);
++        Objects.requireNonNull(appealPeriod);
++    }
++}
+diff --git a/src/main/java/com/papaya/claims/workflow/WorkflowEvidence.java b/src/main/java/com/papaya/claims/workflow/WorkflowEvidence.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/workflow/WorkflowEvidence.java
+@@ -0,0 +1,17 @@
++package com.papaya.claims.workflow;
++
++import java.time.Instant;
++
++/** Trusted server supplied evidence. Never construct this record from client supplied facts. */
++public record WorkflowEvidence(int informationCycleCount, Instant informationRequestedAt,
++        Instant informationReceivedAt, Instant paymentRequestCreatedAt, Instant paymentConfirmedAt,
++        String paymentReference, Instant rejectionAt, Instant memberAcknowledgedAt) {
++    public WorkflowEvidence {
++        informationRequestedAt = micros(informationRequestedAt); informationReceivedAt = micros(informationReceivedAt);
++        paymentRequestCreatedAt = micros(paymentRequestCreatedAt); paymentConfirmedAt = micros(paymentConfirmedAt);
++        rejectionAt = micros(rejectionAt); memberAcknowledgedAt = micros(memberAcknowledgedAt);
++        if (informationCycleCount < 0) throw new IllegalArgumentException("Cycle count cannot be negative");
++    }
++    private static Instant micros(Instant value) { return value == null ? null : value.truncatedTo(java.time.temporal.ChronoUnit.MICROS); }
++    public static WorkflowEvidence empty() { return new WorkflowEvidence(0,null,null,null,null,null,null,null); }
++}
+diff --git a/src/main/java/com/papaya/claims/workflow/WorkflowOption.java b/src/main/java/com/papaya/claims/workflow/WorkflowOption.java
+new file mode 100644
+--- /dev/null
++++ b/src/main/java/com/papaya/claims/workflow/WorkflowOption.java
+@@ -0,0 +1,7 @@
++package com.papaya.claims.workflow;
++
++import java.util.List;
++
++public record WorkflowOption(String transitionId, String from, String to, List<String> effects) {
++    public WorkflowOption { effects = List.copyOf(effects); }
++}

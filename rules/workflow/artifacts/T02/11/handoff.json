@@ -1,0 +1,64 @@
+{
+  "task": "T02",
+  "attempt": "11",
+  "requirements": ["REQ-20261017-006", "REQ-20261017-007", "REQ-20261017-008", "REQ-20261017-009", "REQ-20261017-010"],
+  "contract": "CH14-Contracts-v1+AD-01",
+  "domain_port_aggregate_sha256": "5a8e761cc5ed3578cc05b5f12755047c7bd4359d45e1e724aa9cc56dd378ef89",
+  "status": "PARTIAL",
+  "candidate_patch": "rules/workflow/artifacts/T02/11/candidate.patch",
+  "patch_paths": [
+    "src/main/java/com/papaya/claims/claim/domain/mapper/AuditMapper.java",
+    "src/main/java/com/papaya/claims/claim/domain/mapper/ClaimMapper.java",
+    "src/main/java/com/papaya/claims/claim/domain/mapper/EffectsMapper.java",
+    "src/main/java/com/papaya/claims/claim/domain/mapper/ReceiptMapper.java",
+    "src/main/java/com/papaya/claims/claim/domain/mapper/SystemAuditMapper.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/AuditRow.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/ClaimRow.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/OutboxRow.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/PaymentRow.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/ReceiptRow.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/SystemAuditRow.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/PersistenceMapping.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisClaimRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisClaimAuditRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisSystemOperationAuditRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisIdempotencyRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisPaymentRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/MyBatisOutboxRepository.java",
+    "src/main/resources/sql/service/claim/AuditMapper.xml",
+    "src/main/resources/sql/service/claim/ClaimMapper.xml",
+    "src/main/resources/sql/service/claim/EffectsMapper.xml",
+    "src/main/resources/sql/service/claim/ReceiptMapper.xml",
+    "src/main/resources/sql/service/claim/SystemAuditMapper.xml",
+    "src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java"
+  ],
+  "implementation": {
+    "adapters": ["ClaimRepository", "ClaimAuditRepository", "SystemOperationAuditRepository", "IdempotencyRepository", "PaymentRepository", "OutboxRepository"],
+    "details": [
+      "Repositories are Spring components using MyBatis mappers and the application ObjectMapper; no adapter starts or commits a transaction.",
+      "Claim update SQL compares the expected version and increments the stored version; visible-member page and count share the member_id predicate and deterministic created_at/id ordering.",
+      "Audit statements only insert/read, with stable sequence/id ordering; database immutability triggers/grants remain required.",
+      "Outbox claim uses a PostgreSQL UPDATE CTE with FOR UPDATE SKIP LOCKED and a 30-second lease; retry errors are capped to the schema's 240-character field.",
+      "Receipt inserts preserve the JSON result and surface unique-key violations to the service; fingerprint comparison/replay policy remains service composition.",
+      "JSON values are passed through the configured Jackson ObjectMapper and JSONB text casts; application.yml enables BigDecimal float deserialization."
+    ],
+    "transaction_composition": "The application use-case service must be a Spring-managed @Transactional boundary around claim mutation, claim/system audit inserts, receipt insertion, payment request and outbox enqueue. Use the same DataSourceTransactionManager/MyBatis SqlSessionFactory so these mapper calls join that transaction; do not call repositories through unmanaged sessions. Unique receipt conflicts must be caught/re-read only after rollback or via a deliberate savepoint strategy, then compare fingerprint and return the stored result."
+  },
+  "verification": {
+    "patch_scope_review": "PASS: all 24 diff headers target only packet-approved mapper, persistence, SQL-resource or persistence-test paths; each proposed SQL statement was inspected for bound values and schema alignment.",
+    "git_apply_check": {"status": "PASS", "command": "git apply --check rules/workflow/artifacts/T02/11/candidate.patch", "exit_code": 0},
+    "runtime_command": {
+      "status": "NOT_RUN",
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dit.test=ClaimPersistenceIT,AuditImmutabilityIT,IdempotencyIT,PaymentOutboxIT verify",
+      "reason": "Worker protocol prohibits builds/tests, Docker and database operations; coordinator must run this command."
+    },
+    "compile": {"status": "NOT_RUN", "reason": "Worker protocol prohibits builds/tests."}
+  },
+  "limitations": [
+    "Only ClaimPersistenceIT is supplied; dedicated AuditImmutabilityIT, IdempotencyIT and PaymentOutboxIT sources are missing, so this handoff is PARTIAL.",
+    "Payment creation/confirmation, independent concurrent SKIP LOCKED behavior, append-only role enforcement and unique-conflict replay races have not been covered by the supplied integration test source or executed.",
+    "No build, test, Docker or database command was run; XML dialect, Spring context wiring and Java compilation remain unverified.",
+    "Outbox lease duration is currently fixed at 30 seconds in the mapper SQL and requires coordinator review against dispatch timing/configuration."
+  ],
+  "audit": {"host_managed_payloads": "NOT_CAPTURED", "trace_status": "PARTIAL"}
+}

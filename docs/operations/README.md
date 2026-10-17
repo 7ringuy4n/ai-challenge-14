@@ -1,0 +1,19 @@
+# Operations
+
+## Local runtime
+
+Use Java 21, Maven 3.9.11, Docker Compose, and `bash scripts/setup.sh`. The setup creates an ignored mode-0600 `.env` when needed, applies database schema changes, and starts the app, PostgreSQL 16, and the OpenTelemetry Collector. Credentials are generated from `.env.example` inputs; do not commit `.env`. The app binds to loopback by default and fails closed on blank/placeholder credentials. Database bootstrap, migration owner, and restricted runtime roles remain separate.
+
+The app exports OTLP traces to the Compose collector (`docker/otel-collector.yml`). The Collector currently uses the debug exporter for local verification; this is a development evidence setup, not a persistent production trace backend. The application defaults to 100% sampling locally (`management.tracing.sampling.probability=1.0`). Adjust sampling and exporter endpoints for deployment policy. The app/collector use the same Compose network; the app endpoint is configurable through `OTEL_EXPORTER_OTLP_ENDPOINT`.
+
+## Runtime behavior
+
+Mutations write claim state, claim audit, system audit, idempotency receipt, payment, and outbox evidence in a PostgreSQL transaction. The outbox dispatcher leases due work after commit, creates a child span using the persisted W3C traceparent, and records delivery/retry state. This challenge build uses only mock effect delivery. Correlation ID remains a separate bounded value; HTTP request logs include correlation ID plus validated inbound trace/parent IDs. Outbox logs include active trace/span IDs.
+
+Public health output hides details. Other actuator routes, including Prometheus, require authentication. Do not expose debug collector output on an untrusted network.
+
+## Verification evidence and limits
+
+The latest full clean quality run passed 127 unit and 9 PostgreSQL/Testcontainers tests; six Liquibase changesets applied and JaCoCo passed at 97.0195% line / 90.2326% branch. The combined 29-case live API matrix, 17-case Chrome UI flow, 7-case two-member isolation check, smoke, and Postman collection have current evidence. The 06:39 application logs correlate the HTTP request and both asynchronous outbox deliveries under trace `d5fdcf613e4a47189047a2bcd20df302`, with delivery span IDs preserved in [`current-run application trace log`](../../reports/verification/REQ-017-final-live/application-trace.log). Collector-exported HTTP/server/security/outbox parent-child spans were verified separately in an earlier run, trace `45166d4eef3241f3b8f4227f3b270db3`; that evidence is not from the 06:39 run ([earlier trace verification](../../reports/telemetry/REQ-017-trace-verification.json)). Seven final-source JMeter profiles ran on commit 0435e1b; six passed, while the 500-user stress run failed P95 at 564 ms against the 500 ms target. A default repeat also missed. Diagnostic pool/thread changes worsened results; keep documented defaults. A controlled dedicated benchmark environment is needed. See [`docs/testing/README.md`](../testing/README.md), [`reports/verification/REQ-017-current.json`](../../reports/verification/REQ-017-current.json), and [`final acceptance evidence`](../../reports/acceptance/FINAL-ACCEPTANCE.md).
+
+Docker socket and loopback access are restricted in the default sandbox. Approved escalated invocations were used; permissions and daemon settings were not changed. The final-source performance suite has run; stress acceptance remains failed and requires a controlled dedicated benchmark. The current local session audit covers 65 sessions and 8,483 accessible message/tool records; the interaction ledger has 101 rows and 60 IDs. Host-managed raw LLM payloads remain `NOT_CAPTURED`, with audit status `PARTIAL`; full historical capture is a mandatory merge gate. The project remains in progress and not accepted; the full host-managed LLM payload condition also remains blocked.

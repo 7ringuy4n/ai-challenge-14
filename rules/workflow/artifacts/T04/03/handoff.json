@@ -1,0 +1,51 @@
+{
+  "task": "T04",
+  "attempt": "03",
+  "author_role": "implementation_worker",
+  "status": "submitted",
+  "base_contract_sha256": "803c9cd982a7ee393a64b7b6965091cd68dc1bd9573f3a86e9fc5db40c58815f",
+  "packet_sha256": "130498457ac46ab7dbe12cb152888fad128495e636044d119c1d51e6f90c8a3e",
+  "artifact": "rules/workflow/artifacts/T04/03/candidate.patch",
+  "draft_files": [
+    "src/main/java/com/papaya/claims/application/ClaimService.java",
+    "src/main/java/com/papaya/claims/application/EffectDispatcher.java",
+    "src/main/java/com/papaya/claims/application/MockEffectFactory.java",
+    "src/main/java/com/papaya/claims/configuration/WorkflowConfiguration.java",
+    "src/main/java/com/papaya/claims/observability/TraceContextFilter.java",
+    "src/main/java/com/papaya/claims/security/AuthenticatedActors.java",
+    "src/main/java/com/papaya/claims/security/SecurityConfiguration.java",
+    "src/test/java/com/papaya/claims/application/EffectDispatcherTest.java",
+    "src/test/java/com/papaya/claims/application/FactAuthorizationTest.java",
+    "src/test/java/com/papaya/claims/application/FactoryStrategyTest.java",
+    "src/test/java/com/papaya/claims/application/IdempotencyTest.java",
+    "src/test/java/com/papaya/claims/application/InputValidationTest.java",
+    "src/test/java/com/papaya/claims/application/TransitionAtomicityIT.java",
+    "src/test/java/com/papaya/claims/application/TransitionConcurrencyIT.java",
+    "src/test/java/com/papaya/claims/application/TransitionServiceTest.java",
+    "src/test/java/com/papaya/claims/security/RoleAuthorizationTest.java"
+  ],
+  "verification": [
+    {
+      "command": "mvn -B -Dtest=TransitionServiceTest,RoleAuthorizationTest,IdempotencyTest,FactAuthorizationTest,EffectDispatcherTest,FactoryStrategyTest,InputValidationTest test",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol prohibits builds; coordinator runs checks after serial integration."
+    },
+    {
+      "command": "mvn -B -Dit.test=TransitionAtomicityIT,TransitionConcurrencyIT verify",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol prohibits Docker/database/build operations; coordinator runs these on real PostgreSQL after integration."
+    }
+  ],
+  "implementation_notes": [
+    "Attempt 03 is a full set of new T04 source/test additions against current root; it does not depend on or patch attempt 01/02.",
+    "ClaimService never calls EffectDispatcher. It atomically writes the business claim, audit, synchronous payment request, receipt, and outbox. Only the scheduled dispatcher polls committed rows; it rejects invocation in an ambient transaction, reads ready rows in REQUIRES_NEW, sends outside the database transaction, and marks delivered/failed in separate REQUIRES_NEW transactions.",
+    "TransitionAtomicityIT adds a real PostgreSQL enclosing-transaction rollback regression: it observes the pending message inside the outer transaction, rolls back, then asserts no state/audit/receipt/outbox remains and that scheduled polling does not call the effect strategy.",
+    "Member transition options are returned from the configured engine; ClaimService no longer blanket-denies member transitions, leaving configured role enforcement to the engine while preserving claim ownership checks.",
+    "Idempotency request hashes include actor role; a same-user receipt requested under a changed role conflicts instead of returning a saved result.",
+    "The attempt 02 trace/config/validation repairs are retained, with lifecycle-specific fact-edit policy, system transitions delegated to configured edges, and terminal fact mutation detected from empty engine outgoing options."
+  ],
+  "shared_config_requests": [],
+  "known_limits": [
+    "All builds, PostgreSQL checks, and independent review remain NOT_RUN; no execution evidence is claimed."
+  ]
+}

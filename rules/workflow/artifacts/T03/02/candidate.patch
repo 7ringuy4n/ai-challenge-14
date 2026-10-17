@@ -1,0 +1,51 @@
+--- a/scripts/setup.sh
++++ b/scripts/setup.sh
+@@ -72,8 +72,14 @@
+ os.chmod(path, 0o600)
+ PY
+ 
+-# Validate interpolation before building. This is a local provisioning command;
+-# it intentionally does not run Maven tests or scenario checks.
++# Reconcile the local database credentials before starting the application. Compose
++# updates the DB container environment while retaining its named data volume. The
++# reconciliation runs over the container's trusted local socket and emits no secrets.
+ docker compose --env-file .env -f docker/compose.yml config --quiet
+-docker compose --env-file .env -f docker/compose.yml up -d --build --wait
++docker compose --env-file .env -f docker/compose.yml up -d --wait db
++docker compose --env-file .env -f docker/compose.yml exec -T db sh /opt/claims/reconcile-roles.sh
++
++# Provision/build the app only after current database credentials are installed.
++# This does not run Maven tests or scenario checks.
++docker compose --env-file .env -f docker/compose.yml up -d --build --wait app
+ printf 'Local claims services are healthy. Run bash scripts/smoke.sh for the HTTP smoke check.\n'
+--- a/docker/compose.yml
++++ b/docker/compose.yml
+@@ -11,6 +11,7 @@
+     volumes:
+       - claims_challenge14_postgres_data:/var/lib/postgresql/data
+       - ./initdb/10-create-runtime-role.sh:/docker-entrypoint-initdb.d/10-create-runtime-role.sh:ro
++      - ./initdb/reconcile-roles.sh:/opt/claims/reconcile-roles.sh:ro
+     healthcheck:
+       test: ["CMD-SHELL", "pg_isready -U claims_owner -d claims"]
+       interval: 5s
+--- /dev/null
++++ b/docker/initdb/reconcile-roles.sh
+@@ -0,0 +1,18 @@
++#!/bin/sh
++set -eu
++
++: "${DB_PASSWORD:?DB_PASSWORD must be provided by Compose}"
++: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be provided by Compose}"
++
++# Local socket authentication is managed by the official Postgres image. Bind both
++# current secrets as psql variables so values never become executable SQL or output.
++psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
++  --set=runtime_password="$DB_PASSWORD" \
++  --set=migration_password="$POSTGRES_PASSWORD" \
++  --set=ON_ERROR_STOP=1 <<'SQL'
++SELECT format('CREATE ROLE claims_app LOGIN PASSWORD %L', :'runtime_password')
++WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'claims_app')
++\gexec
++ALTER ROLE claims_app PASSWORD :'runtime_password';
++ALTER ROLE claims_owner PASSWORD :'migration_password';
++SQL

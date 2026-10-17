@@ -1,0 +1,287 @@
+diff --git a/src/test/java/com/papaya/claims/claim/domain/persistence/AuditImmutabilityIT.java b/src/test/java/com/papaya/claims/claim/domain/persistence/AuditImmutabilityIT.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/claim/domain/persistence/AuditImmutabilityIT.java
+@@ -0,0 +1,31 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.List;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++
++class AuditImmutabilityIT extends PersistenceITSupport {
++    @Test
++    void runtimeCannotUpdateOrDeleteEitherAuditTable() throws Exception {
++        try (var connection = runtime()) {
++            UUID claimId = insertClaim(connection);
++            insertAuditRows(connection, claimId);
++            for (String table : List.of("claim_audit", "system_operation_audit")) {
++                for (String operation : List.of("UPDATE", "DELETE")) {
++                    String sql = table.equals("claim_audit")
++                            ? operation + " " + table + " SET reason='rewritten' WHERE claim_id='" + claimId + "'"
++                            : operation + " " + table + " WHERE resource_id='" + claimId + "'";
++                    var failure = org.assertj.core.api.Assertions.catchThrowable(() -> {
++                        try (var statement = connection.createStatement()) { statement.executeUpdate(sql); }
++                    });
++                    assertThat(failure).as(table + " " + operation).isNotNull();
++                }
++            }
++            try (var statement = connection.createStatement(); var rows = statement.executeQuery("SELECT (SELECT count(*) FROM claim_audit),(SELECT count(*) FROM system_operation_audit)")) {
++                assertThat(rows.next()).isTrue(); assertThat(rows.getLong(1)).isEqualTo(1); assertThat(rows.getLong(2)).isEqualTo(1);
++            }
++        }
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java b/src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/claim/domain/persistence/ClaimPersistenceIT.java
+@@ -0,0 +1,73 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.sql.ResultSet;
++import org.junit.jupiter.api.Test;
++
++class ClaimPersistenceIT extends PersistenceITSupport {
++    @Test
++    void migrationOwnerIsRestrictedSchemaOwnerAndRuntimeCannotCreateObjects() throws Exception {
++        try (var connection = runtime(); var statement = connection.createStatement();
++             ResultSet roles = statement.executeQuery("SELECT rolname, rolsuper, rolcreatedb, rolcreaterole FROM pg_roles WHERE rolname IN ('claims_migration','claims_runtime') ORDER BY rolname")) {
++            assertThat(roles.next()).isTrue();
++            assertThat(roles.getString("rolname")).isEqualTo("claims_migration");
++            assertThat(roles.getBoolean("rolsuper")).isFalse();
++            assertThat(roles.getBoolean("rolcreatedb")).isFalse();
++            assertThat(roles.getBoolean("rolcreaterole")).isFalse();
++            assertThat(roles.next()).isTrue();
++            assertThat(roles.getString("rolname")).isEqualTo("claims_runtime");
++            assertThat(roles.getBoolean("rolsuper")).isFalse();
++            assertThat(roles.getBoolean("rolcreatedb")).isFalse();
++            assertThat(roles.getBoolean("rolcreaterole")).isFalse();
++            assertThat(roles.next()).isFalse();
++        }
++        try (var connection = runtime(); var statement = connection.createStatement()) {
++            try (ResultSet privileges = statement.executeQuery("SELECT has_schema_privilege('claims_migration','public','USAGE'), has_schema_privilege('claims_migration','public','CREATE'), has_schema_privilege('claims_runtime','public','USAGE'), has_schema_privilege('claims_runtime','public','CREATE')")) {
++                assertThat(privileges.next()).isTrue();
++                assertThat(privileges.getBoolean(1)).isTrue(); assertThat(privileges.getBoolean(2)).isTrue();
++                assertThat(privileges.getBoolean(3)).isTrue(); assertThat(privileges.getBoolean(4)).isFalse();
++            }
++            var failure = org.assertj.core.api.Assertions.catchThrowable(() -> statement.execute("CREATE TABLE runtime_must_not_create(id integer)"));
++            assertThat(failure).isNotNull();
++        }
++    }
++
++    @Test
++    void compareAndSetMappingDoesNotSetImmutableAggregateFields() throws Exception {
++        try (var mapper = getClass().getClassLoader().getResourceAsStream("sql/service/claim/ClaimMapper.xml")) {
++            assertThat(mapper).as("ClaimMapper.xml must be packaged for persistence tests").isNotNull();
++            String xml = new String(mapper.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
++            String update = xml.substring(xml.indexOf("<update id=\"compareAndSet\">"), xml.indexOf("</update>", xml.indexOf("<update id=\"compareAndSet\">")));
++            assertThat(update).doesNotContain("member_id", "policy_limit", "currency");
++        }
++    }
++
++    @Test
++    void runtimeCanCreateAndReadClaimButCannotRewriteIdentityOrCoverage() throws Exception {
++        try (var connection = runtime()) {
++            var id = insertClaim(connection);
++            try (var read = connection.prepareStatement("SELECT member_id, policy_limit, currency FROM claims WHERE id=?")) {
++                read.setObject(1, id);
++                try (var row = read.executeQuery()) {
++                    assertThat(row.next()).isTrue();
++                    assertThat(row.getString(1)).isEqualTo("member-1");
++                    assertThat(row.getBigDecimal(2)).isEqualByComparingTo("125.00");
++                    assertThat(row.getString(3).trim()).isEqualTo("USD");
++                }
++            }
++            try (var update = connection.prepareStatement("UPDATE claims SET state='assessing', version=version+1 WHERE id=?")) {
++                update.setObject(1, id); assertThat(update.executeUpdate()).isEqualTo(1);
++            }
++            try (var read = connection.prepareStatement("SELECT member_id, policy_limit, currency FROM claims WHERE id=?")) {
++                read.setObject(1, id);
++                try (var row = read.executeQuery()) {
++                    assertThat(row.next()).isTrue();
++                    assertThat(row.getString(1)).isEqualTo("member-1");
++                    assertThat(row.getBigDecimal(2)).isEqualByComparingTo("125.00");
++                    assertThat(row.getString(3).trim()).isEqualTo("USD");
++                }
++            }
++        }
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/claim/domain/persistence/IdempotencyIT.java b/src/test/java/com/papaya/claims/claim/domain/persistence/IdempotencyIT.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/claim/domain/persistence/IdempotencyIT.java
+@@ -0,0 +1,33 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.sql.SQLException;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++
++class IdempotencyIT extends PersistenceITSupport {
++    @Test
++    void uniqueActorScopeKeyPreservesExactFingerprintAndJsonResult() throws Exception {
++        String fingerprint = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
++        String result = "{\"claimId\":\"" + UUID.randomUUID() + "\",\"state\":\"approved\",\"version\":7}";
++        try (var connection = runtime(); var insert = connection.prepareStatement("INSERT INTO command_receipts(id,actor_id,scope,idempotency_key,fingerprint,result_json) VALUES(?,?,?,?,?,?::jsonb)")) {
++            UUID id = UUID.randomUUID();
++            insert.setObject(1, id); insert.setString(2, "actor-1"); insert.setString(3, "claim.transition"); insert.setString(4, "request-1"); insert.setString(5, fingerprint); insert.setString(6, result);
++            assertThat(insert.executeUpdate()).isEqualTo(1);
++            try (var read = connection.prepareStatement("SELECT fingerprint, result_json = ?::jsonb AS same_result, result_json::text FROM command_receipts WHERE actor_id=? AND scope=? AND idempotency_key=?")) {
++                read.setString(1, result); read.setString(2, "actor-1"); read.setString(3, "claim.transition"); read.setString(4, "request-1");
++                try (var row = read.executeQuery()) {
++                    assertThat(row.next()).isTrue(); assertThat(row.getString(1)).isEqualTo(fingerprint);
++                    assertThat(row.getBoolean(2)).isTrue(); assertThat(row.getString(3)).contains("approved").contains("\"version\": 7");
++                }
++            }
++            var duplicate = org.assertj.core.api.Assertions.catchThrowable(() -> insert.executeUpdate());
++            assertThat(duplicate).isInstanceOf(SQLException.class);
++            try (var count = connection.prepareStatement("SELECT count(*) FROM command_receipts WHERE actor_id=? AND scope=? AND idempotency_key=?")) {
++                count.setString(1, "actor-1"); count.setString(2, "claim.transition"); count.setString(3, "request-1");
++                try (var rows = count.executeQuery()) { assertThat(rows.next()).isTrue(); assertThat(rows.getLong(1)).isEqualTo(1); }
++            }
++        }
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/claim/domain/persistence/PaymentOutboxIT.java b/src/test/java/com/papaya/claims/claim/domain/persistence/PaymentOutboxIT.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/claim/domain/persistence/PaymentOutboxIT.java
+@@ -0,0 +1,59 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.time.Instant;
++import java.util.UUID;
++import org.junit.jupiter.api.Test;
++
++class PaymentOutboxIT extends PersistenceITSupport {
++    @Test
++    void runtimePersistsAndConfirmsPaymentRequest() throws Exception {
++        try (var connection = runtime()) {
++            UUID claimId = insertClaim(connection);
++            UUID requestId = UUID.randomUUID();
++            try (var insert = connection.prepareStatement("INSERT INTO payment_requests(id,claim_id,request_id,currency,amount) VALUES(?,?,?,'USD',125.00)")) {
++                insert.setObject(1, UUID.randomUUID()); insert.setObject(2, claimId); insert.setObject(3, requestId);
++                assertThat(insert.executeUpdate()).isEqualTo(1);
++            }
++            try (var exists = connection.prepareStatement("SELECT EXISTS(SELECT 1 FROM payment_requests WHERE claim_id=?)")) {
++                exists.setObject(1, claimId); try (var row = exists.executeQuery()) { assertThat(row.next()).isTrue(); assertThat(row.getBoolean(1)).isTrue(); }
++            }
++            try (var confirm = connection.prepareStatement("UPDATE payment_requests SET status='CONFIRMED',reference=?,confirmed_at=clock_timestamp() WHERE claim_id=? AND status='REQUESTED'")) {
++                confirm.setString(1, "PAY-123"); confirm.setObject(2, claimId); assertThat(confirm.executeUpdate()).isEqualTo(1);
++            }
++            try (var read = connection.prepareStatement("SELECT status,reference,confirmed_at IS NOT NULL FROM payment_requests WHERE claim_id=?")) {
++                read.setObject(1, claimId); try (var row = read.executeQuery()) { assertThat(row.next()).isTrue(); assertThat(row.getString(1)).isEqualTo("CONFIRMED"); assertThat(row.getString(2)).isEqualTo("PAY-123"); assertThat(row.getBoolean(3)).isTrue(); }
++            }
++        }
++    }
++
++    @Test
++    void outboxClaimLeaseRetryAndDeliveryArePersisted() throws Exception {
++        try (var connection = runtime()) {
++            UUID claimId = insertClaim(connection), outboxId = UUID.randomUUID();
++            try (var insert = connection.prepareStatement("INSERT INTO local_outbox(id,claim_id,effect,payload,available_at) VALUES(?,?,'notify', '{\"event\":\"ready\"}'::jsonb, clock_timestamp())")) {
++                insert.setObject(1, outboxId); insert.setObject(2, claimId); assertThat(insert.executeUpdate()).isEqualTo(1);
++            }
++            Instant now = Instant.now();
++            try (var claim = connection.prepareStatement("WITH due AS (SELECT id FROM local_outbox WHERE delivered_at IS NULL AND available_at <= ? ORDER BY available_at,id FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE local_outbox o SET attempts=o.attempts+1,available_at=? + interval '30 seconds' FROM due WHERE o.id=due.id RETURNING o.attempts,o.available_at")) {
++                claim.setTimestamp(1, java.sql.Timestamp.from(now)); claim.setTimestamp(2, java.sql.Timestamp.from(now));
++                try (var row = claim.executeQuery()) { assertThat(row.next()).isTrue(); assertThat(row.getInt(1)).isEqualTo(1); assertThat(row.getTimestamp(2).toInstant()).isAfter(now); }
++            }
++            Instant retryAt = now.plusSeconds(45);
++            try (var failed = connection.prepareStatement("UPDATE local_outbox SET last_error=left(?,240),available_at=? WHERE id=? AND delivered_at IS NULL")) {
++                failed.setString(1, "temporary delivery failure"); failed.setTimestamp(2, java.sql.Timestamp.from(retryAt)); failed.setObject(3, outboxId); assertThat(failed.executeUpdate()).isEqualTo(1);
++            }
++            try (var retryClaim = connection.prepareStatement("WITH due AS (SELECT id FROM local_outbox WHERE delivered_at IS NULL AND available_at <= ? ORDER BY available_at,id FOR UPDATE SKIP LOCKED LIMIT 1) UPDATE local_outbox o SET attempts=o.attempts+1,available_at=? + interval '30 seconds' FROM due WHERE o.id=due.id RETURNING o.attempts")) {
++                retryClaim.setTimestamp(1, java.sql.Timestamp.from(retryAt)); retryClaim.setTimestamp(2, java.sql.Timestamp.from(retryAt));
++                try (var row = retryClaim.executeQuery()) { assertThat(row.next()).isTrue(); assertThat(row.getInt(1)).isEqualTo(2); }
++            }
++            try (var delivered = connection.prepareStatement("UPDATE local_outbox SET delivered_at=? WHERE id=? AND delivered_at IS NULL")) {
++                delivered.setTimestamp(1, java.sql.Timestamp.from(retryAt.plusSeconds(1))); delivered.setObject(2, outboxId); assertThat(delivered.executeUpdate()).isEqualTo(1);
++            }
++            try (var read = connection.prepareStatement("SELECT attempts,last_error,delivered_at IS NOT NULL FROM local_outbox WHERE id=?")) {
++                read.setObject(1, outboxId); try (var row = read.executeQuery()) { assertThat(row.next()).isTrue(); assertThat(row.getInt(1)).isEqualTo(2); assertThat(row.getString(2)).isEqualTo("temporary delivery failure"); assertThat(row.getBoolean(3)).isTrue(); }
++            }
++        }
++    }
++}
+diff --git a/src/test/java/com/papaya/claims/claim/domain/persistence/PersistenceITSupport.java b/src/test/java/com/papaya/claims/claim/domain/persistence/PersistenceITSupport.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/papaya/claims/claim/domain/persistence/PersistenceITSupport.java
+@@ -0,0 +1,66 @@
++package com.papaya.claims.claim.domain.persistence;
++
++import java.sql.Connection;
++import java.sql.DriverManager;
++import java.sql.SQLException;
++import java.sql.Statement;
++import java.util.UUID;
++import liquibase.Contexts;
++import liquibase.LabelExpression;
++import liquibase.Liquibase;
++import liquibase.database.Database;
++import liquibase.database.DatabaseFactory;
++import liquibase.database.jvm.JdbcConnection;
++import liquibase.resource.ClassLoaderResourceAccessor;
++import org.junit.jupiter.api.BeforeAll;
++import org.testcontainers.containers.PostgreSQLContainer;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++
++@Testcontainers
++abstract class PersistenceITSupport {
++    @Container
++    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
++            .withDatabaseName("claims")
++            .withUsername("bootstrap")
++            .withPassword("bootstrap-test");
++
++    @BeforeAll
++    static void provisionRolesAndApplyMigrations() throws Exception {
++        try (Connection bootstrap = DriverManager.getConnection(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
++             Statement sql = bootstrap.createStatement()) {
++            sql.execute("CREATE ROLE claims_runtime LOGIN PASSWORD 'runtime-test' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT");
++            sql.execute("CREATE ROLE claims_migration LOGIN PASSWORD 'migration-test' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT");
++            sql.execute("ALTER SCHEMA public OWNER TO claims_migration");
++            sql.execute("GRANT CONNECT ON DATABASE claims TO claims_migration, claims_runtime");
++            sql.execute("GRANT USAGE, CREATE ON SCHEMA public TO claims_migration");
++        }
++        try (Connection migration = DriverManager.getConnection(POSTGRES.getJdbcUrl(), "claims_migration", "migration-test")) {
++            Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(migration));
++            try (Liquibase liquibase = new Liquibase("db/changelog/db.changelog-master.yml", new ClassLoaderResourceAccessor(), database)) {
++                liquibase.update(new Contexts(), new LabelExpression());
++            }
++        }
++    }
++
++    static Connection runtime() throws SQLException {
++        return DriverManager.getConnection(POSTGRES.getJdbcUrl(), "claims_runtime", "runtime-test");
++    }
++
++    static UUID insertClaim(Connection connection) throws SQLException {
++        UUID id = UUID.randomUUID();
++        try (var statement = connection.prepareStatement("INSERT INTO claims(id,member_id,state,policy_limit,currency) VALUES(?, 'member-1','submitted',125.00,'USD')")) {
++            statement.setObject(1, id);
++            statement.executeUpdate();
++        }
++        return id;
++    }
++
++    static void insertAuditRows(Connection connection, UUID claimId) throws SQLException {
++        try (var claimAudit = connection.prepareStatement("INSERT INTO claim_audit(id,claim_id,sequence,occurred_at,to_state,actor_id,role,reason,correlation_id,workflow_version) VALUES(?, ?, 0, clock_timestamp(), 'submitted', 'member-1', 'member', 'created', 'corr-1', 'v1')");
++             var systemAudit = connection.prepareStatement("INSERT INTO system_operation_audit(id,action,resource,resource_id,actor_id,correlation_id,outcome,occurred_at) VALUES(?, 'claim.read', 'claim', ?, 'member-1', 'corr-1', 'SUCCESS', clock_timestamp())")) {
++            claimAudit.setObject(1, UUID.randomUUID()); claimAudit.setObject(2, claimId); claimAudit.executeUpdate();
++            systemAudit.setObject(1, UUID.randomUUID()); systemAudit.setString(2, claimId.toString()); systemAudit.executeUpdate();
++        }
++    }
++}

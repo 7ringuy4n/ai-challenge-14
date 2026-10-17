@@ -1,0 +1,1 @@
+PostgreSQL integration tests use roles created before Liquibase migration. The test runtime adapter connections authenticate as claims_app; migrations authenticate as claims_owner. Docker is required.

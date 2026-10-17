@@ -1,0 +1,58 @@
+{
+  "task": "T02",
+  "attempt": "08",
+  "requirements": ["REQ-20261017-006", "REQ-20261017-007", "REQ-20261017-008", "REQ-20261017-009", "REQ-20261017-010"],
+  "contract": "CH14-Contracts-v1+AD-01",
+  "base_source_sha256": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+  "status": "PARTIAL",
+  "candidate_patch": "rules/workflow/artifacts/T02/08/candidate.patch",
+  "patch_paths": [
+    "src/main/java/com/papaya/claims/claim/domain/ClaimRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/ClaimAuditRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRecord.java",
+    "src/main/java/com/papaya/claims/claim/domain/SystemOperationAuditRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/IdempotencyRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/PaymentRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/OutboxRepository.java",
+    "src/main/java/com/papaya/claims/claim/domain/ClaimAggregate.java",
+    "src/main/java/com/papaya/claims/claim/domain/ClaimWorkflowData.java",
+    "src/main/java/com/papaya/claims/claim/domain/mapper/ClaimMapper.java",
+    "src/main/java/com/papaya/claims/claim/domain/mapper/AuditMapper.java",
+    "src/main/java/com/papaya/claims/claim/domain/mapper/ReceiptMapper.java",
+    "src/main/java/com/papaya/claims/claim/domain/mapper/EffectsMapper.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/ClaimRow.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/AuditRow.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/ReceiptRow.java",
+    "src/main/java/com/papaya/claims/claim/domain/persistence/OutboxRow.java",
+    "src/main/resources/db/changelog/changes/002-persistence.sql",
+    "src/main/resources/sql/service/claim/ClaimMapper.xml"
+  ],
+  "repository_signatures": {
+    "ClaimRepository": ["insert(Claim)", "find(UUID)", "findForUpdate(UUID)", "listVisible(PageRequest, Actor)", "compareAndSet(Claim,long)"],
+    "ClaimAuditRepository": ["append(AuditRecord)", "findByClaim(UUID,PageRequest)"],
+    "SystemOperationAuditRepository": ["append(SystemOperationAuditRecord)"],
+    "IdempotencyRepository": ["find(actorId,scope,key)", "insert(Receipt)"],
+    "PaymentRepository": ["create(claimId,requestId,currency,amount)", "exists(claimId)", "confirm(claimId,reference)"],
+    "OutboxRepository": ["enqueue(Message)", "claimDue(now,limit)", "markDelivered(id,at)", "markFailed(id,error,retryAt)"]
+  },
+  "mapper_signatures": {
+    "ClaimMapper": ["insert(ClaimRow)", "find(id)", "findForUpdate(id)", "pageAll(limit,offset)", "countAll()", "pageMember(memberId,limit,offset)", "countMember(memberId)", "compareAndSet(row,expectedVersion)"],
+    "AuditMapper": ["append(AuditRow)", "page(claimId,limit,offset)", "count(claimId)"],
+    "ReceiptMapper": ["find(actor,scope,key)", "insert(ReceiptRow)"],
+    "EffectsMapper": ["enqueue(OutboxRow)", "claimDue(now,limit)", "delivered(id,at)", "failed(id,error,retry)", "createPayment(claimId,requestId,currency,amount)", "confirmPayment(claimId,reference,at)", "paymentExists(claimId)"]
+  },
+  "schema_objects_intended": ["claim_audit", "system_operation_audit", "command_receipts", "payment_requests", "local_outbox", "audit immutability triggers", "due outbox index", "actor/scope/key receipt uniqueness"],
+  "grants_intended": ["runtime SELECT/INSERT claim and system audits only", "runtime UPDATE denied for both audit tables", "payment UPDATE restricted to status/reference/confirmed_at", "outbox UPDATE restricted to attempts/available_at/delivered_at/last_error", "no default privileges"],
+  "tests_proposed": ["ClaimPersistenceIT: roundtrip/page/member filter/CAS/rollback/exact decimal", "AuditImmutabilityIT: runtime denial, owner trigger, no cascading delete, effective privileges", "IdempotencyIT: same-key replay and fingerprint conflict", "PaymentOutboxIT: persistence, retry and bounded due claiming"],
+  "verification": {
+    "status": "NOT_RUN",
+    "checks": [
+      {"command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dit.test=ClaimPersistenceIT,AuditImmutabilityIT,IdempotencyIT,PaymentOutboxIT verify", "status": "NOT_RUN", "reason": "Worker packet prohibits builds/tests; coordinator execution required with PostgreSQL Testcontainers/Docker."},
+      {"command": "Patch application/source compilation", "status": "NOT_RUN", "reason": "No Git mutation or build permitted in worker packet."}
+    ]
+  },
+  "limitations": ["This is a partial candidate, not acceptable as a complete persistence implementation.", "Only ClaimMapper XML is drafted; audit, receipt, effect XML and repository adapters/type handlers are absent.", "The requested four Testcontainers integration test sources are absent; proposed cases above are not implemented evidence.", "The migration schema portion is carried from T02/07 and needs coordinator/reviewer inspection against the frozen schema/grant contract.", "The candidate does not yet wire all transactional operations or system-operation audit persistence."],
+  "decisions_and_risks": ["Preserve claims base table and store workflow timestamps in additional columns in changeset 002.", "Payment and outbox UPDATE privilege must remain column scoped.", "Do not infer runtime role grant correctness from static SQL; verify with separate runtime and owner sessions."],
+  "coordinator_action": "After review and completion, add changes/002-persistence.sql to db.changelog-master.yml; this worker intentionally does not edit the master changelog.",
+  "audit": {"host_managed_payloads": "NOT_CAPTURED", "trace_status": "PARTIAL"}
+}

@@ -1,0 +1,5 @@
+# T02/13 adapter-facing persistence test review
+
+Task T02 / REQ-20261017-006 through -010. Independent read-only review, gpt-6-luna / medium. Candidate base persistence hash: `8be87c69eeed929fbbc2245ebad7a803f433718af5b846399567d1b0808e59f7`.
+
+Inspect `candidate.patch`, `handoff.json`, the test packet, current production adapters and mapper XML, migration 002, AD-01, and prior findings `reports/sub-agents/T02/re-review-12.md`. Verify patch scope/applicability; confirm each integration test uses the production MyBatis mappings/adapters for its claimed behavior; assess fixture roles and migration ownership, transaction/autocommit determinism, SQL privileges, CAS immutability, exact decimal mapping, audit immutability, idempotency limitation, payment and outbox retry/lease assertions. Identify concrete source/test defects with path and line. Do not edit application/test source or run builds, tests, Docker, database operations, or Git mutations. Write only `reports/sub-agents/T02/re-review-13.md`. Return PASS/REWORK/FAIL with criteria coverage, limitations, and NOT_RUN evidence. Do not mark T02 or the application accepted or production-ready.

@@ -1,0 +1,17 @@
+{
+  "task": "T09",
+  "attempt": "02",
+  "status": "submitted",
+  "author": "foundation_tests_worker",
+  "summary": "Fixed the four wildcard generic assertion compilation errors in ModelBoundaryTest and DefinitionImmutabilityTest. Equality assertions compare against typed expected lists; mutation attempts remain asserted through typed helper methods with localized unchecked-cast suppression.",
+  "patch": "rules/workflow/artifacts/T09/02/candidate.patch",
+  "allowed_patch_paths": [
+    "src/test/java/com/papaya/claims/contract/ModelBoundaryTest.java",
+    "src/test/java/com/papaya/claims/engine/DefinitionImmutabilityTest.java"
+  ],
+  "proposed_checks": [
+    {"status": "NOT_RUN", "command": "mvn -B -Dtest=ModelBoundaryTest,GuardBoundaryTest,WorkflowValidationTest,DefinitionImmutabilityTest,PersistenceBoundaryTest test", "reason": "Worker instructions prohibit running builds; coordinator owns verification."}
+  ],
+  "findings": [],
+  "known_limits": ["Delta is against the currently applied T09/01 files and has not been compiled or executed."]
+}

@@ -1,0 +1,66 @@
+{
+  "task": "T01",
+  "attempt": "06",
+  "status": "SUBMITTED",
+  "model": "gpt-6-luna",
+  "reasoning_effort": "medium",
+  "requirement_ids": [
+    "REQ-20261017-006",
+    "REQ-20261017-007",
+    "REQ-20261017-008",
+    "REQ-20261017-009",
+    "REQ-20261017-010"
+  ],
+  "contract_version": "CH14-Contracts-v1+AD-01",
+  "contract_sha256": {
+    "docs/challenge-14/CONTRACTS.md": "f64a027ac12c3a8f41e2ab528b72e6c41e3945a76f0652673e0c569d088d7c83",
+    "docs/challenge-14/FACTS-AND-PERSISTENCE.md": "934134482c3ceb375b21300b04ba7312f2ed64b150ecda64901401f4d439f6cb"
+  },
+  "base_source_sha256": "f6844d57f86ba460bdabf30937f8f08da39dbf034cebb357bacbf4d7f19eb1af",
+  "patch_paths": [
+    "src/main/java/com/papaya/claims/workflow/",
+    "src/test/java/com/papaya/claims/workflow/"
+  ],
+  "stable_api_signatures": [
+    "WorkflowDefinition WorkflowConfigLoader.load(InputStream input)",
+    "WorkflowDecision WorkflowEngine.evaluate(WorkflowEvaluationContext context)",
+    "List<WorkflowOption> WorkflowEngine.availableTransitions(WorkflowEvaluationContext context)",
+    "boolean GuardEvaluator.passes(String id, WorkflowEvaluationContext context)",
+    "record WorkflowEvaluationContext(Claim claim, Actor actor, TransitionCommand command, WorkflowEvidence evidence, Instant now, Duration appealPeriod)",
+    "record WorkflowEvidence(int informationRequests, Instant lastInformationRequestedAt, Instant lastInformationReceivedAt, Instant assessmentStartedAt, Instant rejectedAt, Instant memberAcknowledgedRejectionAt, boolean paymentRequestExists, String paymentReference, Instant paymentConfirmedAt)",
+    "record WorkflowDecision(boolean allowed, String transitionId, String fromState, String toState, List<String> effectIds, String error, String cycleCounter, int nextCycleCount)",
+    "record WorkflowOption(String transitionId, String targetState, Set<String> authorizedRoles, boolean available, List<String> failures)"
+  ],
+  "implementation_summary": "Added immutable workflow definition and YAML validation; registry-backed named guard/effect capabilities; pure configurable state engine with dynamic options, role and guard results, invalid-edge explanations, cycle boundary; trusted evidence microsecond normalization; config and guard/engine tests including config-only state/edge extension.",
+  "tests": [
+    {
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=WorkflowEngineTest,WorkflowConfigTest,GuardEvaluatorTest test",
+      "status": "NOT_RUN",
+      "reason": "Worker protocol assigns all builds and tests to the coordinator; no test or build command was run."
+    }
+  ],
+  "checks": [
+    {
+      "name": "focused Maven tests",
+      "status": "NOT_RUN",
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=WorkflowEngineTest,WorkflowConfigTest,GuardEvaluatorTest test",
+      "reason": "Coordinator-owned verification; worker protocol prohibits executing tests/builds."
+    }
+  ],
+  "decisions": [
+    "The implementation uses the existing Claim, ClaimFacts, Actor and TransitionCommand domain values and the frozen workflow.yml format.",
+    "WorkflowEvidence is an immutable trusted-service input and normalizes all timestamps to PostgreSQL microseconds.",
+    "Cycle policy remains the configured request-information transition, informationRequests counter, maximum 3 and exact escalation text.",
+    "Effect strategies expose named capabilities as decision identifiers; persistence and dispatch remain outside the pure engine."
+  ],
+  "risks": [
+    "Patch has not been compiled or executed; integration and API compatibility remain coordinator verification items.",
+    "The loader intentionally accepts only the frozen supported guard/effect/role capability registries; adding new strategy capabilities requires code, while extensions using existing primitives remain YAML-only."
+  ],
+  "shared_changes": [],
+  "interaction_audit": {
+    "raw_request": "NOT_CAPTURED",
+    "raw_response": "NOT_CAPTURED",
+    "reason": "Host-managed model invocation payloads are inaccessible to this worker runtime; task packet and handoff are retained, audit status is PARTIAL."
+  }
+}

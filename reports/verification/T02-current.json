@@ -1,0 +1,177 @@
+{
+  "task_id": "T02 integrated implementation evidence",
+  "requirements": [
+    "REQ-20261017-008",
+    "REQ-20261017-009",
+    "REQ-20261017-010",
+    "REQ-20261017-011",
+    "REQ-20261017-012"
+  ],
+  "branch": "develop (unborn; HEAD absent)",
+  "source_hash": "900ac547584e85a54115a7abfcd767cba440d631be0e3c6a56a0aa645045ae32",
+  "source_hash_inputs": "reports/verification/T02-source-hash-inputs.txt",
+  "status": "IN_PROGRESS",
+  "acceptance": "NOT_ACCEPTED",
+  "trace_audit": "PARTIAL",
+  "checks": [
+    {
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B test",
+      "exit_code": 0,
+      "result": "PASS",
+      "tests": 42,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "artifact": "reports/verification/application-unit-tests.log",
+      "source_hash": "900ac547584e85a54115a7abfcd767cba440d631be0e3c6a56a0aa645045ae32"
+    },
+    {
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B jacoco:report",
+      "exit_code": 0,
+      "result": "PASS_REPORT_GENERATED",
+      "coverage": {
+        "instruction": {
+          "covered": 3671,
+          "missed": 3156,
+          "total": 6827,
+          "percent": 53.77
+        },
+        "branch": {
+          "covered": 275,
+          "missed": 330,
+          "total": 605,
+          "percent": 45.45
+        },
+        "line": {
+          "covered": 542,
+          "missed": 365,
+          "total": 907,
+          "percent": 59.76
+        },
+        "complexity": {
+          "covered": 223,
+          "missed": 361,
+          "total": 584,
+          "percent": 38.18
+        },
+        "method": {
+          "covered": 154,
+          "missed": 126,
+          "total": 280,
+          "percent": 55.0
+        },
+        "class": {
+          "covered": 43,
+          "missed": 28,
+          "total": 71,
+          "percent": 60.56
+        }
+      },
+      "artifact": "reports/verification/T02-jacoco-current.xml",
+      "source_hash": "900ac547584e85a54115a7abfcd767cba440d631be0e3c6a56a0aa645045ae32",
+      "gate": "FAIL_BELOW_95_LINE_90_BRANCH"
+    },
+    {
+      "command": "node --check src/main/resources/static/app.js && docker compose --env-file .env.example -f docker/compose.yml config --quiet && bash -n scripts/setup.sh && sh -n docker/initdb/10-runtime-role.sh",
+      "exit_code": 0,
+      "result": "PASS_STATIC_CHECKS"
+    },
+    {
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -DskipTests package",
+      "exit_code": 1,
+      "result": "BLOCKED_OFFLINE_PLUGIN_DEPENDENCY",
+      "artifact": "reports/verification/T02-package.log",
+      "reason": "Offline cache lacks org.springframework.boot:spring-boot-buildpack-platform:3.5.16 and spring-boot-loader-tools:3.5.16."
+    },
+    {
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -DskipTests=false -Dit.test=ClaimPersistenceIT,AuditImmutabilityIT,IdempotencyIT,PaymentOutboxIT org.apache.maven.plugins:maven-failsafe-plugin:3.5.6:integration-test",
+      "exit_code": 0,
+      "result": "BLOCKED_TESTCONTAINERS_DOCKER_ACCESS",
+      "tests": 4,
+      "failures": 0,
+      "errors": 4,
+      "skipped": 0,
+      "artifact": "reports/verification/T02-integration-testcontainers.log",
+      "reason": "Testcontainers socket connection failed with java.net.SocketException: Operation not permitted for unix:///var/run/docker.sock; integration test methods did not execute."
+    },
+    {
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B org.apache.maven.plugins:maven-failsafe-plugin:3.5.6:verify",
+      "exit_code": 1,
+      "result": "BLOCKED_INTEGRATION_TEST_ERRORS",
+      "artifact": "reports/verification/T02-failsafe-verify.log",
+      "reason": "Four selected Testcontainers classes failed during Docker environment discovery."
+    },
+    {
+      "command": "docker info",
+      "exit_code": 1,
+      "result": "BLOCKED_PERMISSION_DENIED",
+      "artifact": "reports/verification/docker-info-blocked.log",
+      "reason": "Permission denied on /var/run/docker.sock; no permission changes attempted."
+    },
+    {
+      "command": "bash scripts/setup.sh",
+      "result": "NOT_RUN",
+      "reason": "Would start Docker services; Docker API access is denied."
+    },
+    {
+      "command": "bash scripts/smoke.sh",
+      "result": "NOT_RUN",
+      "reason": "Requires app and PostgreSQL containers; Docker API access is denied."
+    },
+    {
+      "command": "bash scripts/run-scenarios.sh",
+      "result": "NOT_RUN",
+      "reason": "Script does not exist in current tree; no acceptance scenario suite has been implemented."
+    },
+    {
+      "command": "mvnw -Pquality clean verify",
+      "result": "NOT_RUN",
+      "reason": "Maven Wrapper is absent; local Maven exists, but its offline Spring Boot plugin dependencies are missing and Testcontainers cannot access Docker."
+    },
+    {
+      "command": "Application database migration and startup",
+      "result": "NOT_RUN",
+      "reason": "Requires PostgreSQL/Docker; neither migrations nor application startup have executed."
+    },
+    {
+      "command": "JAVA_HOME=/home/tringuyen/.local/java/jdk-21 PATH=/home/tringuyen/.local/java/jdk-21/bin:/home/tringuyen/.local/maven/bin:$PATH /home/tringuyen/.local/maven/bin/mvn -o -Dmaven.repo.local=/tmp/claims-m2 -B -Dtest=ClaimAuditAspectTest test",
+      "exit_code": 0,
+      "result": "PASS",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "artifact": "reports/verification/claim-audit-aspect-test.log",
+      "source_hash": "900ac547584e85a54115a7abfcd767cba440d631be0e3c6a56a0aa645045ae32"
+    },
+    {
+      "command": "python3 scripts/workflow/verify_workflow.py",
+      "exit_code": 2,
+      "result": "BLOCKED_VALIDATOR_MISSING",
+      "artifact": "reports/verification/workflow-validator-missing.log",
+      "reason": "The referenced validator script is absent; scripts/ contains only smoke.sh and setup.sh."
+    }
+  ],
+  "review": {
+    "reviewer_agent": "/root/final_impl_review",
+    "artifact": "reports/sub-agents/T02/re-review-17.md",
+    "result": "PASS_FOCUSED_SOURCE_AND_PROXY_REGRESSION_WITH_RUNTIME_GAPS",
+    "source_hash": "900ac547584e85a54115a7abfcd767cba440d631be0e3c6a56a0aa645045ae32",
+    "review_packet": "rules/workflow/artifacts/T02/17/REVIEW-PACKET.md"
+  },
+  "blocked": [
+    {
+      "command": "docker info",
+      "reason": "permission denied while trying to connect to the Docker API at unix:///var/run/docker.sock"
+    }
+  ],
+  "git": {
+    "status": "## No commits yet on develop",
+    "head": "ABSENT",
+    "main_ref": "ABSENT",
+    "origin_main_ref": "ABSENT",
+    "origin": "git@github.com:7ringuy4n/ai-challenge-14.git",
+    "operation": "No operation requiring verified main history performed; no commit/reset/merge/push."
+  },
+  "notes": "42 unit tests pass; line coverage is 59.76% and branch coverage is 45.45%, below gates. Independent proxy-based AOP review found no further source defect, but used a fake repository and does not verify persistence or REQUIRES_NEW. Docker/Testcontainers errors occur before business assertions; offline package/verify is blocked by uncached plugin dependencies; migrations, startup, full acceptance scenarios and production readiness remain unverified."
+}
