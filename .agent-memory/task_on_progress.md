@@ -10,12 +10,10 @@ in_progress
 
 ## Current step
 
-Final branch-tip evidence corrected
+Final local archive merge verified
 
 ## Completed
 
-- [x] Updated sanitizer output to preserve original ZIP member timestamps and metadata while deflating sanitized content, so identical input and code produce stable ZIP bytes.
-- [x] Preserved the first sanitized artifact/report and the initial two-marker scan result as historical evidence; verified the copied artifact's hash.
 - [x] Regenerated codex-logs.sanitized.zip while preserving source member metadata. Sanitized SHA-256 is 009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738; raw ZIP SHA remains unchanged.
 - [x] Second sanitizer generation produced the same SHA-256; sanitized ZIP CRC, zero-match scan, structure/session-ID verification, workflow validator, and diff checks all passed.
 - [x] Recorded REQ-025 verification, redaction results, sanitized archive hash, workflow task evidence, LLM interaction metadata and preserved the raw-archive decision. T20 remains in_review pending independent review.
@@ -27,10 +25,11 @@ Final branch-tip evidence corrected
 - [x] Fast-forwarded main to develop and verified both at 5371cd79da337a472937a73be5be9eb6c3c7f5e4; original ZIP remains untracked with unchanged hash.
 - [x] Fast-forwarded main to develop and verified both refs at 5371cd79da337a472937a73be5be9eb6c3c7f5e4; raw archive remains untracked with original hash.
 - [x] Added final verification commit aa9c31e724b5abc18a9cf0297fbd0cc249fcad14 and fast-forwarded main to it; final refs matched and workflow validation passed.
+- [x] Committed sanitized archive 6703222 plus traceability/evidence commits; develop and main now both point to 2c22056797c1a2a2240390da33cce3df326d2772 after fast-forward. Raw ZIP remains untracked and unchanged. Workflow validation and diff checks pass.
 
 ## Next exact step
 
-Commit the corrected final branch-tip references, fast-forward main to that evidence commit, then verify both refs and status (except the intentionally untracked raw ZIP).
+No archive-tracking changes remain; T20 stays in_review pending independent review, with no acceptance or push claimed.
 
 ## Blockers
 
@@ -52,6 +51,6 @@ unzip -t codex-logs.zip; python3 scripts/audit/import_codex_archive.py --check c
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-17T08:15:30Z
+- Updated (UTC): 2026-10-17T08:16:18Z
 - Branch: `develop`
-- Commit: `5371cd7`
+- Commit: `2c22056`
