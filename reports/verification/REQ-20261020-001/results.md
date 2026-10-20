@@ -15,4 +15,14 @@ Base: cloned origin/develop and origin/main both at e4153b6313e68656206c8d7ac63d
 - NOT_RUN — mvn -B -Pquality clean verify; documentation and prompt-evidence only, with no Java source, test, build, or runtime configuration changes.
 - NOT_RUN — Compose, smoke, and live API checks; no runtime behavior changed.
 
-Independent review PASS; full visible review interaction is recorded in independent-review.md. No remote branch was modified. The planned Git integration is local only.
+Independent review PASS; full visible review interaction is recorded in independent-review.md. ## Git integration and acceptance
+
+- Content commit on develop: 00e1e9ff0aa7fde76d4189279144f3daf68f59d4 (docs: import logical question source).
+- Progress synchronization commit on develop: 5230724495d3f1d43bde329ace84ca1f080ea5a9.
+- Local main was created from the verified origin/main base and fast-forwarded to 5230724495d3f1d43bde329ace84ca1f080ea5a9.
+- Local develop and main both resolve to 5230724495d3f1d43bde329ace84ca1f080ea5a9 at merge time.
+- origin/main and origin/develop remain at e4153b6313e68656206c8d7ac63d2a48d8f6da3d. No push was performed.
+- Independent reviewer /root/t21_review returned PASS. The coordinator approved T21 after review and scoped checks; task acceptance is recorded in the task manifest.
+- The unfiltered whitespace failure is the preserved imported document's original trailing spaces. All project-authored staged files pass the filtered whitespace check.
+
+Independent review interaction is recorded in independent-review.md. Application tests remain NOT_RUN because the change is documentation-only.

@@ -274,7 +274,7 @@ OpenAPI, history and the local submission archive only after verification.
 - Source: PROMPT-20261017-003, verbatim prompt log.
 - Scope: initialize this as a new project; remove stale documentation and workflow assumptions that required prior project files, completed-task archives, existing application/runtime logs, or recovered source as prerequisites.
 - Acceptance: startup instructions match the current blank application checkout; retain requirements and acceptance criteria for creating the application; distinguish absent optional historical artifacts from real blockers; no fabricated source, history, or verification claims.
-- Status: in progress.
+- Status: accepted after independent review and local integration; exact source whitespace is preserved and documented.
 - Supersedes: REQ-20261017-002's recovery assumptions about missing application/build files, archived progress, historical artifacts, and existing worker drafts. Mandatory request/response tracing and review gates from REQ-20261017-001 remain in force.
 
 ## REQ-20261017-004 — 2026-10-17

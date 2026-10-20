@@ -162,3 +162,7 @@ REQ-026: Reconfirmed both local branch archive blobs match sanitized SHA-256 009
 ## 2026-10-20 — Logical-question source import
 
 REQ-20261020-001 adds the provided Questions.md under `logical-question/`. The copied file matches the supplied source SHA-256 `8bc3049e92a4f15886e0c77e82de8bfbbc9cbe13bb1d97a34329b972d8588dce`. No application architecture or runtime behavior changed.
+
+## 2026-10-20 — REQ-20261020-001 integration
+
+The imported Questions.md remains byte-identical to its supplied source. Independent review passed, and local main was fast-forwarded from the verified origin/main base to develop commit 5230724495d3f1d43bde329ace84ca1f080ea5a9. No remote refs were modified. The unfiltered whitespace warning comes from the source document and is intentionally preserved.

@@ -41,3 +41,13 @@ Append each reviewed develop commit hash, parent, message, scoped files, review 
 - The attached mandatory completion request is recorded verbatim as PROMPT-20261017-017 (SHA-256 `6fb86ed95779972d569760a3d7fc43152f5742563f0fa8e2e54b99f7c0e61023`). REQ-20261017-017 and coordinator-owned T13–T16 workstreams are active.
 - Exact pre-rerun SHA-256 values for all seven JMX files and seven properties files are captured in `reports/verification/REQ-017-jmeter-profile-hashes-before.txt`. No JMeter rerun had started at the time of this snapshot.
 - Branch remains `develop` at `e9e42e0ee89c2e3205858d3accbf24d5abfb6762` during plan preparation. Main remains `521cb1427f910ebbd01129cc1a950c55b899ee87`. The user conditionally authorized local merging only after all gates pass, including full host-managed historical capture; no push is authorized.
+
+
+## 2026-10-20 — REQ-20261020-001 local integration
+
+- The remote main/develop refs were verified at e4153b6313e68656206c8d7ac63d2a48d8f6da3d before work.
+- Commit 00e1e9ff0aa7fde76d4189279144f3daf68f59d4 on develop imports logical-question/Questions.md and related reviewed requirement/evidence.
+- Commit 5230724495d3f1d43bde329ace84ca1f080ea5a9 records synchronized task progress.
+- Local main was created from origin/main and fast-forwarded to develop at 5230724495d3f1d43bde329ace84ca1f080ea5a9. Both local branches matched at verification.
+- origin/main and origin/develop remain unchanged at e4153b6313e68656206c8d7ac63d2a48d8f6da3d. No push was performed.
+- Independent review PASS and coordinator approval are recorded in reports/verification/REQ-20261020-001/.
