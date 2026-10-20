@@ -10,7 +10,7 @@ in_progress
 
 ## Current step
 
-Scoped REQ-002 evidence is reviewed and staged on develop; commit the request record before remote publication.
+REQ-002 evidence committed on develop as 6ddc789; record the commit and next synchronization action.
 
 ## Completed
 
@@ -20,10 +20,11 @@ Scoped REQ-002 evidence is reviewed and staged on develop; commit the request re
 - [x] Corrected task ID to T22 and required notes field; workflow validator passes with 23 tasks.
 - [x] Created REQ-002 verification report and confirmed exact raw prompt plus synchronized memory/history progress.
 - [x] Workflow manifest validates 23 unique tasks and the staged whitespace/prompt/progress checks pass.
+- [x] Committed PROMPT-20261020-002, REQ-002/T22, pre-publication checks and NOT_RUN application-test rationale on develop at 6ddc789.
 
 ## Next exact step
 
-Commit the staged task evidence, fast-forward main, recheck origin ancestry, then atomically push both refs.
+Commit the synchronized checkpoint, fast-forward local main, verify fresh remote refs/ancestry, and push both branches atomically.
 
 ## Blockers
 
@@ -35,16 +36,16 @@ Commit the staged task evidence, fast-forward main, recheck origin ancestry, the
 
 ## Relevant files
 
-- `history/CHANGELOG.md`
+- `reports/verification/REQ-20261020-002/results.md`
 
 ## Verification commands
 
 ```bash
-git diff --cached --check -- . :!logical-question/Questions.md
+git show --stat --oneline HEAD
 ```
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-20T00:34:02Z
-- Branch: `develop...origin/develop [ahead 3]`
-- Commit: `9f0fa9e`
+- Updated (UTC): 2026-10-20T00:34:10Z
+- Branch: `develop...origin/develop [ahead 4]`
+- Commit: `6ddc789`
