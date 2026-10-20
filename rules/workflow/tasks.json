@@ -1398,6 +1398,118 @@
         }
       ],
       "notes": "Owner selected a sanitized ZIP; raw codex-logs.zip remains byte-for-byte unchanged and untracked. Sanitized output preserves all archive paths/session records, passes the configured zero-active-match scan and structural verifier, and regenerates deterministically. Workflow and diff checks pass. Archive commit 6703222 and evidence commits 5371cd7 and aa9c31e are on develop; main was fast-forwarded to final tip aa9c31e724b5abc18a9cf0297fbd0cc249fcad14. Both refs were verified equal and retain baseline 2cafe2507708c6b773865a04b342ea623248bf02 as ancestor. Task remains in_review pending independent review; no acceptance is claimed and no push occurred."
+    },
+    {
+      "id": "T21",
+      "title": "Import logical-question document and merge locally",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "in_review",
+      "depends_on": [],
+      "allowed_paths": [
+        "logical-question/Questions.md",
+        "docs/submission/user-prompts.jsonl",
+        "rules/REQUIREMENT.md",
+        "rules/workflow/tasks.json",
+        "docs/CHANGELOG.md",
+        "docs/HISTORY.md",
+        "history/CHANGELOG.md",
+        "history/task_on_progress.md",
+        ".agent-memory/",
+        "reports/verification/REQ-20261020-001/",
+        "reports/verification/REQ-20261020-001/filtered-authored-diff.sha256",
+        "reports/verification/REQ-20261020-001/independent-review.md"
+      ],
+      "verification": [
+        "python3 -c \"import hashlib; from pathlib import Path; assert hashlib.sha256(Path('logical-question/Questions.md').read_bytes()).hexdigest() == '8bc3049e92a4f15886e0c77e82de8bfbbc9cbe13bb1d97a34329b972d8588dce'\"",
+        "python3 scripts/workflow/verify_workflow.py",
+        "git diff --cached --check -- . ':(exclude)logical-question/Questions.md'",
+        "python3 -c \"import json,hashlib; from pathlib import Path; r=[json.loads(x) for x in Path('docs/submission/user-prompts.jsonl').read_text().splitlines()][-1]; assert r['prompt_id']=='PROMPT-20261020-001' and hashlib.sha256(r['raw_text'].encode()).hexdigest()=='c4a74941f9fce29ad0643fa32ac1d34bcf822735f3ada24e16d63e8a67d72cd9'\" && cmp -s .agent-memory/task_on_progress.md history/task_on_progress.md",
+        "mvn -B -Pquality clean verify"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "Repository clone is at the requested path and tracks the configured remote",
+        "Copied Questions.md matches the supplied source byte-for-byte",
+        "Only requested document and required traceability/history files are included",
+        "Independent review and workflow validation pass; project-authored files pass whitespace checks and source whitespace exceptions are disclosed",
+        "Commit is created on develop and merged locally into main without rewriting history",
+        "No push is performed"
+      ],
+      "evidence": [
+        {
+          "command": "sha256sum logical-question/Questions.md; compare to supplied source SHA-256",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-20261020-001/results.md",
+          "source_hash": "8bc3049e92a4f15886e0c77e82de8bfbbc9cbe13bb1d97a34329b972d8588dce",
+          "source_path": "logical-question/Questions.md"
+        },
+        {
+          "command": "python3 scripts/workflow/verify_workflow.py",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-20261020-001/results.md",
+          "source_hash": "b6762b51930fb4215d84e44d39bd2126cbb7f484703948cf7abaa0c974b44b63",
+          "source_path": "scripts/workflow/verify_workflow.py"
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 2,
+          "result": "FAIL",
+          "artifact": "reports/verification/REQ-20261020-001/results.md",
+          "source_hash": "8bc3049e92a4f15886e0c77e82de8bfbbc9cbe13bb1d97a34329b972d8588dce",
+          "source_path": "logical-question/Questions.md"
+        },
+        {
+          "command": "python3 -c \"import json,hashlib; from pathlib import Path; r=[json.loads(x) for x in Path('docs/submission/user-prompts.jsonl').read_text().splitlines()][-1]; assert r['prompt_id']=='PROMPT-20261020-001' and hashlib.sha256(r['raw_text'].encode()).hexdigest()=='c4a74941f9fce29ad0643fa32ac1d34bcf822735f3ada24e16d63e8a67d72cd9'\" && cmp -s .agent-memory/task_on_progress.md history/task_on_progress.md",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-20261020-001/results.md",
+          "source_hash": "9a947c010302c3f5683014f1e4396ab68ecd630112fed9a7c73497ce32a69cc1",
+          "source_path": "docs/submission/user-prompts.jsonl",
+          "compared_path": ".agent-memory/task_on_progress.md and history/task_on_progress.md"
+        },
+        {
+          "command": "mvn -B -Pquality clean verify",
+          "exit_code": null,
+          "result": "NOT_RUN",
+          "artifact": "reports/verification/REQ-20261020-001/results.md",
+          "source_hash": "d479d11582ad4c59aa75fca135fc9705f862bf167b9d0afa0e39db5e0135f7ef",
+          "source_path": "pom.xml"
+        },
+        {
+          "command": "git diff --cached --check -- . ':(exclude)logical-question/Questions.md'",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-20261020-001/results.md",
+          "source_hash": "c4d67bc39196d26365c809c812f0b8cc2b16e1fd6f5f792b591435c48fda056b",
+          "source_path": "reports/verification/REQ-20261020-001/filtered-authored-diff.sha256",
+          "source_description": "SHA-256 of the exact filtered staged diff command recorded in this evidence entry"
+        },
+        {
+          "command": "git diff --cached --binary -- . ':(exclude)logical-question/Questions.md' ':(exclude)rules/workflow/tasks.json' ':(exclude)reports/verification/REQ-20261020-001/results.md' ':(exclude).agent-memory/task_on_progress.md' ':(exclude)history/task_on_progress.md' | sha256sum",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-20261020-001/results.md",
+          "source_hash": "c4d67bc39196d26365c809c812f0b8cc2b16e1fd6f5f792b591435c48fda056b",
+          "source_path": "reports/verification/REQ-20261020-001/filtered-authored-diff.sha256",
+          "source_description": "SHA-256 of the exact filtered staged diff command recorded in this evidence entry"
+        },
+        {
+          "reviewer_agent": "/root/t21_review",
+          "reviewer_model": "gpt-6-luna",
+          "reasoning_effort": "medium",
+          "command": "Independent review of staged T21 change; final rereview PASS",
+          "exit_code": 0,
+          "result": "PASS",
+          "artifact": "reports/verification/REQ-20261020-001/independent-review.md",
+          "source_hash": "8bc3049e92a4f15886e0c77e82de8bfbbc9cbe13bb1d97a34329b972d8588dce",
+          "source_path": "logical-question/Questions.md"
+        }
+      ],
+      "notes": "Exact-copy requirement takes precedence over normalizing source whitespace. Unfiltered git diff --check reports original trailing spaces in the imported document; all project-authored files pass the filtered check. Workflow validation passes. Maven/Compose checks are NOT_RUN because no application/runtime files changed. Independent review PASS after correcting progress synchronization and evidence metadata; coordinator approval is pending commit/merge. No push."
     }
   ]
 }

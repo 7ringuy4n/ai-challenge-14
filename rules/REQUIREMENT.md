@@ -559,3 +559,13 @@ The earlier GitHub blocker was resolved under the explicit authorization in REQ-
 - Acceptance: verify the tracked archive blob on both branches, archive structure and existing audit references; preserve task review status.
 
 - Verification result: PASS for both tracked branch archive hashes, ZIP CRC/record preservation, imported transcript references and workflow manifest (21 tasks). Raw ZIP remains unchanged/untracked. No push. T20 stays in_review. Evidence: reports/verification/REQ-026/archive-reconfirmation.json.
+
+
+## REQ-20261020-001 — Import logical-question document and integrate locally (2026-10-20)
+
+- Source: `PROMPT-20261020-001`, preserved verbatim in `docs/submission/user-prompts.jsonl`.
+- Request: clone the Challenge 14 repository into the requested destination; create `logical-question/`; copy the supplied `Questions.md`; commit on `develop` and merge locally into `main`.
+- Acceptance: the destination is a real clone of the configured repository; the copied file matches the supplied source byte-for-byte; only scoped files are committed; required traceability and history are synchronized; the documented workflow validator and diff checks pass; local `main` contains the `develop` commit without rewriting history. Do not push.
+- Scope: `logical-question/Questions.md`, this requirement, raw prompt log, task manifest and synchronized history/memory.
+- Verification: SHA-256 equality for source and destination, `python3 scripts/workflow/verify_workflow.py`, and `git diff --check`. Application tests are not applicable to this documentation-only change and must be recorded as `NOT_RUN`.
+- Status: in progress.

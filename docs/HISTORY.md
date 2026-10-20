@@ -158,3 +158,7 @@ The owner selected a sanitized ZIP under REQ-025. The original archive remains b
 The sanitized archive and directly related import/audit evidence were committed on `develop` as `6703222` after reviewing the staged file set. Final verification commit `aa9c31e724b5abc18a9cf0297fbd0cc249fcad14` is the matching tip of local `develop` and `main`. The raw ZIP remained untracked. No push occurred; T20 remains in review pending independent review.
 
 REQ-026: Reconfirmed both local branch archive blobs match sanitized SHA-256 009d9ae63f7d6d7b94a42508a74dbeae47f6d97d9d89e3c9fbc48dbc583e2738; structural verification preserves 64 sessions/28,716 records, all 64 imported transcript hashes verify, and workflow validator passes 21 tasks. Raw ZIP remains unchanged/untracked; no push. T20 remains in_review. Evidence: reports/verification/REQ-026/archive-reconfirmation.json.
+
+## 2026-10-20 — Logical-question source import
+
+REQ-20261020-001 adds the provided Questions.md under `logical-question/`. The copied file matches the supplied source SHA-256 `8bc3049e92a4f15886e0c77e82de8bfbbc9cbe13bb1d97a34329b972d8588dce`. No application architecture or runtime behavior changed.

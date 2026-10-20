@@ -2,7 +2,7 @@
 
 ## Goal
 
-Merge the provided Codex session archive into project audit evidence without overwriting existing records or fabricating missing data.
+Import logical-question Questions.md into the freshly cloned project, record the request, commit on develop, and merge locally to main without pushing.
 
 ## Current status
 
@@ -10,30 +10,29 @@ in_progress
 
 ## Current step
 
-Repeated archive request verified
+Independent review PASS; staged content is ready for coordinator acceptance
 
 ## Completed
 
-- [x] Second sanitizer generation produced the same SHA-256; sanitized ZIP CRC, zero-match scan, structure/session-ID verification, workflow validator, and diff checks all passed.
-- [x] Recorded REQ-025 verification, redaction results, sanitized archive hash, workflow task evidence, LLM interaction metadata and preserved the raw-archive decision. T20 remains in_review pending independent review.
-- [x] Owner approved tracking a sanitized ZIP; generated and verified the deterministic sanitized archive and synchronized REQ-023–025 traceability while preserving the raw ZIP untracked.
-- [x] Revalidated archive import, ZIP CRC, sanitized zero-match scan, structural preservation, workflow manifest, and diff check; raw source hash unchanged. Switched safely from main to develop after confirming both refs at 2cafe250.
-- [x] Selective staged diff contains only sanitized ZIP, archive tooling, and associated audit/requirement/history/verification updates; raw codex-logs.zip remains untracked. Staged whitespace check passed; T20 remains in_review.
-- [x] Committed the reviewed sanitized archive and related records on develop as 6703222; raw ZIP remained untracked.
-- [x] Recorded the develop commit in the verification report and synchronized project history/changelog.
-- [x] Fast-forwarded main to develop and verified both at 5371cd79da337a472937a73be5be9eb6c3c7f5e4; original ZIP remains untracked with unchanged hash.
-- [x] Fast-forwarded main to develop and verified both refs at 5371cd79da337a472937a73be5be9eb6c3c7f5e4; raw archive remains untracked with original hash.
-- [x] Added final verification commit aa9c31e724b5abc18a9cf0297fbd0cc249fcad14 and fast-forwarded main to it; final refs matched and workflow validation passed.
-- [x] Committed sanitized archive 6703222 plus traceability/evidence commits; develop and main now both point to 2c22056797c1a2a2240390da33cce3df326d2772 after fast-forward. Raw ZIP remains untracked and unchanged. Workflow validation and diff checks pass.
-- [x] REQ-026 reconfirmed both branch archive blobs, unchanged raw ZIP, structural integrity, imported transcript hashes and workflow validation; no push; T20 remains in_review.
+- [x] Cloned remote develop into the requested destination; confirmed origin/main and origin/develop both at e4153b6313e68656206c8d7ac63d2a48d8f6da3d; preserved previous copied snapshot in /tmp/ai-challenge-14-snapshot-copy-20261020.
+- [x] Appended exact user request PROMPT-20261020-001; registered REQ-20261020-001 and T21 before importing the requested file.
+- [x] Copied logical-question/Questions.md; SHA-256 matches the supplied file exactly.
+- [x] Updated docs/CHANGELOG.md, docs/HISTORY.md, history/CHANGELOG.md, and synchronized history/task_on_progress.md with REQ-20261020-001.
+- [x] Corrected T21 status to the workflow validator supported state running after it rejected in_progress.
+- [x] Recorded SHA-256, workflow validator, diff check, exact prompt/progress checks, and honest NOT_RUN Maven/runtime checks in REQ-20261020-001 evidence.
+- [x] Unfiltered diff check identified original trailing spaces in Questions.md; preserved exact bytes and recorded exception. Excluding only that imported file, staged whitespace check passes; workflow validator passes.
+- [x] Updated requirement and T21 to treat unfiltered source trailing-space findings as an explicit preservation exception; filtered project-authored whitespace validation passes.
+- [x] Corrected review findings: all evidence source_hash fields are SHA-256 values with source paths, workflow check is consistent, verification commands are unique and prompt/progress checks are runnable.
+- [x] Independent rereview cleared previous blockers and identified that staged-diff evidence source_path should name a concrete artifact file.
+- [x] Independent reviewer T21_REVIEW passes the corrected staged change; all prior review findings are resolved.
 
 ## Next exact step
 
-Commit the reconfirmation evidence on develop and fast-forward main, then report verified final refs.
+Record reviewer evidence, rerun final verification, then commit on develop and fast-forward main
 
 ## Blockers
 
-- None for the authorized sanitized archive tracking. The original ZIP remains intentionally untracked.
+- None.
 
 ## Known constraints
 
@@ -41,16 +40,17 @@ Commit the reconfirmation evidence on develop and fast-forward main, then report
 
 ## Relevant files
 
-- `codex-logs.zip`
+- `reports/verification/REQ-20261020-001/results.md`
+- `rules/workflow/tasks.json`
 
 ## Verification commands
 
 ```bash
-unzip -t codex-logs.zip; python3 scripts/audit/import_codex_archive.py --check codex-logs.zip; python3 scripts/audit/import_codex_archive.py --verify-import codex-logs.zip; python3 scripts/workflow/verify_workflow.py; git diff --check
+reviewer independently confirms byte identity, evidence hashes and synchronized history
 ```
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-17T08:18:12Z
-- Branch: `develop`
-- Commit: `a5eb0f0`
+- Updated (UTC): 2026-10-20T00:27:29Z
+- Branch: `develop...origin/develop`
+- Commit: `e4153b6`
