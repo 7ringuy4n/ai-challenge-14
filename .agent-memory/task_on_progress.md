@@ -10,23 +10,26 @@ in_progress
 
 ## Current step
 
-Freshly fetched origin/develop and origin/main; both remain at the shared base and are ancestors of local branches.
+T22 is accepted after independent rereview PASS and post-push refs verified at c99ddec; final record commit is being prepared.
 
 ## Completed
 
-- [x] Resumed project memory and verified clean local state, local ancestry and both remote refs at e4153b6313e68656206c8d7ac63d2a48d8f6da3d.
-- [x] Fast-forwarded local develop to reviewed local main commit 9f0fa9ec689dbfcdf219475c5327fbef5c4ba3dc.
-- [x] Preserved PROMPT-20261020-002 verbatim and registered REQ-20261020-002/T13 before any remote write.
-- [x] Corrected task ID to T22 and required notes field; workflow validator passes with 23 tasks.
-- [x] Created REQ-002 verification report and confirmed exact raw prompt plus synchronized memory/history progress.
-- [x] Workflow manifest validates 23 unique tasks and the staged whitespace/prompt/progress checks pass.
 - [x] Committed PROMPT-20261020-002, REQ-002/T22, pre-publication checks and NOT_RUN application-test rationale on develop at 6ddc789.
 - [x] Fast-forwarded local main to contain the reviewed develop history through 6ddc789 and synchronized checkpoint.
 - [x] Fetched origin refs and verified both remote branch tips at e4153b6313e68656206c8d7ac63d2a48d8f6da3d are ancestors of local develop/main.
+- [x] Atomic non-force push updated both GitHub refs from e4153b6 to c99ddec.
+- [x] Post-push ls-remote and fetch verified origin/develop and origin/main exactly at c99ddec; local branches match.
+- [x] Recorded successful atomic push and exact post-push origin ref hashes in REQ-002 evidence.
+- [x] Recorded T22 independent review 01 and added the referenced verification report to T22 allowed_paths.
+- [x] Resolved reviewer 01 scope finding by adding the REQ-002 results report to T22 allowed_paths; focused review 02 PASS.
+- [x] Added validator-compatible PASS result fields and scoped T22 to its verification and review artifacts.
+- [x] Resolved review finding about stale pending text and absent closeout hash by distinguishing the verified c99 push from the not-yet-created follow-up closeout.
+- [x] Reconciled the manifest by removing a coordinator-approval PASS record while final evidence closeout is still pending.
+- [x] Added coordinator acceptance after independent rereview confirmed consistent scope, evidence and verified c99ddec branch heads.
 
 ## Next exact step
 
-Commit the verification checkpoint, fast-forward local main to the final develop tip, then perform atomic non-force push and verify remote IDs.
+Run workflow and diff checks, commit the acceptance/progress evidence on develop, fast-forward main, push both and verify the resulting remote heads.
 
 ## Blockers
 
@@ -43,11 +46,11 @@ Commit the verification checkpoint, fast-forward local main to the final develop
 ## Verification commands
 
 ```bash
-git merge-base --is-ancestor origin/develop develop && git merge-base --is-ancestor origin/main main
+python3 scripts/workflow/verify_workflow.py
 ```
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-20T00:34:29Z
-- Branch: `develop...origin/develop [ahead 5]`
-- Commit: `a91d081`
+- Updated (UTC): 2026-10-20T00:38:07Z
+- Branch: `develop...origin/develop`
+- Commit: `c99ddec`

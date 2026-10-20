@@ -124,3 +124,9 @@ REQ-026: Reconfirmed both local branch archive blobs match sanitized SHA-256 009
 - Committed the byte-identical Questions.md import on develop (00e1e9f), recorded synchronized task progress (5230724), and fast-forwarded local main to 5230724. Independent review passed. Remote refs remain unchanged; no push.
 
 - REQ-20261020-002: synchronize and publish reviewed `develop`/`main`; verify both GitHub refs.
+
+- REQ-20261020-002: atomically pushed synchronized `develop` and `main`; both verified at `c99ddec1ab0df258b8ecfe2a2deb649d1746134d`.
+
+- T22 delivery evidence independently reviewed and accepted; final evidence closeout is being synchronized to both branches.
+
+- T22 accepted after independent PASS; publication verified at c99ddec. Coordinator closeout and progress record are included in a follow-up sync commit.

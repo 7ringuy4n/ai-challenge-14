@@ -107,3 +107,11 @@ REQ-026: Reconfirmed both local branch archive blobs match sanitized SHA-256 009
 - Independent review PASS; local develop/main both reached 5230724495d3f1d43bde329ace84ca1f080ea5a9 after fast-forward. Remote refs stayed at e4153b6313e68656206c8d7ac63d2a48d8f6da3d; no push.
 
 - 2026-10-20: Registered REQ-20261020-002 / T22 for authorized non-force publication and verification of synchronized `develop` and `main`.
+
+
+- 2026-10-20: Atomic non-force push succeeded; GitHub `develop` and `main` were both fetched and verified at `c99ddec1ab0df258b8ecfe2a2deb649d1746134d`.
+
+- 2026-10-20: T22 independent rereview PASS after adding the REQ-002 results artifact to allowed paths; coordinator accepted the verified branch publication.
+
+
+- 2026-10-20: REQ-20261020-002 / T22 accepted after independent rereview PASS; both remote refs verified at c99ddec.
