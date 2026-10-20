@@ -1649,9 +1649,20 @@
           "source_hash": "d01a28bf99d11b22b6a36b46578eda0533449b89e3121ba592a86eafa3006fa1",
           "source_path": "rules/workflow/tasks.json",
           "artifact": "reports/sub-agents/reviews/t22.md"
+        },
+        {
+          "kind": "verification",
+          "status": "PASS",
+          "result": "PASS",
+          "command": "git ls-remote --heads origin develop main; git fetch --no-tags origin +refs/heads/develop:refs/remotes/origin/develop +refs/heads/main:refs/remotes/origin/main",
+          "exit_code": 0,
+          "source_hash": "6abdacc061a6199da2d0c8892e4f0e2c1ad89ec9b58067759026e2156a451f07",
+          "source_path": "reports/verification/REQ-20261020-002/results.md",
+          "artifact": "reports/verification/REQ-20261020-002/results.md",
+          "details": "Fresh ls-remote/fetch at 2026-10-20T00:38:50Z confirmed local and remote develop/main at 0e0e599f2d2a8f76b37c8bf7503d83cb5ece3d07."
         }
       ],
-      "notes": "Accepted by coordinator after independent rereview PASS: the authorized atomic non-force push succeeded and fresh ls-remote/fetch confirmed both refs at c99ddec. The upcoming commit only publishes the acceptance and synchronized progress evidence."
+      "notes": "Accepted by coordinator after independent rereview PASS. Atomic non-force push and fresh ls-remote/fetch verified both remote refs at 0e0e599f2d2a8f76b37c8bf7503d83cb5ece3d07; application tests are NOT_RUN because no application source changed."
     }
   ]
 }

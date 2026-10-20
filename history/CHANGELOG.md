@@ -115,3 +115,5 @@ REQ-026: Reconfirmed both local branch archive blobs match sanitized SHA-256 009
 
 
 - 2026-10-20: REQ-20261020-002 / T22 accepted after independent rereview PASS; both remote refs verified at c99ddec.
+
+- 2026-10-20: Final REQ-002 closeout `0e0e599f2d2a8f76b37c8bf7503d83cb5ece3d07` verified on both remote refs.

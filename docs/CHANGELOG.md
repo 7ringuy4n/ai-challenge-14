@@ -130,3 +130,5 @@ REQ-026: Reconfirmed both local branch archive blobs match sanitized SHA-256 009
 - T22 delivery evidence independently reviewed and accepted; final evidence closeout is being synchronized to both branches.
 
 - T22 accepted after independent PASS; publication verified at c99ddec. Coordinator closeout and progress record are included in a follow-up sync commit.
+
+- Final REQ-002 closeout refs verified at `0e0e599f2d2a8f76b37c8bf7503d83cb5ece3d07` on both GitHub branches.

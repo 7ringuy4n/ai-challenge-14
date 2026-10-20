@@ -178,3 +178,5 @@ T22 independent review 01 identified an allowed-path omission; the coordinator c
 
 
 REQ-20261020-002 accepted after independent rereview and coordinator approval. GitHub `develop` and `main` were both fetched and verified at `c99ddec1ab0df258b8ecfe2a2deb649d1746134d`. A follow-up documentation commit publishes the acceptance record.
+
+Final closeout commit `0e0e599f2d2a8f76b37c8bf7503d83cb5ece3d07` was fetched and verified as both `origin/develop` and `origin/main`; original base ancestry is preserved.

@@ -10,13 +10,10 @@ in_progress
 
 ## Current step
 
-Reviewed REQ-002 acceptance record committed as b60e149 on develop and fast-forwarded to main.
+Final closeout hash 0e0e599 is recorded in the result report, manifest and histories; local verification passes.
 
 ## Completed
 
-- [x] Fast-forwarded local main to contain the reviewed develop history through 6ddc789 and synchronized checkpoint.
-- [x] Fetched origin refs and verified both remote branch tips at e4153b6313e68656206c8d7ac63d2a48d8f6da3d are ancestors of local develop/main.
-- [x] Atomic non-force push updated both GitHub refs from e4153b6 to c99ddec.
 - [x] Post-push ls-remote and fetch verified origin/develop and origin/main exactly at c99ddec; local branches match.
 - [x] Recorded successful atomic push and exact post-push origin ref hashes in REQ-002 evidence.
 - [x] Recorded T22 independent review 01 and added the referenced verification report to T22 allowed_paths.
@@ -26,10 +23,13 @@ Reviewed REQ-002 acceptance record committed as b60e149 on develop and fast-forw
 - [x] Reconciled the manifest by removing a coordinator-approval PASS record while final evidence closeout is still pending.
 - [x] Added coordinator acceptance after independent rereview confirmed consistent scope, evidence and verified c99ddec branch heads.
 - [x] Independent review passed; T22 and requirement record acceptance; the closeout commit is synchronized locally on develop/main.
+- [x] Published final acceptance, review and synchronized history/progress evidence on both branches.
+- [x] Final accepted closeout commit 0e0e599 is present on local and remote develop/main; original base remains an ancestor.
+- [x] Recorded exact final remote develop/main hashes and timestamp 2026-10-20T00:38:50Z.
 
 ## Next exact step
 
-Commit this checkpoint, fast-forward main, atomically push the final acceptance/history closeout to both refs, and verify final remote hashes.
+Commit this final evidence update on develop, fast-forward main, push both atomically and confirm their final heads.
 
 ## Blockers
 
@@ -51,6 +51,6 @@ python3 scripts/workflow/verify_workflow.py
 
 ## Checkpoint metadata
 
-- Updated (UTC): 2026-10-20T00:38:39Z
-- Branch: `develop...origin/develop [ahead 1]`
-- Commit: `b60e149`
+- Updated (UTC): 2026-10-20T00:39:26Z
+- Branch: `develop...origin/develop`
+- Commit: `0e0e599`
