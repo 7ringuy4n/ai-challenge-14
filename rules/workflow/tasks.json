@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "Implement Challenge 14 on develop and apply owner-approved REQ-20261017-020. Source commit 0435e1b passed Java 21/Maven 3.9.11 and PostgreSQL 16/Testcontainers quality verification: 127 unit + 9 integration, 97.0195% line / 90.2326% branch. Current functional, browser, cross-member and Postman evidence passes. Original final-source JMeter stress remains recorded as FAIL (P95 564ms >500ms); do not claim threshold passed. Hardware exception requires evidence-based attribution and explicit production-performance caveat. LLM full raw payload capture is revised to proof-of-work; preserve all accessible transcripts and record unavailable raw payloads NOT_CAPTURED/PARTIAL. Merge develop into existing main only after all revised gates pass; never push.",
+  "scope": "Implement Challenge 14 on develop and apply owner-approved REQ-20261017-020. Source commit 0435e1b passed Java 21/Maven 3.9.11 and PostgreSQL 16/Testcontainers quality verification: 127 unit + 9 integration, 97.0195% line / 90.2326% branch. Current functional, browser, cross-member and Postman evidence passes. Original final-source JMeter stress remains recorded as FAIL (P95 564ms >500ms); do not claim threshold passed. Hardware exception requires evidence-based attribution and explicit production-performance caveat. LLM full raw payload capture is revised to proof-of-work; preserve all accessible transcripts and record unavailable raw payloads NOT_CAPTURED/PARTIAL. Merge develop into existing main only after all revised gates pass; historical policy disallowed push until separate authorization; REQ-20261020-002 is the explicit authorization for normal non-force publication of synchronized develop/main and remote verification",
   "coordinator_model": "gpt-6.1-sol",
   "worker_model": "gpt-6-luna",
   "reasoning_effort": "medium",
@@ -1524,6 +1524,81 @@
         }
       ],
       "notes": "Coordinator approval PASS after independent T21 review PASS and scoped checks. Content commit 00e1e9ff0aa7fde76d4189279144f3daf68f59d4 plus progress commit 5230724495d3f1d43bde329ace84ca1f080ea5a9 were fast-forwarded locally into main. Remote refs remain unchanged; no push. Exact Questions.md bytes are preserved; unfiltered diff whitespace warning is disclosed. Maven/Compose checks are NOT_RUN because no application/runtime source changed."
+    },
+    {
+      "id": "T22",
+      "title": "Publish synchronized develop and main refs and verify GitHub",
+      "role": "coordinator",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "medium",
+      "status": "running",
+      "depends_on": [
+        "T21"
+      ],
+      "allowed_paths": [
+        "rules/REQUIREMENT.md",
+        "rules/workflow/tasks.json",
+        "docs/submission/user-prompts.jsonl",
+        "docs/CHANGELOG.md",
+        "docs/HISTORY.md",
+        "history/CHANGELOG.md",
+        "history/task_on_progress.md",
+        ".agent-memory/"
+      ],
+      "verification": [
+        "python3 scripts/workflow/verify_workflow.py",
+        "git diff --check",
+        "git ls-remote --heads origin develop main"
+      ],
+      "case_ids": [],
+      "acceptance": [
+        "Remote develop and main contain the reviewed local history without rewriting or discarding remote commits",
+        "Both GitHub branch refs are verified at the same intended commit",
+        "Git publication evidence and synchronized project history are recorded"
+      ],
+      "evidence": [
+        {
+          "kind": "verification",
+          "status": "PASS",
+          "command": "python3 scripts/workflow/verify_workflow.py",
+          "exit_code": 0,
+          "source_hash": "b6762b51930fb4215d84e44d39bd2126cbb7f484703948cf7abaa0c974b44b63",
+          "source_path": "scripts/workflow/verify_workflow.py",
+          "artifact": "reports/verification/REQ-20261020-002/results.md",
+          "reason": null
+        },
+        {
+          "kind": "verification",
+          "status": "PASS",
+          "command": "git diff --check -- . ':!logical-question/Questions.md'",
+          "exit_code": 0,
+          "source_hash": "a0213d65a1bfd46ad3114c6644814ab8ab6d3d80b4b9d73a6d85ee5391ed44fb",
+          "source_path": "reports/verification/REQ-20261020-002/results.md",
+          "artifact": "reports/verification/REQ-20261020-002/results.md",
+          "reason": null
+        },
+        {
+          "kind": "verification",
+          "status": "PASS",
+          "command": "PROMPT-20261020-002 exact raw text and .agent-memory/history progress mirror comparison",
+          "exit_code": 0,
+          "source_hash": "2127ddec1355b3a3562fc060ccac55f3ca6885e8033ce686012c7b35cbe71f19",
+          "source_path": "docs/submission/user-prompts.jsonl",
+          "artifact": "reports/verification/REQ-20261020-002/results.md",
+          "reason": null
+        },
+        {
+          "kind": "verification",
+          "status": "NOT_RUN",
+          "command": "mvn -B -Pquality clean verify",
+          "exit_code": null,
+          "source_hash": "d479d11582ad4c59aa75fca135fc9705f862bf167b9d0afa0e39db5e0135f7ef",
+          "source_path": "pom.xml",
+          "artifact": "reports/verification/REQ-20261020-002/results.md",
+          "reason": "Application code unchanged; this Git-only task does not require the Java suite."
+        }
+      ],
+      "notes": "Documentation and Git delivery task; application source is unchanged. Publish only after workflow and ancestry checks pass; record NOT_RUN for application tests."
     }
   ]
 }

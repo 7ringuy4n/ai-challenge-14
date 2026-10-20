@@ -569,3 +569,13 @@ The earlier GitHub blocker was resolved under the explicit authorization in REQ-
 - Scope: `logical-question/Questions.md`, this requirement, raw prompt log, task manifest and synchronized history/memory.
 - Verification: SHA-256 equality for source and destination, `python3 scripts/workflow/verify_workflow.py`, and `git diff --check`. Application tests are not applicable to this documentation-only change and must be recorded as `NOT_RUN`.
 - Status: in progress.
+
+
+## REQ-20261020-002 — Publish and verify develop/main (2026-10-20)
+
+- Source: `PROMPT-20261020-002`, preserved verbatim in `docs/submission/user-prompts.jsonl`.
+- Scope: publish the already reviewed local Challenge 14 history to the configured GitHub `origin`; synchronize `develop` and `main` at the same reviewed commit and verify both remote branch heads.
+- Acceptance: preserve remote commits with normal fast-forward Git operations only; confirm remote ancestry before pushing; use an atomic, non-force push when possible; verify `origin/develop` and `origin/main` both equal the intended local commit; capture command results, final hashes and timestamps.
+- Safety: no force push, reset, branch deletion, or protection bypass. If remote state diverges, stop and reconcile without discarding remote history.
+- Checks: `python3 scripts/workflow/verify_workflow.py`; `git diff --check` (excluding the byte-preserved imported `logical-question/Questions.md`); compare local ancestry and exact remote refs before and after push. Application tests are `NOT_RUN` because this task changes only Git branch references and delivery evidence, not application source.
+- Status: running; local branches are synchronized at `9f0fa9ec689dbfcdf219475c5327fbef5c4ba3dc`; remote refs were last observed at common base `e4153b6313e68656206c8d7ac63d2a48d8f6da3d`.
